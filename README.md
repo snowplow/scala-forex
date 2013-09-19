@@ -4,7 +4,9 @@
 
 ## Introduction
 
-Open Exchange Rates Scala Client is a high-performance Scala library for performing currency conversions using the [Open Exchange Rates API] [ore-api]. It includes a configurable LRU (Least Recently Used) cache to minimize calls to the Open Exchange Rates API; this makes the library usable in high-volume environments such as Hadoop and Storm.
+Open Exchange Rates Scala Client is a high-performance Scala library for performing currency conversions using the [Open Exchange Rates API] [ore-api].
+
+It includes a configurable LRU (Least Recently Used) cache to minimize calls to the Open Exchange Rates API; this makes the library usable in high-volume environments such as Hadoop and Storm.
 
 This Scala Client is built on top of the [Open Exchange Rates Java Client] [ore-java], [Joda-Money] [joda-money] and [Joda-Time] [joda-time].
 
@@ -41,7 +43,7 @@ val priceInEuros = fx.convert(10000, "GBP").to("JPY").on(tradeDate)
 
 When `convert...now` is specified, the **live** exchange rate available from Open Exchange Rates is used.
 
-When `convert...on(...)` is specified, the most recent end-of-day rate still falling before the `on(...)` datetime is used.
+When `convert...on(...)` is specified, the most recent **end-of-day rate** still falling before the `on(...)` datetime is used.
 
 **TBC: what do we do if the EOD is not yet available? e.g. at 00:00:01?**
 
