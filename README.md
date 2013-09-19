@@ -31,10 +31,10 @@ Here is a usage example for a historic exchange rate:
 import com.snowplowanalytics.ore.forex.Forex
 import org.joda.time.DateTime
 
-val fx = Forex(appId = "XXX", lruCache = 2000)
-val date = DateTime ny = new DateTime(2011, 3, 13, 2, 0, 0, 0, DateTimeZone.forID("America/New_York"));
+val fx = Forex(appId = "XXX", lruCache = 2000) // No homeCurrency set
+val tradeDate = DateTime(2011, 3, 13, 2, 0, 0, 0, DateTimeZone.forID("America/New_York"))
 
-val priceInEuros = fx.convert(9.99, "GBP").to("EUR").on(date)
+val priceInEuros = fx.convert(10000, "GBP").to("JPY").on(tradeDate)
 ```
 
 ## Conversion behaviour
