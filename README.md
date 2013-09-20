@@ -29,8 +29,17 @@ Conversion using the live exchange rate:
 ```scala
 import com.snowplowanalytics.ore.forex.Forex
 
-val fx = Forex(appId = "XXX", homeCurrency = "USD", lruCache = 2000)
+val fx = Forex(appId = "XXX", homeCurrency = "USD")
 val priceInEuros = fx.convert(9.99).to("EUR").now
+```
+
+Conversion using a near-live exchange rate:
+
+```scala
+import com.snowplowanalytics.ore.forex.Forex
+
+val fx = Forex(appId = "XXX", homeCurrency = "USD", lruCache = 100000, nowishDuration = 30)
+val priceInEuros = fx.convert(9.99).to("EUR").nowish
 ```
 
 Conversion using a historic exchange rate:
@@ -39,7 +48,7 @@ Conversion using a historic exchange rate:
 import com.snowplowanalytics.ore.forex.Forex
 import org.joda.time.DateTime
 
-val fx = Forex(appId = "XXX", lruCache = 2000) // No homeCurrency set
+val fx = Forex(appId = "XXX", lruCache = 4000) // No homeCurrency set
 
 val tradeDate = DateTime(2011, 3, 13, 11, 39, 27, 567, DateTimeZone.forID("America/New_York"))
 val tradeInYen = fx.convert(10000, "GBP").to("JPY").at(tradeDate)
@@ -60,6 +69,8 @@ When `convert...now` is specified, the **live** exchange rate available from Ope
 When `convert...on(...)` is specified, the most recent **end-of-day rate** still falling before the `on(...)` datetime is used.
 
 **TBC: what do we do if the EOD is not yet available? e.g. at 00:00:01?**
+
+**TODO: add thread-safe warning.**
 
 ## Roadmap
 
