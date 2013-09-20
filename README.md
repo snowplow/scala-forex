@@ -33,16 +33,25 @@ val fx = Forex(appId = "XXX", homeCurrency = "USD", lruCache = 2000)
 val priceInEuros = fx.convert(9.99).to("EUR").now
 ```
 
-Conversion using historic exchange rate:
+Conversion using a historic exchange rate:
 
 ```scala
 import com.snowplowanalytics.ore.forex.Forex
 import org.joda.time.DateTime
 
 val fx = Forex(appId = "XXX", lruCache = 2000) // No homeCurrency set
-val tradeDate = DateTime(2011, 3, 13, 2, 0, 0, 0, DateTimeZone.forID("America/New_York"))
 
+val tradeDate = DateTime(2011, 3, 13, 11, 39, 27, 567, DateTimeZone.forID("America/New_York"))
 val priceInEuros = fx.convert(10000, "GBP").to("JPY").on(tradeDate)
+```
+
+Or you can be explicit about the EOD you want to use:
+
+```scala
+...
+
+val eodDate = DateTime(2011, 3, 13, 0, 0)
+val priceInEuros = fx.convert(10000, "GBP").to("JPY").eod(eodDate)
 ```
 
 ## Conversion behaviour
