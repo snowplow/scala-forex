@@ -42,7 +42,7 @@ import org.joda.time.DateTime
 val fx = Forex(appId = "XXX", lruCache = 2000) // No homeCurrency set
 
 val tradeDate = DateTime(2011, 3, 13, 11, 39, 27, 567, DateTimeZone.forID("America/New_York"))
-val priceInEuros = fx.convert(10000, "GBP").to("JPY").at(tradeDate)
+val tradeInYen = fx.convert(10000, "GBP").to("JPY").at(tradeDate)
 ```
 
 Or you can be explicit about the EOD rate to use:
@@ -50,7 +50,7 @@ Or you can be explicit about the EOD rate to use:
 ```scala
 ...
 val eodDate = DateTime(2011, 3, 13, 0, 0)
-val priceInEuros = fx.convert(10000, "GBP").to("JPY").eod(eodDate)
+val tradeInYen = fx.convert(10000, "GBP").to("JPY").eod(eodDate)
 ```
 
 ## Conversion behaviour
