@@ -18,7 +18,13 @@ Rest of section to come.
 
 ## Usage
 
-Here is a simple usage example for a live exchange rate:
+### Rate lookup
+
+To come.
+
+### Currency conversion
+
+Conversion using the live exchange rate:
 
 ```scala
 import com.snowplowanalytics.ore.forex.Forex
@@ -27,7 +33,7 @@ val fx = Forex(appId = "XXX", homeCurrency = "USD", lruCache = 2000)
 val priceInEuros = fx.convert(9.99).to("EUR").now
 ```
 
-Here is a usage example for a historic exchange rate:
+Conversion using historic exchange rate:
 
 ```scala
 import com.snowplowanalytics.ore.forex.Forex
