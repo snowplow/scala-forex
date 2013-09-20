@@ -49,7 +49,6 @@ Or you can be explicit about the EOD you want to use:
 
 ```scala
 ...
-
 val eodDate = DateTime(2011, 3, 13, 0, 0)
 val priceInEuros = fx.convert(10000, "GBP").to("JPY").eod(eodDate)
 ```
