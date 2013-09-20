@@ -45,7 +45,7 @@ val tradeDate = DateTime(2011, 3, 13, 11, 39, 27, 567, DateTimeZone.forID("Ameri
 val priceInEuros = fx.convert(10000, "GBP").to("JPY").at(tradeDate)
 ```
 
-Or you can be explicit about the EOD you want to use:
+Or you can be explicit about the EOD rate to use:
 
 ```scala
 ...
