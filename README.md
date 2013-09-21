@@ -67,7 +67,6 @@ val usd2yen = fx.rate("USD").to("JPY").at(tradeDate) // => xxx
 Lookup the EOD rate for a specific date _(cacheing available)_:
 
 ```scala
-...
 import com.snowplowanalytics.ore.forex.Forex
 import org.joda.time.DateTime
 
