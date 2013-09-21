@@ -51,7 +51,7 @@ val jpy2gbp = fx.rate("JPY").to("GBP").nowish // => xxx
 
 ### Nearest EOD rate
 
-Lookup the nearest EOD (end-of-date) rate to your event (cacheing available):
+Lookup the nearest EOD (end-of-date) rate to your event _(cacheing available)_:
 
 ```scala
 import com.snowplowanalytics.ore.forex.Forex
@@ -64,7 +64,7 @@ val usd2yen = fx.rate("USD").to("JPY").at(tradeDate) // => xxx
 
 ### Specific EOD rate
 
-Lookup a specific EOD rate (cacheing available):
+Lookup a specific EOD rate _(cacheing available)_:
 
 ```scala
 ...
@@ -80,7 +80,7 @@ val gbp2jpy = fx.rate.to("JPY").eod(eodDate) // => xxx
 
 #### Live rate
 
-Conversion using the live exchange rate (no cacheing available):
+Conversion using the live exchange rate _(no cacheing available)_:
 
 ```scala
 import com.snowplowanalytics.ore.forex.Forex
@@ -91,7 +91,7 @@ val priceInEuros = fx.convert(9.99).to("EUR").now // => xxx
 
 #### Near-live rate
 
-Conversion using a near-live exchange rate (cacheing available):
+Conversion using a near-live exchange rate _(cacheing available)_:
 
 ```scala
 import com.snowplowanalytics.ore.forex.Forex
@@ -102,7 +102,7 @@ val priceInEuros = fx.convert(9.99, "USD").to("EUR").nowish // => xxx
 
 #### Nearest EOD rate
 
-Conversion using the nearest EOD (end-of-date) rate to your event (cacheing available):
+Conversion using the nearest EOD (end-of-date) rate to your event _(cacheing available)_:
 
 ```scala
 import com.snowplowanalytics.ore.forex.Forex
@@ -115,7 +115,7 @@ val tradeInYen = fx.convert(10000, "GBP").to("JPY").at(tradeDate) // => xxx
 
 #### Specific EOD rate
 
-Conversion using a specific EOD rate (cacheing available):
+Conversion using a specific EOD rate _(cacheing available)_:
 
 ```scala
 ...
