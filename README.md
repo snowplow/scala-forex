@@ -8,7 +8,7 @@ Open Exchange Rates Scala Client is a high-performance Scala library for perform
 
 It includes a configurable LRU (Least Recently Used) cache to minimize calls to the Open Exchange Rates API; this makes the library usable in high-volume environments such as Hadoop and Storm.
 
-This Scala Client is built on top of the [Open Exchange Rates Java Client] [ore-java], [Joda-Money] [joda-money] and [Joda-Time] [joda-time].
+This ORE Scala Client for foreign exchange is built on top of the [Open Exchange Rates Java Client] [ore-java], [Joda-Money] [joda-money] and [Joda-Time] [joda-time].
 
 ## Installation
 
@@ -18,48 +18,113 @@ Rest of section to come.
 
 ## Usage
 
-### Rate lookup
+The ORE Scala Client supports two types of usage:
 
-To come.
+1. Exchange rate lookups
+2. Currency conversions
 
-### Currency conversion
+Both usage types can support live, near-live or historical (end-of-day) exchange rates.
 
-Conversion using the live exchange rate:
+### 1. Rate lookup
+
+#### Live rate
+
+Lookup a live rate:
 
 ```scala
 import com.snowplowanalytics.ore.forex.Forex
 
 val fx = Forex(appId = "XXX", homeCurrency = "USD")
-val priceInEuros = fx.convert(9.99).to("EUR").now
+val usd2eur = fx.rate.to("EUR").now // => xxx
 ```
+
+### Near-live rate
+
+Lookup a near-live rate:
+
+```scala
+import com.snowplowanalytics.ore.forex.Forex
+
+val fx = Forex(appId = "XXX", homeCurrency = "USD", nowishCache = 30)
+val jpy2gbp = fx.rate("JPY").to("GBP").nowish // => xxx
+```
+
+### Nearest EOD rate
+
+Lookup the nearest EOD (end-of-date) rate to your event:
+
+```scala
+import com.snowplowanalytics.ore.forex.Forex
+import org.joda.time.DateTime
+
+val fx = Forex(appId = "XXX", lruCache = 4000)
+val tradeDate = DateTime(2011, 3, 13, 11, 39, 27, 567, DateTimeZone.forID("America/New_York"))
+val usd2yen = fx.rate("USD").to("JPY").at(tradeDate) // => xxx
+```
+
+### Specific EOD rate
+
+Lookup a specific EOD rate:
+
+```scala
+...
+import com.snowplowanalytics.ore.forex.Forex
+import org.joda.time.DateTime
+
+val fx = Forex(appId = "XXX", homeCurrency = "GBP", lruCache = 80000)
+val eodDate = DateTime(2011, 3, 13, 0, 0)
+val gbp2jpy = fx.rate.to("JPY").eod(eodDate) // => xxx
+```
+
+### 2. Currency conversion
+
+#### Live rate
+
+Conversion using the live exchange rate (no cacheing possible):
+
+```scala
+import com.snowplowanalytics.ore.forex.Forex
+
+val fx = Forex(appId = "XXX", homeCurrency = "USD")
+val priceInEuros = fx.convert(9.99).to("EUR").now // => xxx
+```
+
+#### Near-live rate
 
 Conversion using a near-live exchange rate:
 
 ```scala
 import com.snowplowanalytics.ore.forex.Forex
 
-val fx = Forex(appId = "XXX", homeCurrency = "USD", lruCache = 100000, nowishDuration = 30)
-val priceInEuros = fx.convert(9.99).to("EUR").nowish
+val fx = Forex(appId = "XXX", lruCache = 100000, nowishCache = 30)
+val priceInEuros = fx.convert(9.99, "USD").to("EUR").nowish // => xxx
 ```
 
-Conversion using a historic exchange rate:
+#### Nearest EOD rate
+
+Conversion using the nearest EOD (end-of-date) rate to your event:
 
 ```scala
 import com.snowplowanalytics.ore.forex.Forex
 import org.joda.time.DateTime
 
-val fx = Forex(appId = "XXX", lruCache = 4000) // No homeCurrency set
-
+val fx = Forex(appId = "XXX", lruCache = 4000)
 val tradeDate = DateTime(2011, 3, 13, 11, 39, 27, 567, DateTimeZone.forID("America/New_York"))
-val tradeInYen = fx.convert(10000, "GBP").to("JPY").at(tradeDate)
+val tradeInYen = fx.convert(10000, "GBP").to("JPY").at(tradeDate) // => xxx
 ```
 
-Or you can be explicit about the EOD rate to use:
+#### Specific EOD rate
+
+Conversion using a specific EOD rate:
 
 ```scala
 ...
+import com.snowplowanalytics.ore.forex.Forex
+import org.joda.time.DateTime
+
+val fx = Forex(appId = "XXX", homeCurrency = "GBP", lruCache = 80000)
 val eodDate = DateTime(2011, 3, 13, 0, 0)
-val tradeInYen = fx.convert(10000, "GBP").to("JPY").eod(eodDate)
+val tradeInYen = fx.convert(10000).to("JPY").eod(eodDate) // => xxx
 ```
 
 ## Conversion behaviour
@@ -78,7 +143,7 @@ Nothing planned currently.
 
 ## Copyright and license
 
-Copyright 2013 Snowplow Analytics Ltd.
+ORE Scala Client is copyright 2013 Snowplow Analytics Ltd.
 
 Licensed under the [Apache License, Version 2.0] [license] (the "License");
 you may not use this software except in compliance with the License.
