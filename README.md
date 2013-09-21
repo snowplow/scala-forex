@@ -49,9 +49,9 @@ val fx = Forex(appId = "XXX", homeCurrency = "USD", nowishSecs = 30)
 val jpy2gbp = fx.rate("JPY").to("GBP").nowish // => xxx
 ```
 
-### Nearest EOD rate
+### Latest-prior EOD rate
 
-Lookup the nearest EOD (end-of-date) rate to your event _(cacheing available)_:
+Lookup the latest EOD (end-of-date) rate prior to your event _(cacheing available)_:
 
 ```scala
 import com.snowplowanalytics.ore.forex.Forex
@@ -64,7 +64,7 @@ val usd2yen = fx.rate("USD").to("JPY").at(tradeDate) // => xxx
 
 ### Specific EOD rate
 
-Lookup a specific EOD rate _(cacheing available)_:
+Lookup the EOD rate for a specific date _(cacheing available)_:
 
 ```scala
 ...
@@ -100,9 +100,9 @@ val fx = Forex(appId = "XXX", lruCache = 100000, nowishSecs = 30)
 val priceInEuros = fx.convert(9.99, "USD").to("EUR").nowish // => xxx
 ```
 
-#### Nearest EOD rate
+#### Latest-prior EOD rate
 
-Conversion using the nearest EOD (end-of-date) rate to your event _(cacheing available)_:
+Conversion using the latest EOD (end-of-date) rate prior to your event _(cacheing available)_:
 
 ```scala
 import com.snowplowanalytics.ore.forex.Forex
@@ -115,7 +115,7 @@ val tradeInYen = fx.convert(10000, "GBP").to("JPY").at(tradeDate) // => xxx
 
 #### Specific EOD rate
 
-Conversion using a specific EOD rate _(cacheing available)_:
+Conversion using the EOD rate for a specific date _(cacheing available)_:
 
 ```scala
 ...
@@ -145,15 +145,19 @@ There is no default `homeCurrency`.
 
 ## Implementation details
 
+### End-of-day definition
+
+**TBC**
+
 ### Exchange rate lookup
 
 When `.now` is specified, the **live** exchange rate available from Open Exchange Rates is used.
 
-When `.nowish` is specified, a **cached** version of the **live** exchange rate is used, if the timestamp of that exchange rate is less than or equal to `nowishSecs` (see above) old.
+When `.nowish` is specified, a **cached** version of the **live** exchange rate is used, if the timestamp of that exchange rate is less than or equal to `nowishSecs` (see above) old. Otherwise a new lookup is performed.
 
-When `.on(...)` is specified, the most recent **end-of-day rate** still falling **before** the `on(...)` datetime is used. **TBC: what do we do if the EOD is not yet available? e.g. at 00:00:01?**
+When `.on(...)` is specified, the **latest end-of-day rate prior** to the datetime is used. **TBC: what do we do if the EOD is not yet available? e.g. at 00:00:01?**
 
-When `.eod(...)` is specified, the end-of-day rate for the **specified day** is used. Any hour/minute/second/etc portion of the `DateTime` is ignored.
+When `.eod(...)` is specified, the end-of-day rate for the **specified day** is used. Any hour/minute/second/etc portion of the datetime is ignored.
 
 ### LRU cache
 
