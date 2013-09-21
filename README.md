@@ -127,19 +127,45 @@ val eodDate = DateTime(2011, 3, 13, 0, 0)
 val tradeInYen = fx.convert(10000).to("JPY").eod(eodDate) // => xxx
 ```
 
-## Conversion behaviour
+### 3. Usage notes
 
-When `convert...now` is specified, the **live** exchange rate available from Open Exchange Rates is used.
+#### From currency selection
 
-When `convert...on(...)` is specified, the most recent **end-of-day rate** still falling before the `on(...)` datetime is used.
+A default "from currency" can be specified for all operations, using the `homeCurrency` argument to the `Forex` object.
 
-**TBC: what do we do if the EOD is not yet available? e.g. at 00:00:01?**
+If this is not specified, all calls to `rate()` or `convert()` **must** specify the `fromCurrency` argument.
 
-**TODO: add thread-safe warning.**
+#### Constructor defaults
+
+If not specified, the `lruCache` defaults to 50,000 entries. This is equivalent to around one year's worth of EOD currency rates for 12 currencies (12*11 * 365 = 48,180).
+
+If not specified, the `nowishSecs` defaults to 300 seconds (5 minutes).
+
+## Implementation details
+
+### Exchange rate lookup
+
+When `.now` is specified, the **live** exchange rate available from Open Exchange Rates is used.
+
+When `.nowish` is specified, a **cached** version of the **live** exchange rate is used, if the timestamp of that exchange rate is less than or equal to `nowishSecs` (see above) old.
+
+When `.on(...)` is specified, the most recent **end-of-day rate** still falling **before** the `on(...)` datetime is used. **TBC: what do we do if the EOD is not yet available? e.g. at 00:00:01?**
+
+When `.eod(...)` is specified, the end-of-day rate for the **specified day** is used. Any hour/minute/second/etc portion of the `DateTime` is ignored.
+
+### LRU cache
+
+We recommend trying different LRU cache sizes to see what works best for you.
+
+Please note that the LRU cache is **not** thread-safe ([see this note] [twitter-lru-cache]). Switch it off if you are working with threads.
 
 ## Roadmap
 
-Nothing planned currently.
+It could be nice to double the efficiency of the system by understanding that:
+
+    EUR:USD EOD rate 21/09/2012 = 1 / (USD:EUR EOD rate)
+
+So simply cache the first of those found, and calculate the other. Would need to investigate and check that this conversion was non-lossy.
 
 ## Copyright and license
 
@@ -160,5 +186,7 @@ limitations under the License.
 
 [joda-money]: http://www.joda.org/joda-money/
 [joda-time]: http://www.joda.org/joda-time/
+
+[twitter-lru-cache]: http://twitter.github.com/commons/apidocs/com/twitter/common/util/caching/LRUCache.html
 
 [license]: http://www.apache.org/licenses/LICENSE-2.0
