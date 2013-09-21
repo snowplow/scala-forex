@@ -23,13 +23,13 @@ The ORE Scala Client supports two types of usage:
 1. Exchange rate lookups
 2. Currency conversions
 
-Both usage types can support live, near-live or historical (end-of-day) exchange rates.
+Both usage types support live, near-live or historical (end-of-day) exchange rates.
 
 ### 1. Rate lookup
 
 #### Live rate
 
-Lookup a live rate:
+Lookup a live rate (_no cacheing available_):
 
 ```scala
 import com.snowplowanalytics.ore.forex.Forex
@@ -40,7 +40,7 @@ val usd2eur = fx.rate.to("EUR").now // => xxx
 
 ### Near-live rate
 
-Lookup a near-live rate:
+Lookup a near-live rate (cacheing available):
 
 ```scala
 import com.snowplowanalytics.ore.forex.Forex
@@ -51,7 +51,7 @@ val jpy2gbp = fx.rate("JPY").to("GBP").nowish // => xxx
 
 ### Nearest EOD rate
 
-Lookup the nearest EOD (end-of-date) rate to your event:
+Lookup the nearest EOD (end-of-date) rate to your event (cacheing available):
 
 ```scala
 import com.snowplowanalytics.ore.forex.Forex
@@ -64,7 +64,7 @@ val usd2yen = fx.rate("USD").to("JPY").at(tradeDate) // => xxx
 
 ### Specific EOD rate
 
-Lookup a specific EOD rate:
+Lookup a specific EOD rate (cacheing available):
 
 ```scala
 ...
@@ -80,7 +80,7 @@ val gbp2jpy = fx.rate.to("JPY").eod(eodDate) // => xxx
 
 #### Live rate
 
-Conversion using the live exchange rate (no cacheing possible):
+Conversion using the live exchange rate (no cacheing available):
 
 ```scala
 import com.snowplowanalytics.ore.forex.Forex
@@ -91,7 +91,7 @@ val priceInEuros = fx.convert(9.99).to("EUR").now // => xxx
 
 #### Near-live rate
 
-Conversion using a near-live exchange rate:
+Conversion using a near-live exchange rate (cacheing available):
 
 ```scala
 import com.snowplowanalytics.ore.forex.Forex
@@ -102,7 +102,7 @@ val priceInEuros = fx.convert(9.99, "USD").to("EUR").nowish // => xxx
 
 #### Nearest EOD rate
 
-Conversion using the nearest EOD (end-of-date) rate to your event:
+Conversion using the nearest EOD (end-of-date) rate to your event (cacheing available):
 
 ```scala
 import com.snowplowanalytics.ore.forex.Forex
@@ -115,7 +115,7 @@ val tradeInYen = fx.convert(10000, "GBP").to("JPY").at(tradeDate) // => xxx
 
 #### Specific EOD rate
 
-Conversion using a specific EOD rate:
+Conversion using a specific EOD rate (cacheing available):
 
 ```scala
 ...
