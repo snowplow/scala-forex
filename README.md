@@ -141,6 +141,8 @@ If not specified, the `lruCache` defaults to 50,000 entries. This is equivalent 
 
 If not specified, the `nowishSecs` defaults to 300 seconds (5 minutes).
 
+There is no default `homeCurrency`.
+
 ## Implementation details
 
 ### Exchange rate lookup
