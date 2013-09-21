@@ -45,7 +45,7 @@ Lookup a near-live rate:
 ```scala
 import com.snowplowanalytics.ore.forex.Forex
 
-val fx = Forex(appId = "XXX", homeCurrency = "USD", nowishCache = 30)
+val fx = Forex(appId = "XXX", homeCurrency = "USD", nowishSecs = 30)
 val jpy2gbp = fx.rate("JPY").to("GBP").nowish // => xxx
 ```
 
@@ -96,7 +96,7 @@ Conversion using a near-live exchange rate:
 ```scala
 import com.snowplowanalytics.ore.forex.Forex
 
-val fx = Forex(appId = "XXX", lruCache = 100000, nowishCache = 30)
+val fx = Forex(appId = "XXX", lruCache = 100000, nowishSecs = 30)
 val priceInEuros = fx.convert(9.99, "USD").to("EUR").nowish // => xxx
 ```
 
