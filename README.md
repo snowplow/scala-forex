@@ -29,7 +29,7 @@ Both usage types support live, near-live or historical (end-of-day) exchange rat
 
 #### Live rate
 
-Lookup a live rate (_no cacheing available_):
+Lookup a live rate _(no cacheing available)_:
 
 ```scala
 import com.snowplowanalytics.ore.forex.Forex
@@ -40,7 +40,7 @@ val usd2eur = fx.rate.to("EUR").now // => xxx
 
 ### Near-live rate
 
-Lookup a near-live rate (cacheing available):
+Lookup a near-live rate _(cacheing available)_:
 
 ```scala
 import com.snowplowanalytics.ore.forex.Forex
