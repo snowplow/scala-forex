@@ -128,6 +128,10 @@ val tradeInYen = fx.convert(10000).to("JPY").eod(eodDate) // => xxx
 
 ### 3. Usage notes
 
+#### LRU cache
+
+The `lruCache` value determines the maximum number of values to keep in the LRU cache, which the Client will check prior to making an API lookup. To disable the LRU cache, set its size to zero, i.e. `lruCache = 0`.
+
 #### From currency selection
 
 A default "from currency" can be specified for all operations, using the `homeCurrency` argument to the `Forex` object.
