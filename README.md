@@ -158,7 +158,10 @@ When `.now` is specified, the **live** exchange rate available from Open Exchang
 
 When `.nowish` is specified, a **cached** version of the **live** exchange rate is used, if the timestamp of that exchange rate is less than or equal to `nowishSecs` (see above) old. Otherwise a new lookup is performed.
 
-When `.on(...)` is specified, the **latest end-of-day rate prior** to the datetime is used. **TBC: what do we do if the EOD is not yet available? e.g. at 00:00:01?**
+When `.on(...)` is specified, the **latest end-of-day rate prior** to the datetime is used. **TBC:**
+
+* What do we do if the EOD is not yet available? e.g. at 00:00:01?
+* Should we always use the last prior, or round forwards in time if the timestamp is closer to tomorrow?
 
 When `.eod(...)` is specified, the end-of-day rate for the **specified day** is used. Any hour/minute/second/etc portion of the datetime is ignored.
 
