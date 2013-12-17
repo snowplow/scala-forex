@@ -11,6 +11,8 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 
+
+
 // Java
 import java.math.BigDecimal
 
@@ -23,6 +25,9 @@ import scala.collection.JavaConversions._
 // Specs2
 import org.specs2.mutable.Specification
 
+// Joda time
+import org.joda.time._
+
 class JavaOerTest extends Specification { /*def is =
 
   "This is a specification to check that the underlying Java Oer client is working correctly" ^
@@ -34,7 +39,7 @@ class JavaOerTest extends Specification { /*def is =
   // TODO: figure out way of fetching API key from environment variable or similar so that we don't
   // have to keep adding and removing the key to avoid accidentally leaking it on GitHub
   // TODO: explore ways of starting SBT with a Java environment variable
-  val ore = OpenExchangeRates.getClient("<<ADD IN YOUR KEY>>") // Do not commit with key added!!
+  val ore = OpenExchangeRates.getClient("") // Do not commit with key added!!
 
   for (entry <- ore.getLatest.entrySet) {
     "live exchange rate for currency [%s]".format(entry.getKey) should { // TODO: put currency code in here
@@ -45,4 +50,18 @@ class JavaOerTest extends Specification { /*def is =
   }
 
   // TODO: add more tests as per https://github.com/snowplow/snowplow/blob/master/3-enrich/hadoop-etl/src/test/scala/utils/MapTransformerTest.scala
+
+  val cal = DateTime.parse("2012-01-01T01:01:01.123+0900").toGregorianCalendar
+
+  for (entry <- ore.getHistorical(cal).entrySet) {
+        "exchange rate for currency [%s] on 01/Jan/2008".format(entry.getKey) should {
+          "be greater than 0" in {
+        entry.getValue must beGreaterThan(new BigDecimal(0))
+      }
+    }
+  }
+
 }
+
+
+
