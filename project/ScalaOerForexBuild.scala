@@ -13,7 +13,7 @@
 import sbt._
 import Keys._
 
-object ScalaOreForexBuild extends Build {
+object ScalaOerForexBuild extends Build {
 
   import Dependencies._
   import BuildSettings._
