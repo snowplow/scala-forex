@@ -140,7 +140,7 @@ If this is not specified, all calls to `rate()` or `convert()` **must** specify 
 
 #### Constructor defaults
 
-If not specified, the `lruCache` defaults to 50,000 entries. This is equivalent to around one year's worth of EOD currency rates for 12 currencies (12*11 * 365 = 48,180).
+If not specified, the `lruCache` defaults to 60,000 entries. This is equivalent to around one year's worth of EOD currency rates for 165 currencies (165 * 365 = 60,225).
 
 If not specified, the `nowishSecs` defaults to 300 seconds (5 minutes).
 
@@ -192,9 +192,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-[ore-api]: https://openexchangerates.org/
-[ore-java]: https://github.com/dneto/oer-java
-[ore-signup]: https://openexchangerates.org/signup
+[oer-api]: https://openexchangerates.org/
+[oer-java]: https://github.com/dneto/oer-java
+[oer-signup]: https://openexchangerates.org/signup
 
 [joda-money]: http://www.joda.org/joda-money/
 [joda-time]: http://www.joda.org/joda-time/
