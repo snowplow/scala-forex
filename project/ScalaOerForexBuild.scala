@@ -32,6 +32,7 @@ object ScalaOerForexBuild extends Build {
         Libraries.jodaConvert,
         Libraries.jodaMoney,
         Libraries.jackson,
+        Libraries.collUtil,
         Libraries.scalaUtil,
         Libraries.specs2
       )

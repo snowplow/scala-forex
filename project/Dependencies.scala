@@ -16,7 +16,8 @@ object Dependencies {
 
   val resolutionRepos = Seq(
     // For scala-util
-    "Snowplow Analytics Maven repo" at "http://maven.snplow.com/releases/"
+    "Snowplow Analytics Maven repo" at "http://maven.snplow.com/releases/",
+    "Twitter Maven Repo" at "http://maven.twttr.com/" // For Twitter's util functions
   )
 
   object V {
@@ -27,6 +28,7 @@ object Dependencies {
     val jackson    = "1.9.7" // Needed by java-oer and not contained in /lib/oer-java-0.1.0.jar
     // val awsSdk  = "1.6.4" Only available on Amazon Kinesis private beta, so this is an unmanaged lib
     // Scala
+    val collUtil   = "6.3.4"
     val scalaUtil  = "0.1.0"
     // Scala (test only)
     val specs2     = "2.3.4"
@@ -39,6 +41,7 @@ object Dependencies {
     val jackson     = "org.codehaus.jackson"       % "jackson-mapper-asl" % V.jackson
     val jodaConvert = "org.joda"                   % "joda-convert"       % V.jodaConvert
     // Scala
+    val collUtil    = "com.twitter"                %% "util-collection"   % V.collUtil
     val scalaUtil   = "com.snowplowanalytics"      %  "scala-util"        % V.scalaUtil
     // Scala (test only)
     val specs2      = "org.specs2"                 %% "specs2"            % V.specs2     % "test"

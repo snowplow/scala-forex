@@ -32,7 +32,7 @@ Both usage types support live, near-live or historical (end-of-day) exchange rat
 Lookup a live rate _(no cacheing available)_:
 
 ```scala
-import com.snowplowanalytics.ore.forex.Forex
+import com.snowplowanalytics.oer.forex.Forex
 
 val fx = Forex(appId = "XXX", homeCurrency = "USD")
 val usd2eur = fx.rate.to("EUR").now // => xxx
