@@ -18,6 +18,7 @@ import java.math.BigDecimal
 
 // Java OER
 import org.openexchangerates.oerjava.OpenExchangeRates
+import org.openexchangerates.oerjava.Currency
 
 // Scala
 import scala.collection.JavaConversions._
@@ -28,39 +29,43 @@ import org.specs2.mutable.Specification
 // Joda time
 import org.joda.time._
 
-class JavaOerTest extends Specification { /*def is =
+class JavaOerTest extends Specification { 
 
-  "This is a specification to check that the underlying Java Oer client is working correctly" ^
-                                                                                             p^
-  "all live exchange rates should be greater than 0"                                          ! e1^
-                                                                                              end */
+  //run "sbt -Dkey=<<Key>> test" in the command line
+  //e.g.  if your key is 123, then run "sbt -Dkey=123 test" 
+  val oer = OpenExchangeRates.getClient(System.getProperty("key")) 
 
-
-  // TODO: figure out way of fetching API key from environment variable or similar so that we don't
-  // have to keep adding and removing the key to avoid accidentally leaking it on GitHub
-  // TODO: explore ways of starting SBT with a Java environment variable
-  val ore = OpenExchangeRates.getClient("") // Do not commit with key added!!
-
-  for (entry <- ore.getLatest.entrySet) {
-    "live exchange rate for currency [%s]".format(entry.getKey) should { // TODO: put currency code in here
+  for (entry <- oer.getLatest.entrySet) {
+    "live exchange rate for currency [%s]".format(entry.getKey) should { 
       "be greater than 0" in {
         entry.getValue must beGreaterThan (new BigDecimal(0))
       }
     }
   }
 
-  // TODO: add more tests as per https://github.com/snowplow/snowplow/blob/master/3-enrich/hadoop-etl/src/test/scala/utils/MapTransformerTest.scala
+  
 
-  val cal = DateTime.parse("2012-01-01T01:01:01.123+0900").toGregorianCalendar
+  val cal = DateTime.parse("2008-01-01T01:01:01.123+0900").toGregorianCalendar
 
-  for (entry <- ore.getHistorical(cal).entrySet) {
-        "exchange rate for currency [%s] on 01/Jan/2008".format(entry.getKey) should {
+  for (entry <- oer.getHistorical(cal).entrySet) {
+        "exchange rate for currency [%s] on 01/01/2008".format(entry.getKey) should {
           "be greater than 0" in {
-        entry.getValue must beGreaterThan(new BigDecimal(0))
+        entry.getValue must beGreaterThan (new BigDecimal(0))
       }
     }
   }
 
+  "live currency value for USD" should { 
+    "always equal to 1" in {
+      oer.getCurrencyValue(Currency.USD) must_== (new BigDecimal(1))
+    }
+  }
+
+  "historical currency value for USD on 01/01/2008" should {
+    "always equal to 1 as well" in {
+      oer.getHistoricalCurrencyValue(Currency.USD, cal) must_== (new BigDecimal(1))
+    }
+  }
 }
 
 
