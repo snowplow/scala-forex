@@ -30,6 +30,7 @@ object ScalaOerForexBuild extends Build {
       libraryDependencies ++= Seq(
         Libraries.jodaTime,
         Libraries.jodaMoney,
+        Libraries.jackson,
         Libraries.scalaUtil,
         Libraries.specs2
       )

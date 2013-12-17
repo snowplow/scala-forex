@@ -23,6 +23,7 @@ object Dependencies {
     // Java
     val jodaTime   = "2.3"
     val jodaMoney  = "0.9"
+    val jackson    = "1.9.7" // Needed by java-oer and not contained in /lib/oer-java-0.1.0.jar
     // val awsSdk  = "1.6.4" Only available on Amazon Kinesis private beta, so this is an unmanaged lib
     // Scala
     val scalaUtil  = "0.1.0"
@@ -32,11 +33,12 @@ object Dependencies {
 
   object Libraries {
     // Java
-    val jodaTime    = "joda-time"                  % "joda-time"        % V.jodaTime
-    val jodaMoney   = "org.joda"                   % "joda-money"       % V.jodaMoney
+    val jodaTime    = "joda-time"                  % "joda-time"          % V.jodaTime
+    val jodaMoney   = "org.joda"                   % "joda-money"         % V.jodaMoney
+    val jackson     = "org.codehaus.jackson"       % "jackson-mapper-asl" % V.jackson
     // Scala
-    val scalaUtil   = "com.snowplowanalytics"      %  "scala-util"      % V.scalaUtil
+    val scalaUtil   = "com.snowplowanalytics"      %  "scala-util"        % V.scalaUtil
     // Scala (test only)
-    val specs2      = "org.specs2"                 %% "specs2"          % V.specs2     % "test"
+    val specs2      = "org.specs2"                 %% "specs2"            % V.specs2     % "test"
   }
 }
