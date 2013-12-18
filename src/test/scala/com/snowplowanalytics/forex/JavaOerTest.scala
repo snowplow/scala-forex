@@ -10,7 +10,9 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.oerforex
+
+ 
+package com.snowplowanalytics.forex
 
 // Java
 import java.math.BigDecimal
@@ -65,7 +67,8 @@ class JavaOerTest extends Specification {
       oer.getHistoricalCurrencyValue(Currency.USD, cal) must_== (new BigDecimal(1))
     }
   }
+
+
+
 }
-
-
 

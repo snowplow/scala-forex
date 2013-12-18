@@ -32,7 +32,7 @@ Both usage types support live, near-live or historical (end-of-day) exchange rat
 Lookup a live rate _(no cacheing available)_:
 
 ```scala
-import com.snowplowanalytics.oer.forex.Forex
+import com.snowplowanalytics.forex.Forex
 
 val fx = Forex(appId = "XXX", homeCurrency = "USD")
 val usd2eur = fx.rate.to("EUR").now // => xxx
@@ -43,7 +43,7 @@ val usd2eur = fx.rate.to("EUR").now // => xxx
 Lookup a near-live rate _(cacheing available)_:
 
 ```scala
-import com.snowplowanalytics.oerforex.Forex
+import com.snowplowanalytics.forex.Forex
 
 val fx = Forex(appId = "XXX", homeCurrency = "USD", nowishSecs = 30)
 val jpy2gbp = fx.rate("JPY").to("GBP").nowish // => xxx
@@ -54,7 +54,7 @@ val jpy2gbp = fx.rate("JPY").to("GBP").nowish // => xxx
 Lookup the latest EOD (end-of-date) rate prior to your event _(cacheing available)_:
 
 ```scala
-import com.snowplowanalytics.oerforex.Forex
+import com.snowplowanalytics.forex.Forex
 import org.joda.time.DateTime
 
 val fx = Forex(appId = "XXX", lruCache = 4000)
@@ -67,7 +67,7 @@ val usd2yen = fx.rate("USD").to("JPY").at(tradeDate) // => xxx
 Lookup the EOD rate for a specific date _(cacheing available)_:
 
 ```scala
-import com.snowplowanalytics.oerforex.Forex
+import com.snowplowanalytics.forex.Forex
 import org.joda.time.DateTime
 
 val fx = Forex(appId = "XXX", homeCurrency = "GBP", lruCache = 80000)
@@ -82,7 +82,7 @@ val gbp2jpy = fx.rate.to("JPY").eod(eodDate) // => xxx
 Conversion using the live exchange rate _(no cacheing available)_:
 
 ```scala
-import com.snowplowanalytics.oerforex.Forex
+import com.snowplowanalytics.forex.Forex
 
 val fx = Forex(appId = "XXX", homeCurrency = "USD")
 val priceInEuros = fx.convert(9.99).to("EUR").now // => xxx
@@ -93,7 +93,7 @@ val priceInEuros = fx.convert(9.99).to("EUR").now // => xxx
 Conversion using a near-live exchange rate _(cacheing available)_:
 
 ```scala
-import com.snowplowanalytics.oerforex.Forex
+import com.snowplowanalytics.forex.Forex
 
 val fx = Forex(appId = "XXX", lruCache = 100000, nowishSecs = 30)
 val priceInEuros = fx.convert(9.99, "USD").to("EUR").nowish // => xxx
@@ -104,7 +104,7 @@ val priceInEuros = fx.convert(9.99, "USD").to("EUR").nowish // => xxx
 Conversion using the latest EOD (end-of-date) rate prior to your event _(cacheing available)_:
 
 ```scala
-import com.snowplowanalytics.oerforex.Forex
+import com.snowplowanalytics.forex.Forex
 import org.joda.time.DateTime
 
 val fx = Forex(appId = "XXX", lruCache = 4000)
@@ -118,7 +118,7 @@ Conversion using the EOD rate for a specific date _(cacheing available)_:
 
 ```scala
 ...
-import com.snowplowanalytics.oerforex.Forex
+import com.snowplowanalytics.forex.Forex
 import org.joda.time.DateTime
 
 val fx = Forex(appId = "XXX", homeCurrency = "GBP", lruCache = 80000)
