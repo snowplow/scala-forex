@@ -34,7 +34,7 @@ class JavaOerTest extends Specification {
 
   //run "sbt -Dkey=<<Key>> test" in the command line
   //e.g.  if your key is 123, then run "sbt -Dkey=123 test" 
-  val oer = OpenExchangeRates.getClient(System.getProperty("key")) 
+  val oer = OpenExchangeRates.getClient(System.getProperty("forex.key")) 
 
   for (entry <- oer.getLatest.entrySet) {
     "live exchange rate for currency [%s]".format(entry.getKey) should { 
