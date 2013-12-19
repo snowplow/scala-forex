@@ -21,7 +21,8 @@ object BuildSettings {
     version               :=  "0.0.1",
     description           :=  "High-performance Scala library for performing currency conversions using Open Exchange Rates",
     scalaVersion          :=  "2.10.1",
-    // TODO: update this so it cross-compiles to Scala 2.9 (see scala-maxmind-geoip for details)
+    crossScalaVersions    :=  Seq("2.9.2", "2.9.3", "2.10.0", "2.10.1"),
+
     scalacOptions         :=  Seq("-deprecation", "-encoding", "utf8"),
     scalacOptions in Test :=  Seq("-Yrangepos"),
     resolvers             ++= Dependencies.resolutionRepos

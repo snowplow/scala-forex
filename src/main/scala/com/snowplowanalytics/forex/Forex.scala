@@ -40,14 +40,19 @@ import com.twitter.util.LruMap
 // EUR -> USD -> GBP. Not very nice!
 /*
 
-few things to note: 
+Questions:
 
 1. In rate method, when the user did not initialize neither 
 home currency nor source currency, do I throw an exception and return? 
 and where do I catch the exception?
 
-2. sizes of the two caches?
+//2. sizes of the two caches? 
+
+3. do I need to store the lookup results into cache after every http request?
+
 */
+
+
 
 /**
  * Forex is a ???
@@ -58,22 +63,31 @@ and where do I catch the exception?
 case class ForexBuilder(appId: String) {
 
   // default values for optional fields
-  private var _lruCacheSize = 60000
-  private var _nowishSecs   = 300
+  private var _nowishCacheSize = 13530
+  private var _nowishSecs      = 300
+  private var _historicalCacheSize    = 405900 
+  private var _getNearestDay   = false
   // there is no default value for home currency
   private var _homeCurrency = Currency.NULL
   
-   def homeCurrency   = _homeCurrency
-   def lruCacheSize   = _lruCacheSize
-   def nowishSecs     = _nowishSecs
+   def homeCurrency          = _homeCurrency
+   def nowishCacheSize       = _nowishCacheSize
+   def nowishSecs            = _nowishSecs
+   def historicalCacheSize   = _historicalCacheSize
+   def getNearestDay         = _getNearestDay
 
   def buildHomeCurrency(currency: Currency):  ForexBuilder = {
     _homeCurrency = currency
     this
   }
 
-  def buildLruCache(size: Int): ForexBuilder = {
-    _lruCacheSize = size
+  def buildNowishCache(size: Int): ForexBuilder = {
+    _nowishCacheSize = size
+    this
+  }
+
+  def buildHistoricalCache(size: Int): ForexBuilder = {
+    _historicalCacheSize    = size
     this
   }
 
@@ -81,6 +95,11 @@ case class ForexBuilder(appId: String) {
     _nowishSecs = secs
     this
   }
+
+  def buildNearestDay: ForexBuilder = {
+    _getNearestDay = true
+    this
+  }  
 
   def build: Forex = {
     new Forex(this)
@@ -96,15 +115,20 @@ case class Forex(builder: ForexBuilder) {
 
   val client = OpenExchangeRates.getClient(builder.appId)
 
-  //lruCache stores Tuple[from, to] as key and Tuple[timestamp, exchange rate] as value 
-  val lruCache = new LruMap[CacheKey, CacheValue](builder.lruCacheSize)
+  val nowishCache = new LruMap[NowishCacheKey, NowishCacheValue](builder.nowishCacheSize)
   
+  val historicalCache = new LruMap[HistoricalCacheKey, HistoricalCacheValue](builder.historicalCacheSize)
+
   var from = if (builder.homeCurrency != null) { builder.homeCurrency} else { Currency.NULL }
   
   var to   = Currency.NULL
 
-  // max possible number of digits of a currency value 
-  val max_possible_precision = 15
+  val getNearestDay = builder.getNearestDay
+
+  // preserve 10 digits after decimal point of a number when performing division 
+  val max_scale = 10
+  // usually the number of digits of a currency value has only 6 digits 
+  val common_scale     = 6
 
   def setSourceCurrency(source: Currency): Forex = {
     from = source
@@ -115,14 +139,16 @@ case class Forex(builder: ForexBuilder) {
     to = target
     this
   }
-  
+
+
+
   // rate method leaves the source currency to be default value(i.e. USD) 
   //and returns ForexLookupTo object
   def rate: ForexLookupTo = {
     if (from == Currency.NULL) {
       throw new IllegalArgumentException
     } 
-    var forex = setSourceCurrency(from)
+    var forex = setSourceCurrency(builder.homeCurrency)
     ForexLookupTo(forex)
   }
 
@@ -153,11 +179,11 @@ case class ForexLookupWhen(fx: Forex) {
     if (fx.from != Currency.USD) {
   
       val USDOverFrom = new BigDecimal(1).divide(fx.client.getCurrencyValue(fx.from)
-              , fx.max_possible_precision, RoundingMode.HALF_EVEN)
+              , fx.max_scale, RoundingMode.HALF_EVEN)
 
       val ToOverUSD = fx.client.getCurrencyValue(fx.to)
 
-      USDOverFrom.multiply(ToOverUSD).setScale(6, RoundingMode.HALF_EVEN)
+      USDOverFrom.multiply(ToOverUSD).setScale(fx.common_scale, RoundingMode.HALF_EVEN)
   
     } else {
   
@@ -169,31 +195,80 @@ case class ForexLookupWhen(fx: Forex) {
 
   def nowish: BigDecimal = {
 
-      val lruCache = fx.lruCache
-      val nowishTime = DateTime.now.minusSeconds(fx.builder.nowishSecs)
-      lruCache.get((fx.from, fx.to)) match {
+      val nowishTime    = DateTime.now.minusSeconds(fx.builder.nowishSecs)
+
+      fx.nowishCache.get((fx.from, fx.to)) match {
         case Some(tuple) => 
                             val (timeStamp, exchangeRate) = tuple
-                            if (nowishTime.isBefore(timeStamp)
-                               || nowishTime.equals(timeStamp)) {
-                              exchangeRate
+                            if  (nowishTime.isBefore(timeStamp)
+                                       || nowishTime.equals(timeStamp)) {
+                               exchangeRate
                             } else {
                               now
                             }
         case None =>
-                      val liveExchangeRate = now
-                      lruCache.put((fx.from, fx.to), (DateTime.now, liveExchangeRate))
-                      liveExchangeRate
+                      fx.nowishCache.get((fx.to, fx.from)) match {
+
+                        case Some(value) =>   
+                                    val (time, rate) = value
+                                    new BigDecimal(1).divide(rate, fx.common_scale, RoundingMode.HALF_EVEN)
+                                    
+                        case None =>
+                          val liveExchangeRate = now
+                          fx.nowishCache.put((fx.from, fx.to), (DateTime.now, liveExchangeRate))
+                          liveExchangeRate
+                      }
       }
         
   }
 
 
-  // def at(tradeDate: DateTime): BigDecimal = {
+  def at(tradeDate: DateTime): BigDecimal = {
+    var latestEod = tradeDate.withTimeAtStartOfDay
+    if (fx.getNearestDay) {
+      latestEod   = latestEod.plusDays(1)
+    }
+    eod(latestEod)   
+  }
 
-  // }
 
-  // def eod(eodDate: DateTime): BigDecimal = {
+  def eod(eodDate: DateTime): BigDecimal = {
 
-  // }
+    fx.historicalCache.get((fx.from, fx.to, eodDate)) match {
+    
+      case Some(rate) => 
+                        rate
+      case None       => 
+                           fx.historicalCache.get((fx.to, fx.from, eodDate)) match {
+                            case Some(exchangeRate) =>
+                                              
+                                               new BigDecimal(1).divide(exchangeRate, fx.common_scale, RoundingMode.HALF_EVEN)
+                            case None =>
+                                               val rate = getHistoricalRate(fx, eodDate)
+                                               fx.historicalCache.put((fx.from, fx.to, eodDate), rate)
+                                               rate
+                        }
+    }
+  }
+
+  private def getHistoricalRate(fx: Forex, date: DateTime): BigDecimal = {
+
+      val dateCal = date.toGregorianCalendar
+
+      if (fx.from != Currency.USD) {
+  
+      val USDOverFrom = new BigDecimal(1).divide(fx.client.getHistoricalCurrencyValue(fx.from, dateCal)
+              , fx.max_scale, RoundingMode.HALF_EVEN)
+
+      val ToOverUSD = fx.client.getHistoricalCurrencyValue(fx.to, dateCal)
+
+      USDOverFrom.multiply(ToOverUSD).setScale(fx.common_scale, RoundingMode.HALF_EVEN)
+  
+    } else {
+  
+      fx.client.getHistoricalCurrencyValue(fx.to, dateCal)
+  
+    }
+  }
+
 }

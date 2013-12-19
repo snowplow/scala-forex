@@ -139,12 +139,12 @@ A default "from currency" can be specified for all operations, using the `homeCu
 If this is not specified, all calls to `rate()` or `convert()` **must** specify the `fromCurrency` argument.
 
 #### Constructor defaults
-********TWO CACHES ?*************
-If not specified, the `lruCache` defaults to 60,000 entries. This is equivalent to around one year's worth of EOD currency rates for 165 currencies (165 * 365 = 60,225).
 
-lruCache for nowish = 165* 164 / 2 * 60 ??
+If not specified, the `eodCache` defaults to 60,000 entries. This is equivalent to around one year's worth of EOD currency rates for 165 currencies (165 * 365 = 60,225).
 
-lruCache for historical = ??
+nowishCache = (165 * 164 / 2) = 13530 <- recommended size
+
+eodCache = (165 * 164 / 2) * 30 = 405900 assuming 1 month <- suggested size
 *********************************
 
 
@@ -164,8 +164,11 @@ When `.now` is specified, the **live** exchange rate available from Open Exchang
 
 When `.nowish` is specified, a **cached** version of the **live** exchange rate is used, if the timestamp of that exchange rate is less than or equal to `nowishSecs` (see above) old. Otherwise a new lookup is performed.
 
-When `.on(...)` is specified, the **latest end-of-day rate prior** to the datetime is used. **TBC:**
+When `.at(...)` is specified, the **latest end-of-day rate prior** to the datetime is used. **TBC:**
 
+//by default, historical lookup gets the currency value on the previous day
+//user can configure it to get that on the nearest day
+  
 * What do we do if the EOD is not yet available? e.g. at 00:00:01?
 * Should we always use the last prior, or round forwards in time if the timestamp is closer to tomorrow?
 

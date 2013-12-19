@@ -33,20 +33,51 @@ class ScalaOerTest extends Specification {
 
    val fx = ForexBuilder(System.getProperty("forex.key")).buildHomeCurrency(Currency.USD).build
 
-   "USD/GBP live rate " should {
+   val gbpNow = fx.rate(Currency.CNY).to(Currency.GBP).now
+   "CNY/GBP live rate [%s]".format(gbpNow) should {
      "be smaller than 1 and greater than 0" in { 
-       fx.rate.to(Currency.GBP).now must be < (new BigDecimal(1))
-       fx.rate.to(Currency.GBP).now must be > (new BigDecimal(0))
+       gbpNow must be < (new BigDecimal(1))
+       gbpNow must be > (new BigDecimal(0))
      }
   }
 
+  val gbpNowish = fx.rate.to(Currency.GBP).nowish
+  "USD/GBP near-live rate [%s]".format(gbpNowish) should {
+    "be smaller than 1 and greater than 0, lruCache.size = [%s]".format(fx.nowishCache.size) in {
 
-  "USD/GBP near-live rate " should {
-    "be smaller than 1 and greater than 0" in {
-
-        fx.rate.to(Currency.GBP).nowish must be < (new BigDecimal(1))
-        fx.rate.to(Currency.GBP).nowish must be > (new BigDecimal(0))
+        gbpNowish must be < (new BigDecimal(1))
+        gbpNowish must be > (new BigDecimal(0))
     }
   }
 
+  val gbpOvercnyNowish = fx.rate(Currency.CNY).to(Currency.GBP).nowish
+  "CNY/GBP near-live rate [%s]".format(gbpOvercnyNowish) should {
+    "be smaller than 1 and greater than 0, nowishCache size = [%s]".format(fx.nowishCache.size) in {
+
+        gbpNowish must be < (new BigDecimal(1))
+        gbpNowish must be > (new BigDecimal(0))
+    }
+  }
+
+  val tradeDate = new DateTime(2011, 3, 13, 11, 39, 27, 567, DateTimeZone.forID("America/New_York"))
+  val gbpLatestEodRate = fx.rate.to(Currency.GBP).at(tradeDate)
+
+  "USD to GBP latest eod rate [%s]".format(gbpLatestEodRate) should {
+    "be > 0, historicalCache size = [%s]".format(fx.historicalCache.size) in {
+        gbpLatestEodRate must be > (new BigDecimal(0))
+    }
+  }
+
+
+  val eodDate = new DateTime(2011, 3, 13, 0, 0)
+  val gbpEodRate =  fx.rate.to(Currency.GBP).eod(eodDate)
+
+  "USD to GBP eod rate [%s]".format(gbpEodRate) should {
+    "be > 0, historicalCache size = [%s]".format(fx.historicalCache.size) in {
+        gbpEodRate must be > (new BigDecimal(0))
+    }
+  }
+
+  
+  
 }
