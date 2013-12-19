@@ -26,6 +26,8 @@ import org.joda.time._
 // Scala
 import scala.collection.JavaConversions._
 
+// LRUCache
+import com.twitter.util.LruMap
 
 
 // TODO: should homeCurrency be a String?
@@ -37,8 +39,14 @@ import scala.collection.JavaConversions._
 // If a homecurrency can't be set, then for EUR -> GBP, I have to convert
 // EUR -> USD -> GBP. Not very nice!
 /*
+
 few things to note: 
-1. I added target currency field 
+
+1. In rate method, when the user did not initialize neither 
+home currency nor source currency, do I throw an exception and return? 
+and where do I catch the exception?
+
+2. sizes of the two caches?
 */
 
 /**
@@ -50,10 +58,14 @@ few things to note:
 case class ForexBuilder(appId: String) {
 
   // default values for optional fields
-  private var _homeCurrency = Currency.USD
-  private var _lruCache     = 60000
+  private var _lruCacheSize = 60000
   private var _nowishSecs   = 300
-  private var _targetCurrency = Currency.USD
+  // there is no default value for home currency
+  private var _homeCurrency = Currency.NULL
+  
+   def homeCurrency   = _homeCurrency
+   def lruCacheSize   = _lruCacheSize
+   def nowishSecs     = _nowishSecs
 
   def buildHomeCurrency(currency: Currency):  ForexBuilder = {
     _homeCurrency = currency
@@ -61,7 +73,7 @@ case class ForexBuilder(appId: String) {
   }
 
   def buildLruCache(size: Int): ForexBuilder = {
-    _lruCache = size
+    _lruCacheSize = size
     this
   }
 
@@ -70,19 +82,11 @@ case class ForexBuilder(appId: String) {
     this
   }
 
-  def buildTargetCurrency(currency: Currency): ForexBuilder = {
-    _targetCurrency = currency
-    this
-  }
-
   def build: Forex = {
     new Forex(this)
   }
 
-  def homeCurrency   = _homeCurrency
-  def lruCache       = _lruCache
-  def nowishSecs     = _nowishSecs
-  def targetCurrency = _targetCurrency
+
 }
 
 
@@ -90,64 +94,100 @@ case class ForexBuilder(appId: String) {
 case class Forex(builder: ForexBuilder) {
 
 
-  lazy val client = OpenExchangeRates.getClient(builder.appId)
+  val client = OpenExchangeRates.getClient(builder.appId)
+
+  //lruCache stores Tuple[from, to] as key and Tuple[timestamp, exchange rate] as value 
+  val lruCache = new LruMap[CacheKey, CacheValue](builder.lruCacheSize)
+  
+  var from = if (builder.homeCurrency != null) { builder.homeCurrency} else { Currency.NULL }
+  
+  var to   = Currency.NULL
 
   // max possible number of digits of a currency value 
   val max_possible_precision = 15
 
+  def setSourceCurrency(source: Currency): Forex = {
+    from = source
+    this
+  }
 
-  // rate method returns ForexLookupFrom object with home currency sets to default value(USD)
+  def setTargetCurrency(target: Currency): Forex = {
+    to = target
+    this
+  }
+  
+  // rate method leaves the source currency to be default value(i.e. USD) 
+  //and returns ForexLookupTo object
   def rate: ForexLookupTo = {
-    ForexLookupTo(builder)
+    if (from == Currency.NULL) {
+      throw new IllegalArgumentException
+    } 
+    var forex = setSourceCurrency(from)
+    ForexLookupTo(forex)
   }
 
-  // rate method sets the home currency to a specific currency
+  // rate method sets the source currency to a specific currency
+  // and returns ForexLookupTo object
   def rate(currency: Currency): ForexLookupTo = {
-    builder.buildHomeCurrency(currency)
-    ForexLookupTo(builder)
+    var forex = setSourceCurrency(currency)
+    ForexLookupTo(forex)
   }
 
 }
 
 
 
-case class ForexLookupTo(fxbuilder: ForexBuilder) {
-
+case class ForexLookupTo(fx: Forex) {
+  
   def to(currency: Currency): ForexLookupWhen = {
-    fxbuilder.buildTargetCurrency(currency)
-    ForexLookupWhen(fxbuilder)
+    var forex = fx.setTargetCurrency(currency)
+    ForexLookupWhen(forex)
   }
 
 }
 
-case class ForexLookupWhen(fxbuilder: ForexBuilder) {
+case class ForexLookupWhen(fx: Forex) {
 
   def now: BigDecimal =  {
-    val fx = fxbuilder.build
-  
-    if (fxbuilder.homeCurrency != Currency.USD) {
-  
-      val homeCurrOverUSD = new BigDecimal(1).divide(fx.client.getCurrencyValue(fxbuilder.homeCurrency)
-              , fx.max_possible_precision, RoundingMode.HALF_UP)
 
-      val USDoverTargetCurr = fx.client.getCurrencyValue(fxbuilder.targetCurrency)
+    if (fx.from != Currency.USD) {
+  
+      val USDOverFrom = new BigDecimal(1).divide(fx.client.getCurrencyValue(fx.from)
+              , fx.max_possible_precision, RoundingMode.HALF_EVEN)
 
-      homeCurrOverUSD.multiply(USDoverTargetCurr).setScale(6, RoundingMode.HALF_EVEN)
+      val ToOverUSD = fx.client.getCurrencyValue(fx.to)
+
+      USDOverFrom.multiply(ToOverUSD).setScale(6, RoundingMode.HALF_EVEN)
   
     } else {
   
-      fx.client.getCurrencyValue(fxbuilder.targetCurrency)
+      fx.client.getCurrencyValue(fx.to)
   
     }
   }
-   
-  // def nowish: BigDecimal = {
+  
 
-  // }
+  def nowish: BigDecimal = {
 
-  // def nowish(nowishSecs: Int): BigDecimal = {
+      val lruCache = fx.lruCache
+      val nowishTime = DateTime.now.minusSeconds(fx.builder.nowishSecs)
+      lruCache.get((fx.from, fx.to)) match {
+        case Some(tuple) => 
+                            val (timeStamp, exchangeRate) = tuple
+                            if (nowishTime.isBefore(timeStamp)
+                               || nowishTime.equals(timeStamp)) {
+                              exchangeRate
+                            } else {
+                              now
+                            }
+        case None =>
+                      val liveExchangeRate = now
+                      lruCache.put((fx.from, fx.to), (DateTime.now, liveExchangeRate))
+                      liveExchangeRate
+      }
+        
+  }
 
-  // }
 
   // def at(tradeDate: DateTime): BigDecimal = {
 

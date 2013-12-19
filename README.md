@@ -139,8 +139,14 @@ A default "from currency" can be specified for all operations, using the `homeCu
 If this is not specified, all calls to `rate()` or `convert()` **must** specify the `fromCurrency` argument.
 
 #### Constructor defaults
-
+********TWO CACHES ?*************
 If not specified, the `lruCache` defaults to 60,000 entries. This is equivalent to around one year's worth of EOD currency rates for 165 currencies (165 * 365 = 60,225).
+
+lruCache for nowish = 165* 164 / 2 * 60 ??
+
+lruCache for historical = ??
+*********************************
+
 
 If not specified, the `nowishSecs` defaults to 300 seconds (5 minutes).
 

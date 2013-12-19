@@ -31,14 +31,22 @@ import org.joda.time._
 class ScalaOerTest extends Specification { 
    val oer = OpenExchangeRates.getClient(System.getProperty("forex.key")) 
 
-   val fxb = ForexBuilder(System.getProperty("forex.key"))
-
-   val fx = Forex(fxb)
+   val fx = ForexBuilder(System.getProperty("forex.key")).buildHomeCurrency(Currency.USD).build
 
    "USD/GBP live rate " should {
      "be smaller than 1 and greater than 0" in { 
-      fx.rate.to(Currency.GBP).now must be < (new BigDecimal(1))
-      fx.rate.to(Currency.GBP).now must be > (new BigDecimal(0))
+       fx.rate.to(Currency.GBP).now must be < (new BigDecimal(1))
+       fx.rate.to(Currency.GBP).now must be > (new BigDecimal(0))
      }
   }
+
+
+  "USD/GBP near-live rate " should {
+    "be smaller than 1 and greater than 0" in {
+
+        fx.rate.to(Currency.GBP).nowish must be < (new BigDecimal(1))
+        fx.rate.to(Currency.GBP).nowish must be > (new BigDecimal(0))
+    }
+  }
+
 }

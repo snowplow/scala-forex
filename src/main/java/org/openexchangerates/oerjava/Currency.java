@@ -21,6 +21,7 @@ package org.openexchangerates.oerjava;
  * 
  */
 public enum Currency {
+	NULL,
 	/**
 	 * United Arab Emirates Dirham
 	 */
