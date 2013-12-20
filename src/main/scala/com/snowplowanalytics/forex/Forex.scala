@@ -162,6 +162,14 @@ case class Forex(builder: ForexBuilder) {
     ForexLookupTo(this)
   }
 
+  def convert(amount: Int): ForexLookupTo = {
+
+  }
+
+  //convert a certain amount of currency to  
+  def convert(amount: Int, currency: Int): ForexLookupTo = {
+
+  }
 }
 
 
@@ -181,12 +189,12 @@ case class ForexLookupWhen(fx: Forex) {
 
     if (fx.from != "USD") {
   
-      val USDOverFrom = new BigDecimal(1).divide(fx.client.getCurrencyValue(fx.from)
+      val fromOverUSD = new BigDecimal(1).divide(fx.client.getCurrencyValue(fx.from)
               , fx.max_scale, RoundingMode.HALF_EVEN)
 
-      val ToOverUSD = fx.client.getCurrencyValue(fx.to)
+      val usdOverTo = fx.client.getCurrencyValue(fx.to)
 
-      USDOverFrom.multiply(ToOverUSD).setScale(fx.common_scale, RoundingMode.HALF_EVEN)
+      fromOverUSD.multiply(usdOverto).setScale(fx.common_scale, RoundingMode.HALF_EVEN)
   
     } else {
   
@@ -260,12 +268,12 @@ case class ForexLookupWhen(fx: Forex) {
 
       if (fx.from != "USD") {
   
-      val USDOverFrom = new BigDecimal(1).divide(fx.client.getHistoricalCurrencyValue(fx.from, dateCal)
+      val fromOverUSD = new BigDecimal(1).divide(fx.client.getHistoricalCurrencyValue(fx.from, dateCal)
               , fx.max_scale, RoundingMode.HALF_EVEN)
 
-      val ToOverUSD = fx.client.getHistoricalCurrencyValue(fx.to, dateCal)
+      val usdOverTo = fx.client.getHistoricalCurrencyValue(fx.to, dateCal)
 
-      USDOverFrom.multiply(ToOverUSD).setScale(fx.common_scale, RoundingMode.HALF_EVEN)
+      fromOverUSD.multiply(usdOverTo).setScale(fx.common_scale, RoundingMode.HALF_EVEN)
   
     } else {
   
