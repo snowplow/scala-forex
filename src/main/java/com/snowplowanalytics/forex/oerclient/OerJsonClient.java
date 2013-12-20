@@ -12,7 +12,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 */
-package org.openexchangerates.oerjava;
+package com.snowplowanalytics.forex.oerclient;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -26,16 +26,24 @@ import java.util.Map;
 
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.openexchangerates.oerjava.exceptions.UnavailableExchangeRateException;
 
 /**
  * Implements Json for Open Exchange Rates(http://openexchangerates.org)
  * 
  * @author Demétrio Menezes Neto
  */
-class OERJsonClient extends OpenExchangeRates {
+class OerJsonClient extends OpenExchangeRates {
 	private final static String OER_URL = "http://openexchangerates.org/api/";
+	
+	/**
+	 * The constant that will holds the URI for
+	 * a latest-exchange rate lookup from OER
+	 */
 	private String LATEST;
+	
+	/**
+	 *
+	 */
 	private String HISTORICAL;
 
 	private final static ObjectMapper mapper = new ObjectMapper();
@@ -45,7 +53,7 @@ class OERJsonClient extends OpenExchangeRates {
 	 *
 	 * @param apiKey The API key to Open Exchange Rates
 	 */
-	public OERJsonClient(String apiKey) {
+	public OerJsonClient(String apiKey) {
 		LATEST = "latest.json?app_id=" + apiKey;
 		HISTORICAL = "historical/%04d-%02d-%02d.json?app_id=" + apiKey;
 	}

@@ -12,13 +12,11 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 */
-package org.openexchangerates.oerjava;
+package com.snowplowanalytics.forex.oerclient;
 
 import java.math.BigDecimal;
 import java.util.Calendar;
 import java.util.Map;
-
-import org.openexchangerates.oerjava.exceptions.UnavailableExchangeRateException;
 
 /**
  * Open Exchange Rates(http://openexchangerates.org) client
@@ -31,29 +29,10 @@ public abstract class OpenExchangeRates {
 	 * @return a Open Exchange Rates client
 	 */
 	public static OpenExchangeRates getClient(String apiKey) {
-		return new OERJsonClient(apiKey);
+		return new OerJsonClient(apiKey);
 	}
 
-	/**
-	 * Get the latest exchange rates from
-	 * http://openexchangerates.org/latest.json
-	 * 
-	 * @return Last updated exchange rates
-	 */
-	//public abstract Map<String, BigDecimal> getLatest();
-
-	/**
-	 * Get a historical exchange rate from a given date
-	 * 
-	 * @param date
-	 *            Date of desired rates
-	 * @return Exchange rates of desired date.
-	 * @throws UnavailableExchangeRateException
-	 *             when a exchange rate is unavailable
-	 */
-	// public abstract Map<String, BigDecimal> getHistorical(Calendar date)
-	// 		throws UnavailableExchangeRateException;
-
+	
 	/**
 	 * Get the latest exchange rate from a given currency
 	 * 

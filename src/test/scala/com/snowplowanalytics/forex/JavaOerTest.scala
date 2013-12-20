@@ -17,9 +17,6 @@ package com.snowplowanalytics.forex
 // Java
 import java.math.BigDecimal
 
-// Java OER
-import org.openexchangerates.oerjava._
-
 // Scala
 import scala.collection.JavaConversions._
 
@@ -28,6 +25,9 @@ import org.specs2.mutable.Specification
 
 // Joda time
 import org.joda.time._
+
+// This project
+import oerclient._
 
 class JavaOerTest extends Specification { 
 
