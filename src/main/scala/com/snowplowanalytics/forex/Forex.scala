@@ -30,13 +30,13 @@ import scala.collection.JavaConversions._
 import com.twitter.util.LruMap
 
 
-// TODO: should homeCurrency be a String?
+// TODO: should baseCurrency be a String?
 
 // TODO: should we ask what version of the API the user has access to?
 // Because e.g. Enterprise is more powerful than Developer. Because
-// Enterprise allows a homeCurrency to be set. Which means that
+// Enterprise allows a baseCurrency to be set. Which means that
 // conversions are easier.
-// If a homecurrency can't be set, then for EUR -> GBP, I have to convert
+// If a baseCurrency can't be set, then for EUR -> GBP, I have to convert
 // EUR -> USD -> GBP. Not very nice!
 /*
 
@@ -68,16 +68,16 @@ case class ForexBuilder(appId: String) {
   private var _historicalCacheSize    = 405900 
   private var _getNearestDay   = false
   // there is no default value for home currency
-  private var _homeCurrency = Currency.NULL
+  private var _baseCurrency = Currency.NULL
   
-   def homeCurrency          = _homeCurrency
-   def nowishCacheSize       = _nowishCacheSize
-   def nowishSecs            = _nowishSecs
-   def historicalCacheSize   = _historicalCacheSize
-   def getNearestDay         = _getNearestDay
+ def baseCurrency          = _baseCurrency
+ def nowishCacheSize       = _nowishCacheSize
+ def nowishSecs            = _nowishSecs
+ def historicalCacheSize   = _historicalCacheSize
+ def getNearestDay         = _getNearestDay
 
-  def buildHomeCurrency(currency: Currency):  ForexBuilder = {
-    _homeCurrency = currency
+  def buildBaseCurrency(currency: Currency):  ForexBuilder = {
+    _baseCurrency = currency
     this
   }
 
@@ -119,7 +119,7 @@ case class Forex(builder: ForexBuilder) {
   
   val historicalCache = new LruMap[HistoricalCacheKey, HistoricalCacheValue](builder.historicalCacheSize)
 
-  var from = if (builder.homeCurrency != null) { builder.homeCurrency} else { Currency.NULL }
+  var from = if (builder.baseCurrency != null) { builder.baseCurrency} else { Currency.NULL }
   
   var to   = Currency.NULL
 
@@ -148,7 +148,7 @@ case class Forex(builder: ForexBuilder) {
     if (from == Currency.NULL) {
       throw new IllegalArgumentException
     } 
-    var forex = setSourceCurrency(builder.homeCurrency)
+    var forex = setSourceCurrency(builder.baseCurrency)
     ForexLookupTo(forex)
   }
 
@@ -270,5 +270,6 @@ case class ForexLookupWhen(fx: Forex) {
   
     }
   }
+
 
 }

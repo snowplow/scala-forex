@@ -1,4 +1,5 @@
-/*
+/*cation
+
  * Copyright (c) 2013-2014 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
@@ -31,7 +32,7 @@ import org.joda.time._
 class ScalaOerTest extends Specification { 
    val oer = OpenExchangeRates.getClient(System.getProperty("forex.key")) 
 
-   val fx = ForexBuilder(System.getProperty("forex.key")).buildHomeCurrency(Currency.USD).build
+   val fx = ForexBuilder(System.getProperty("forex.key")).buildBaseCurrency(Currency.USD).build
 
    val gbpNow = fx.rate(Currency.CNY).to(Currency.GBP).now
    "CNY/GBP live rate [%s]".format(gbpNow) should {
@@ -43,7 +44,7 @@ class ScalaOerTest extends Specification {
 
   val gbpNowish = fx.rate.to(Currency.GBP).nowish
   "USD/GBP near-live rate [%s]".format(gbpNowish) should {
-    "be smaller than 1 and greater than 0, lruCache.size = [%s]".format(fx.nowishCache.size) in {
+    "be smaller than 1 and greater than 0, nowishCache.size = [%s]".format(fx.nowishCache.size) in {
 
         gbpNowish must be < (new BigDecimal(1))
         gbpNowish must be > (new BigDecimal(0))
@@ -78,6 +79,12 @@ class ScalaOerTest extends Specification {
     }
   }
 
-  
+  val gbpOverCnyHistorical = fx.rate(Currency.CNY).to(Currency.GBP).at(tradeDate)
+
+    "CNY to GBP latest eod rate [%s]".format(gbpOverCnyHistorical) should {
+    "be > 0, historicalCache size = [%s]".format(fx.historicalCache.size) in {
+        gbpOverCnyHistorical must be > (new BigDecimal(0))
+    }
+  }
   
 }
