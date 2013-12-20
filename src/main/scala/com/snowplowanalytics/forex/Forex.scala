@@ -68,7 +68,7 @@ case class ForexBuilder(appId: String) {
   private var _historicalCacheSize    = 405900 
   private var _getNearestDay   = false
   // there is no default value for home currency
-  private var _baseCurrency = Currency.NULL
+  private var _baseCurrency = "null"
   
  def baseCurrency          = _baseCurrency
  def nowishCacheSize       = _nowishCacheSize
@@ -76,7 +76,7 @@ case class ForexBuilder(appId: String) {
  def historicalCacheSize   = _historicalCacheSize
  def getNearestDay         = _getNearestDay
 
-  def buildBaseCurrency(currency: Currency):  ForexBuilder = {
+  def buildBaseCurrency(currency: String):  ForexBuilder = {
     _baseCurrency = currency
     this
   }
@@ -115,13 +115,17 @@ case class Forex(builder: ForexBuilder) {
 
   val client = OpenExchangeRates.getClient(builder.appId)
 
-  val nowishCache = new LruMap[NowishCacheKey, NowishCacheValue](builder.nowishCacheSize)
+  val nowishCache = if (builder.nowishCacheSize > 0) 
+                          new LruMap[NowishCacheKey, NowishCacheValue](builder.nowishCacheSize)
+                    else null
   
-  val historicalCache = new LruMap[HistoricalCacheKey, HistoricalCacheValue](builder.historicalCacheSize)
+  val historicalCache = if (builder.historicalCacheSize > 0)
+                            new LruMap[HistoricalCacheKey, HistoricalCacheValue](builder.historicalCacheSize)
+                        else null
 
-  var from = if (builder.baseCurrency != null) { builder.baseCurrency} else { Currency.NULL }
+  var from = if (builder.baseCurrency != "null") { builder.baseCurrency} else { "null" }
   
-  var to   = Currency.NULL
+  var to   = "null"
 
   val getNearestDay = builder.getNearestDay
 
@@ -130,12 +134,12 @@ case class Forex(builder: ForexBuilder) {
   // usually the number of digits of a currency value has only 6 digits 
   val common_scale     = 6
 
-  def setSourceCurrency(source: Currency): Forex = {
+  def setSourceCurrency(source: String): Forex = {
     from = source
     this
   }
 
-  def setTargetCurrency(target: Currency): Forex = {
+  def setTargetCurrency(target: String): Forex = {
     to = target
     this
   }
@@ -145,8 +149,8 @@ case class Forex(builder: ForexBuilder) {
   // rate method leaves the source currency to be default value(i.e. USD) 
   //and returns ForexLookupTo object
   def rate: ForexLookupTo = {
-    if (from == Currency.NULL) {
-      throw new IllegalArgumentException
+    if (from == "null") {
+      throw new IllegalArgumentException("baseCurrency and source currency cannot both be null")
     } 
     var forex = setSourceCurrency(builder.baseCurrency)
     ForexLookupTo(forex)
@@ -154,9 +158,9 @@ case class Forex(builder: ForexBuilder) {
 
   // rate method sets the source currency to a specific currency
   // and returns ForexLookupTo object
-  def rate(currency: Currency): ForexLookupTo = {
+  def rate(currency: String): ForexLookupTo = {
     var forex = setSourceCurrency(currency)
-    ForexLookupTo(forex)
+    ForexLookupTo(this)
   }
 
 }
@@ -165,7 +169,7 @@ case class Forex(builder: ForexBuilder) {
 
 case class ForexLookupTo(fx: Forex) {
   
-  def to(currency: Currency): ForexLookupWhen = {
+  def to(currency: String): ForexLookupWhen = {
     var forex = fx.setTargetCurrency(currency)
     ForexLookupWhen(forex)
   }
@@ -176,7 +180,7 @@ case class ForexLookupWhen(fx: Forex) {
 
   def now: BigDecimal =  {
 
-    if (fx.from != Currency.USD) {
+    if (fx.from != "USD") {
   
       val USDOverFrom = new BigDecimal(1).divide(fx.client.getCurrencyValue(fx.from)
               , fx.max_scale, RoundingMode.HALF_EVEN)
@@ -206,7 +210,7 @@ case class ForexLookupWhen(fx: Forex) {
                             } else {
                               now
                             }
-        case None =>
+        case None =>  
                       fx.nowishCache.get((fx.to, fx.from)) match {
 
                         case Some(value) =>   
@@ -255,7 +259,7 @@ case class ForexLookupWhen(fx: Forex) {
 
       val dateCal = date.toGregorianCalendar
 
-      if (fx.from != Currency.USD) {
+      if (fx.from != "USD") {
   
       val USDOverFrom = new BigDecimal(1).divide(fx.client.getHistoricalCurrencyValue(fx.from, dateCal)
               , fx.max_scale, RoundingMode.HALF_EVEN)

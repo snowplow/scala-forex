@@ -31,7 +31,7 @@ public abstract class OpenExchangeRates {
 	 * @return a Open Exchange Rates client
 	 */
 	public static OpenExchangeRates getClient(String apiKey) {
-		return new OpenExchangeRatesJsonClient(apiKey);
+		return new OERJsonClient(apiKey);
 	}
 
 	/**
@@ -40,7 +40,7 @@ public abstract class OpenExchangeRates {
 	 * 
 	 * @return Last updated exchange rates
 	 */
-	public abstract Map<Currency, BigDecimal> getLatest();
+	//public abstract Map<String, BigDecimal> getLatest();
 
 	/**
 	 * Get a historical exchange rate from a given date
@@ -51,8 +51,8 @@ public abstract class OpenExchangeRates {
 	 * @throws UnavailableExchangeRateException
 	 *             when a exchange rate is unavailable
 	 */
-	public abstract Map<Currency, BigDecimal> getHistorical(Calendar date)
-			throws UnavailableExchangeRateException;
+	// public abstract Map<String, BigDecimal> getHistorical(Calendar date)
+	// 		throws UnavailableExchangeRateException;
 
 	/**
 	 * Get the latest exchange rate from a given currency
@@ -61,19 +61,19 @@ public abstract class OpenExchangeRates {
 	 *            Desired currency
 	 * @return Latest value of exchange rate
 	 */
-	public abstract BigDecimal getCurrencyValue(Currency currency);
+	public abstract BigDecimal getCurrencyValue(String currency)  throws UnavailableExchangeRateException;
 
 	/**
 	 * Get a historical exchange rate from a given currency and date
 	 * 
 	 * @param currency
-	 *            Currency of desired rate
+	 *            String of desired rate
 	 * @param date
 	 *            Date of desired rate
 	 * @return Value of exchange rate in desired date
 	 * @throws when
 	 *             a exchange rate is unavailable
 	 */
-	public abstract BigDecimal getHistoricalCurrencyValue(Currency currency,
+	public abstract BigDecimal getHistoricalCurrencyValue(String currency,
 			Calendar date) throws UnavailableExchangeRateException;
 }

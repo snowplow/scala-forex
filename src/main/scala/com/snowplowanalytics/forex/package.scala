@@ -15,8 +15,6 @@ package com.snowplowanalytics
 // Java
 import java.math.BigDecimal
 
-// Java OER
-import org.openexchangerates.oerjava.Currency
 
 // Joda time
 import org.joda.time._
@@ -34,9 +32,9 @@ package object forex {
   /**
    * The key and value for each cache entry.
    */
-  type NowishCacheKey         = Tuple2[Currency, Currency]
+  type NowishCacheKey         = Tuple2[String, String]
   type NowishCacheValue       = Tuple2[DateTime, BigDecimal]
-  type HistoricalCacheKey     = Tuple3[Currency, Currency, DateTime]
+  type HistoricalCacheKey     = Tuple3[String, String, DateTime]
   type HistoricalCacheValue   = BigDecimal
 
 
