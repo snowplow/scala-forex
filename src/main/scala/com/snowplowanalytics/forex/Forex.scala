@@ -35,26 +35,11 @@ import oerclient.OpenExchangeRates
 // conversions are easier.
 // If a baseCurrency can't be set, then for EUR -> GBP, I have to convert
 // EUR -> USD -> GBP. Not very nice!
-/*
-
-Questions:
-
-1. In rate method, when the user did not initialize neither 
-home currency nor source currency, do I throw an exception and return? 
-and where do I catch the exception?
-
-//2. sizes of the two caches? 
-
-//3. do I need to store the lookup results into cache after every http request?
-
-
-4.OER API crashes sometimes, extend so that users can choose to use other APIs 
-*/
 
 
 
 /**
- * Forex is a ???
+ * Forex is 
  *
  */
 
