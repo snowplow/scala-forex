@@ -11,15 +11,14 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 
- /*
+ 
 package com.snowplowanalytics.forex
 
 // Java
 import java.math.BigDecimal
 
 // Java OER
-import org.openexchangerates.oerjava.OpenExchangeRates
-import org.openexchangerates.oerjava.Currency
+import org.openexchangerates.oerjava._
 
 // Scala
 import scala.collection.JavaConversions._
@@ -32,43 +31,33 @@ import org.joda.time._
 
 class JavaOerTest extends Specification { 
 
-  //run "sbt -Dkey=<<Key>> test" in the command line
-  //e.g.  if your key is 123, then run "sbt -Dkey=123 test" 
+  //run "sbt -Dforex.key=<<Key>> test" in the command line
+  //e.g.  if your key is 123, then run "sbt -Dforex.key=123 test" 
   val oer = OpenExchangeRates.getClient(System.getProperty("forex.key")) 
-
-  for (entry <- oer.getLatest.entrySet) {
-    "live exchange rate for currency [%s]".format(entry.getKey) should { 
-      "be greater than 0" in {
-        entry.getValue must beGreaterThan (new BigDecimal(0))
-      }
-    }
-  }
-
-  
 
   val cal = DateTime.parse("2008-01-01T01:01:01.123+0900").toGregorianCalendar
 
-  for (entry <- oer.getHistorical(cal).entrySet) {
-        "exchange rate for currency [%s] on 01/01/2008".format(entry.getKey) should {
-          "be greater than 0" in {
-        entry.getValue must beGreaterThan (new BigDecimal(0))
-      }
-    }
-  }
 
   "live currency value for USD" should { 
     "always equal to 1" in {
-      oer.getCurrencyValue(Currency.USD) must_== (new BigDecimal(1))
+      oer.getCurrencyValue("USD") must_== (new BigDecimal(1))
+    }
+  }
+
+  val gbpLiveRate =  oer.getCurrencyValue("GBP")
+  "live currency value for GBP [%s]".format(gbpLiveRate) should {
+    "be less than 1" in {
+      gbpLiveRate must be < (new BigDecimal(1))
     }
   }
 
   "historical currency value for USD on 01/01/2008" should {
     "always equal to 1 as well" in {
-      oer.getHistoricalCurrencyValue(Currency.USD, cal) must_== (new BigDecimal(1))
+      oer.getHistoricalCurrencyValue("USD", cal) must_== (new BigDecimal(1))
     }
   }
 
 
 
 }
-*/
+

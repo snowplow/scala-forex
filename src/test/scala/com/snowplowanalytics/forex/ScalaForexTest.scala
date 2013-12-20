@@ -11,14 +11,14 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
+ 
 package com.snowplowanalytics.forex
 
 // Java
 import java.math.BigDecimal
 
 // Java OER
-//import org.openexchangerates.oerjava.OpenExchangeRates
-import org.openexchangerates.oerjava._
+import org.openexchangerates.oerjava.OpenExchangeRates
 
 // Scala
 import scala.collection.JavaConversions._
@@ -31,7 +31,7 @@ import org.joda.time._
 
 class ScalaOerTest extends Specification { 
 
-   val oer = OpenExchangeRates.getClient(System.getProperty("forex.key")) 
+    val oer = OpenExchangeRates.getClient(System.getProperty("forex.key")) 
 
     val fx = ForexBuilder(System.getProperty("forex.key")).buildBaseCurrency("USD").build
 

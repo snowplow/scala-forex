@@ -30,7 +30,6 @@ import scala.collection.JavaConversions._
 import com.twitter.util.LruMap
 
 
-// TODO: should baseCurrency be a String?
 
 // TODO: should we ask what version of the API the user has access to?
 // Because e.g. Enterprise is more powerful than Developer. Because
@@ -48,7 +47,7 @@ and where do I catch the exception?
 
 //2. sizes of the two caches? 
 
-3. do I need to store the lookup results into cache after every http request?
+//3. do I need to store the lookup results into cache after every http request?
 
 */
 
