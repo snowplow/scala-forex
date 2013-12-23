@@ -33,7 +33,7 @@ class JavaOerTest extends Specification {
 
   //run "sbt -Dforex.key=<<Key>> test" in the command line
   //e.g.  if your key is 123, then run "sbt -Dforex.key=123 test" 
-  val oer = new OerJsonClient(config.appId)
+  val oer = OpenExchangeRates.getClient(System.getProperty("forex.key"))
 
   val cal = DateTime.parse("2008-01-01T01:01:01.123+0900").toGregorianCalendar
 

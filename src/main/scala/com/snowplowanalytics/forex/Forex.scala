@@ -46,7 +46,7 @@ import oerclient._
 case class Forex(config: ForexConfig) {
 
 
-  val client = new OerJsonClient(config.appId)
+  val client = OpenExchangeRates.getClient(config.appId)
 
   val nowishCache = if (config.nowishCacheSize > 0) 
                           new LruMap[NowishCacheKey, NowishCacheValue](config.nowishCacheSize)

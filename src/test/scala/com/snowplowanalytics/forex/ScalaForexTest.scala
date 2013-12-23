@@ -31,7 +31,7 @@ import oerclient._
 
 class ScalaOerTest extends Specification { 
 
-    val oer = new OerJsonClient(config.appId)
+    val oer = OpenExchangeRates.getClient(System.getProperty("forex.key"))
 
     val fx = new Forex(new ForexConfig(System.getProperty("forex.key"), baseCurrency = Some("USD")))
 

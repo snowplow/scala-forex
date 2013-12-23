@@ -12,6 +12,8 @@
  */
 package com.snowplowanalytics.forex
 
+import org.joda.money.CurrencyUnit
+
 sealed trait EodRounding
 object EodRoundDown extends EodRounding
 object EodRoundUp extends EodRounding

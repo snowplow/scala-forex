@@ -21,7 +21,7 @@ import java.util.Map
 /**
  * Open Exchange Rates(http://openexchangerates.org) client
  */
-    abstract class OpenExchangeRates {
+object OpenExchangeRates {
 
 	/**
 	 * Generate and get a new Open Exchange Rates client
@@ -30,8 +30,9 @@ import java.util.Map
 	def getClient(apiKey: String):OpenExchangeRates = {
 		new OerJsonClient(apiKey)
 	}
+} 
 
-	
+abstract class OpenExchangeRates {
 	/**
 	 * Get the latest exchange rate from a given currency
 	 * 
