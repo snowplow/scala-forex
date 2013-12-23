@@ -16,9 +16,9 @@ package com.snowplowanalytics
 import java.math.BigDecimal
 
 
-// Joda time
+// Joda 
 import org.joda.time._
-
+import org.joda.money.CurrencyUnit
 
 /**
  * Scala package object to hold types,
@@ -32,9 +32,9 @@ package object forex {
   /**
    * The key and value for each cache entry.
    */
-  type NowishCacheKey         = Tuple2[String, String]
+  type NowishCacheKey         = Tuple2[CurrencyUnit, CurrencyUnit]
   type NowishCacheValue       = Tuple2[DateTime, BigDecimal]
-  type HistoricalCacheKey     = Tuple3[String, String, DateTime]
+  type HistoricalCacheKey     = Tuple3[CurrencyUnit, CurrencyUnit, DateTime]
   type HistoricalCacheValue   = BigDecimal
 
 

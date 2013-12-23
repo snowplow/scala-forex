@@ -30,11 +30,13 @@ import org.codehaus.jackson.map.ObjectMapper
 // Joda money
 import org.joda.money.CurrencyUnit
 
+import com.snowplowanalytics.forex.ForexClient
+
 /**
  * Implements Json for Open Exchange Rates(http://openexchangerates.org)
  * @param apiKey The API key to Open Exchange Rates
  */
-class OerClient(apiKey: String) extends OpenExchangeRates {
+class OerClient(apiKey: String) extends ForexClient {
 	private val oerUrl = "http://openexchangerates.org/api/"
 	/**
 	 * The constant that will hold the URI for

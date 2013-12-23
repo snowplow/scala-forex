@@ -16,7 +16,7 @@ package com.snowplowanalytics.forex
 
 // Java
 import java.math.BigDecimal
-
+import java.math.RoundingMode
 // Scala
 import scala.collection.JavaConversions._
 
@@ -25,74 +25,70 @@ import org.specs2.mutable.Specification
 
 // Joda time
 import org.joda.time._
+import org.joda.money._
 
-// This project
-import oerclient._
 
 class ScalaOerTest extends Specification { 
 
-    val oer = OpenExchangeRates.getClient(System.getProperty("forex.key"))
+    val oer = ForexClient.getClient(System.getProperty("forex.key"))
 
-    val fx = new Forex(new ForexConfig(System.getProperty("forex.key"), baseCurrency = Some("USD")))
+    val fx = new Forex(new ForexConfig(System.getProperty("forex.key"), baseCurrency = Some(CurrencyUnit.USD)))
 
-    val cnyTogbpNow = fx.rate("CNY").to("GBP").now
+    val cnyTogbpNow = fx.rate(CurrencyUnit.getInstance("CNY")).to(CurrencyUnit.GBP).now
      "CNY/GBP live rate [%s]".format(cnyTogbpNow) should {
        "be smaller than 1 and greater than 0" in { 
-        cnyTogbpNow must be < (new BigDecimal(1))
-         cnyTogbpNow must be > (new BigDecimal(0))
+        cnyTogbpNow.isLessThan(Money.of(CurrencyUnit.GBP, 1))
       }
-   }
+    }
 
 
-  val gbpOvercnyNowish = fx.rate("CNY").to("GBP").nowish
+  val gbpOvercnyNowish = fx.rate(CurrencyUnit.getInstance("CNY")).to(CurrencyUnit.GBP).nowish
   "CNY/GBP near-live rate [%s]".format(gbpOvercnyNowish) should {
     "be smaller than 1 and greater than 0, nowishCache size = [%s]".format(fx.nowishCache.size) in {
-
-        gbpOvercnyNowish must be < (new BigDecimal(1))
-        gbpOvercnyNowish must be > (new BigDecimal(0))
+        gbpOvercnyNowish.isLessThan(Money.of(CurrencyUnit.GBP, 1))
     }
   }
 
   val tradeDate = new DateTime(2011, 3, 13, 11, 39, 27, 567, DateTimeZone.forID("America/New_York"))
-  val gbpLatestEodRate = fx.rate.to("GBP").at(tradeDate)
+  val gbpLatestEodRate = fx.rate.to(CurrencyUnit.GBP).at(tradeDate)
 
   "USD to GBP latest eod rate [%s]".format(gbpLatestEodRate) should {
     "be > 0, historicalCache size = [%s]".format(fx.historicalCache.size) in {
-        gbpLatestEodRate must be > (new BigDecimal(0))
+        gbpLatestEodRate.isPositive
     }
   }
 
 
   val eodDate = new DateTime(2011, 3, 13, 0, 0)
-  val gbpEodRate =  fx.rate.to("GBP").eod(eodDate)
+  val gbpEodRate =  fx.rate.to(CurrencyUnit.GBP).eod(eodDate)
 
   "USD to GBP eod rate [%s]".format(gbpEodRate) should {
     "be > 0, historicalCache size = [%s]".format(fx.historicalCache.size) in {
-        gbpEodRate must be > (new BigDecimal(0))
+        gbpEodRate.isPositive
     }
   }
 
 
-  val tradeInYenHistorical = fx.convert(10000).to("JPY").eod(eodDate) 
+  val tradeInYenHistorical = fx.convert(10000).to(CurrencyUnit.JPY).eod(eodDate) 
   "convert 10000 USD dollars to Yen in 2011 = [%s]".format(tradeInYenHistorical) should {
     "be > 10000" in {
-      tradeInYenHistorical must be > (new BigDecimal(10000))
+      tradeInYenHistorical.isGreaterThan(Money.of(CurrencyUnit.JPY, 10000, RoundingMode.HALF_EVEN))
     }
   }
 
-  val gbpOverCnyHistorical = fx.rate("CNY").to("GBP").at(tradeDate)
+  val gbpOverCnyHistorical = fx.rate(CurrencyUnit.getInstance("CNY")).to(CurrencyUnit.GBP).at(tradeDate)
 
     "CNY to GBP latest eod rate [%s]".format(gbpOverCnyHistorical) should {
     "be > 0, historicalCache size = [%s]".format(fx.historicalCache.size) in {
-        gbpOverCnyHistorical must be > (new BigDecimal(0))
+        gbpOverCnyHistorical.isPositive
     }
   }
 
 
-  val tradeInYenNow = fx.convert(10000).to("JPY").now
+  val tradeInYenNow = fx.convert(10000).to(CurrencyUnit.JPY).now
   "convert 10000 USD dollars to Yen now = [%s]".format(tradeInYenNow) should {
     "be > 10000" in {
-      tradeInYenNow must be > (new BigDecimal(10000))
+      tradeInYenNow.isGreaterThan(Money.of(CurrencyUnit.JPY, 10000, RoundingMode.HALF_EVEN))
     }
   }
 

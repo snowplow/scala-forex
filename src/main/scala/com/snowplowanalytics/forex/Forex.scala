@@ -18,6 +18,7 @@ import java.math.RoundingMode
 
 // Joda time
 import org.joda.time._
+import org.joda.money._
 
 // Scala
 import scala.collection.JavaConversions._
@@ -25,8 +26,6 @@ import scala.collection.JavaConversions._
 // LRUCache
 import com.twitter.util.LruMap
 
-// This project
-import oerclient._
 
  
 // TODO: should we ask what version of the API the user has access to?
@@ -46,7 +45,7 @@ import oerclient._
 case class Forex(config: ForexConfig) {
 
 
-  val client = OpenExchangeRates.getClient(config.appId)
+  val client = ForexClient.getClient(config.appId)
 
   val nowishCache = if (config.nowishCacheSize > 0) 
                           new LruMap[NowishCacheKey, NowishCacheValue](config.nowishCacheSize)
@@ -58,10 +57,10 @@ case class Forex(config: ForexConfig) {
 
   var from = config.baseCurrency
   
-  var to:Option[String]   = None
+  var to:Option[CurrencyUnit]   = None
 
   // default value for currency conversion is 1 unit of the source currency
-  var conversionAmount  = 1 
+  var conversionAmount  = new BigDecimal(1) 
 
   val getNearestDay     = config.getNearestDay
 
@@ -70,18 +69,18 @@ case class Forex(config: ForexConfig) {
   // usually the number of digits of a currency value has only 6 digits 
   val common_scale      = 6 // TODO: change C-style max_scale etc to maxScale etc
 
-  def setSourceCurrency(source: String): Forex = {
+  def setSourceCurrency(source: CurrencyUnit): Forex = {
     from = Some(source)
     this
   }
 
-  def setTargetCurrency(target: String): Forex = {
+  def setTargetCurrency(target: CurrencyUnit): Forex = {
     to = Some(target)
     this
   }
 
   def setConversionAmount(amount: Int): Forex = {
-    conversionAmount = amount
+    conversionAmount = new BigDecimal(amount)
     this
   }
 
@@ -98,14 +97,15 @@ case class Forex(config: ForexConfig) {
 
   // rate method sets the source currency to a specific currency
   // and returns ForexLookupTo object
-  def rate(currency: String): ForexLookupTo = {
+  def rate(currency: CurrencyUnit): ForexLookupTo = {
     var forex = setSourceCurrency(currency)
+    setConversionAmount(1)
     ForexLookupTo(forex)
   }
 
-  def convert(amount: Int): ForexLookupTo = {
-    setConversionAmount(amount)
-    rate
+  def rate(currency: String): ForexLookupTo = {
+    setConversionAmount(1)
+    rate(CurrencyUnit.getInstance(currency))
   }
 
   /**
@@ -122,9 +122,19 @@ case class Forex(config: ForexConfig) {
    * @returns a ForexLookupTo, part of the
    * currency conversion fluent interface.
    */
-  def convert(amount: Int, currency: String): ForexLookupTo = {
+
+  def convert(amount: Int): ForexLookupTo = {
+    setConversionAmount(amount)
+    rate
+  }
+  
+  def convert(amount: Int, currency: CurrencyUnit): ForexLookupTo = {
     setConversionAmount(amount)
     rate(currency)
+  }
+
+  def convert(amount: Int, currency: String): ForexLookupTo = {
+    convert(amount, CurrencyUnit.getInstance(currency))
   }
 }
 
@@ -139,58 +149,50 @@ case class ForexLookupTo(fx: Forex) {
   /**
    * TODO
    */
-  def to(currency: String): ForexLookupWhen = {
+  def to(currency: CurrencyUnit): ForexLookupWhen = {
     var forex = fx.setTargetCurrency(currency)
     ForexLookupWhen(forex)
+  }
+
+  def to(currency: String): ForexLookupWhen = {
+    to(CurrencyUnit.getInstance(currency))
   }
 
 }
 
 case class ForexLookupWhen(fx: Forex) {
-  var conversionAmt = 1
+  // if the amount is specified this time, we need to set the amount to 1 for next time
+  val conversionAmt = if (fx.conversionAmount != new BigDecimal(1)) {
+                          fx.conversionAmount
+                        }
+                      else 
+                          new BigDecimal(1)
+                        
+  val Some(fromCurr) = fx.from 
+  val Some(toCurr)   = fx.to
+  val moneyInSourceCurrency = BigMoney.of(fromCurr, conversionAmt)
 
-  def now(): BigDecimal =  {
-    val Some(fromCurr) = fx.from 
-    val Some(toCurr)   = fx.to 
-    // if the amount is specified this time, we need to set the amount to 1 for next time
-    if (fx.conversionAmount > 1) { 
-        conversionAmt = fx.conversionAmount
-       fx.setConversionAmount(1)
-    } 
-    
-      if (fx.from != Some("USD")) {
-    
-        val fromOverUSD = new BigDecimal(1).divide(fx.client.getCurrencyValue(fromCurr)
-                , fx.max_scale, RoundingMode.HALF_EVEN)
-
-        val usdOverTo = fx.client.getCurrencyValue(toCurr)
-
-        fromOverUSD.multiply(usdOverTo).multiply(new BigDecimal(conversionAmt)).setScale(fx.common_scale, RoundingMode.HALF_EVEN)
-    
-      } else {
-    
-        fx.client.getCurrencyValue(toCurr).multiply(new BigDecimal(conversionAmt)).setScale(fx.common_scale, RoundingMode.HALF_EVEN)
-    
-      }
-
-
+  def now: Money =  {
+        val usdOverFrom = fx.client.getCurrencyValue(fromCurr)            
+        val usdOverTo   = fx.client.getCurrencyValue(toCurr)
+        val rate        = getForexRate(usdOverFrom, usdOverTo)
+        moneyInSourceCurrency.convertedTo(toCurr, rate).toMoney(RoundingMode.HALF_EVEN)
   }
   
+  
 
-  def nowish: BigDecimal = {
-
+  def nowish: Money = {
     val nowishTime = DateTime.now.minusSeconds(fx.config.nowishSecs)
-    val Some(fromCurr) = fx.from 
-    val Some(toCurr)   = fx.to 
     fx.nowishCache.get((fromCurr, toCurr)) match {
       // from:to found in LRU cache
       case Some(tpl) => {
         val (timeStamp, exchangeRate) = tpl
-
-        if (nowishTime.isBefore(timeStamp)|| nowishTime.equals(timeStamp)) {
-           exchangeRate
+        if (nowishTime.isBefore(timeStamp) || nowishTime.equals(timeStamp)) {
+           // the timestamp in the cache is within the allowed range 
+          moneyInSourceCurrency.convertedTo(toCurr, exchangeRate).toMoney(RoundingMode.HALF_EVEN)
         } else {
-          now()
+          //update the exchange rate  
+          getLiveRateAndUpdateCache
         }
       }
       // from:to not found in LRU
@@ -199,21 +201,25 @@ case class ForexLookupWhen(fx: Forex) {
           // to:from found in LRU
           case Some(tpl) => { 
             val (time, rate) = tpl
-            new BigDecimal(1).divide(rate, fx.max_scale, RoundingMode.HALF_EVEN)
-                .multiply(new BigDecimal(conversionAmt)).setScale(fx.common_scale, RoundingMode.HALF_EVEN)
+            val inverseRate = new BigDecimal(1).divide(rate, fx.common_scale, RoundingMode.HALF_EVEN)
+            moneyInSourceCurrency.convertedTo(toCurr, inverseRate).toMoney(RoundingMode.HALF_EVEN)
           }
           // Neither direction found in LRU
           case None => {
-            val live = now().multiply(new BigDecimal(conversionAmt)).setScale(fx.common_scale, RoundingMode.HALF_EVEN)
-            fx.nowishCache.put((fromCurr, toCurr), (DateTime.now, live))
-            live
+            getLiveRateAndUpdateCache
           }
         }
       }
     }
   }
+  private def getLiveRateAndUpdateCache: Money = {
+    val live = now
+    fx.nowishCache.put((fromCurr, toCurr), (DateTime.now, live.getAmount))
+    live
+  }
 
-  def at(tradeDate: DateTime): BigDecimal = {
+
+  def at(tradeDate: DateTime): Money = {
     val latestEod = if (fx.getNearestDay == EodRoundUp) {
       tradeDate.withTimeAtStartOfDay.plusDays(1)
     } else {
@@ -223,44 +229,39 @@ case class ForexLookupWhen(fx: Forex) {
   }
 
 
-  def eod(eodDate: DateTime): BigDecimal = {
-    val Some(fromCurr) = fx.from 
-    val Some(toCurr)   = fx.to 
+  def eod(eodDate: DateTime): Money = { 
     fx.historicalCache.get((fromCurr, toCurr, eodDate)) match {
     
       case Some(rate) => 
-                        rate.multiply(new BigDecimal(conversionAmt)).setScale(fx.common_scale, RoundingMode.HALF_EVEN)// todo : rm duplicate
-      case None       => 
-                           fx.historicalCache.get((toCurr, fromCurr, eodDate)) match {
-                            case Some(exchangeRate) =>
-                                              
-                                               new BigDecimal(1).divide(exchangeRate, fx.max_scale, RoundingMode.HALF_EVEN)
-                                                  .multiply(new BigDecimal(conversionAmt)).setScale(fx.common_scale, RoundingMode.HALF_EVEN)
+                          moneyInSourceCurrency.convertedTo(toCurr, rate).toMoney(RoundingMode.HALF_EVEN)
+      case None       =>  
+                          var rate = new BigDecimal(1)
+                          fx.historicalCache.get((toCurr, fromCurr, eodDate)) match {                  
+                            case Some(exchangeRate) =>                                              
+                                               rate = new BigDecimal(1).divide(exchangeRate, fx.common_scale, RoundingMode.HALF_EVEN)
                             case None =>
-                                               val rate = getHistoricalRate(fx, eodDate).multiply(new BigDecimal(conversionAmt)).setScale(fx.common_scale, RoundingMode.HALF_EVEN)
-                                               fx.historicalCache.put((fromCurr, toCurr, eodDate), rate)
-                                               rate
-                        }
+                                               rate = getHistoricalRate(eodDate)
+                                               fx.historicalCache.put((fromCurr, toCurr, eodDate), rate)            
+                          }
+                          moneyInSourceCurrency.convertedTo(toCurr, rate).toMoney(RoundingMode.HALF_EVEN)
     }
   }
 
-  private def getHistoricalRate(fx: Forex, date: DateTime): BigDecimal = {
+  // get historical forex rate between two currencies on a given date  
+  private def getHistoricalRate(date: DateTime): BigDecimal = {
+     val dateCal     = date.toGregorianCalendar
+     val usdOverTo   = fx.client.getHistoricalCurrencyValue(toCurr, dateCal)
+     val usdOverFrom = fx.client.getHistoricalCurrencyValue(fromCurr, dateCal)
+     getForexRate(usdOverFrom, usdOverTo)
+  }
 
-    // If the amount is specified this time, we need to set the amount to 1 for next time
-    if (fx.conversionAmount > 1) { 
-      conversionAmt = fx.conversionAmount
-      fx.setConversionAmount(1)
-    } 
-    val Some(fromCurr) = fx.from 
-    val Some(toCurr)   = fx.to 
-    val dateCal = date.toGregorianCalendar
-    val usdOverTo = fx.client.getHistoricalCurrencyValue(toCurr, dateCal)
-    if (fx.from != Some("USD")) {
-      val rate = fx.client.getHistoricalCurrencyValue(fromCurr, dateCal)
-      val fromOverUsd = new BigDecimal(1).divide(rate, fx.max_scale, RoundingMode.HALF_EVEN)
-      fromOverUsd.multiply(usdOverTo).multiply(new BigDecimal(conversionAmt)).setScale(fx.common_scale, RoundingMode.HALF_EVEN)
+  // get the forex rate between source currency and target currency, output = from:to
+  private def getForexRate(usdOverFrom: BigDecimal, usdOverTo: BigDecimal): BigDecimal = {
+    if (fromCurr != CurrencyUnit.USD) {
+      val fromOverUsd = new BigDecimal(1).divide(usdOverFrom, fx.common_scale, RoundingMode.HALF_EVEN)
+      fromOverUsd.multiply(usdOverTo)
     } else {
-      usdOverTo.multiply(new BigDecimal(conversionAmt)).setScale(fx.common_scale, RoundingMode.HALF_EVEN)
+      usdOverTo
     }
   }
 

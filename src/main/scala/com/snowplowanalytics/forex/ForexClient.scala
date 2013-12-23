@@ -18,7 +18,7 @@ import java.math.BigDecimal
 import java.util.Calendar
 import java.util.Map
 import org.joda.money.CurrencyUnit
-import oerClient._
+import oerclient._
 
 /**
  * companion object 
@@ -29,7 +29,7 @@ object ForexClient {
 	 * Generate and get a new Open Exchange Rates client
 	 * @return a Open Exchange Rates client
 	 */
-	def getClient(apiKey: String):OpenExchangeRates = {
+	def getClient(apiKey: String): ForexClient = {
 		new OerClient(apiKey)
 	}
 } 

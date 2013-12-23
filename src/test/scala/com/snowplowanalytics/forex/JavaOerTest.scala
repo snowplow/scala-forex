@@ -23,28 +23,27 @@ import scala.collection.JavaConversions._
 // Specs2
 import org.specs2.mutable.Specification
 
-// Joda time
+// Joda 
 import org.joda.time._
+import org.joda.money.CurrencyUnit
 
-// This project
-import oerclient._
 
 class JavaOerTest extends Specification { 
 
   //run "sbt -Dforex.key=<<Key>> test" in the command line
   //e.g.  if your key is 123, then run "sbt -Dforex.key=123 test" 
-  val oer = OpenExchangeRates.getClient(System.getProperty("forex.key"))
+  val oer = ForexClient.getClient(System.getProperty("forex.key"))
 
   val cal = DateTime.parse("2008-01-01T01:01:01.123+0900").toGregorianCalendar
 
 
   "live currency value for USD" should { 
     "always equal to 1" in {
-      oer.getCurrencyValue("USD") must_== (new BigDecimal(1))
+      oer.getCurrencyValue(CurrencyUnit.USD) must_== (new BigDecimal(1))
     }
   }
 
-  val gbpLiveRate =  oer.getCurrencyValue("GBP")
+  val gbpLiveRate =  oer.getCurrencyValue(CurrencyUnit.GBP)
   "live currency value for GBP [%s]".format(gbpLiveRate) should {
     "be less than 1" in {
       gbpLiveRate must be < (new BigDecimal(1))
@@ -53,7 +52,7 @@ class JavaOerTest extends Specification {
 
   "historical currency value for USD on 01/01/2008" should {
     "always equal to 1 as well" in {
-      oer.getHistoricalCurrencyValue("USD", cal) must_== (new BigDecimal(1))
+      oer.getHistoricalCurrencyValue(CurrencyUnit.USD, cal) must_== (new BigDecimal(1))
     }
   }
 

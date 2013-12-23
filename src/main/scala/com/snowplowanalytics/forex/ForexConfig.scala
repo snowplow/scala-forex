@@ -31,5 +31,5 @@ case class ForexConfig(
   historicalCacheSize: Int     = 405900, 
   getNearestDay: EodRounding   = EodRoundDown,
   // there is no default value for base currency
-  baseCurrency: Option[String] = None
+  baseCurrency: Option[CurrencyUnit] = None
 ) 
