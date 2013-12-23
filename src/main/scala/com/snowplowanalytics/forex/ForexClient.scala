@@ -12,12 +12,13 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 */
-package com.snowplowanalytics.forex.oerclient
+package com.snowplowanalytics.forex
 
 import java.math.BigDecimal
 import java.util.Calendar
 import java.util.Map
 import org.joda.money.CurrencyUnit
+import oerClient._
 
 /**
  * companion object 
