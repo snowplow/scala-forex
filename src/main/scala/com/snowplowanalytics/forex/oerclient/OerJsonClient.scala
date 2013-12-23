@@ -54,7 +54,7 @@ class OerJsonClient(apiKey: String) extends OpenExchangeRates {
 		val day   	   = date.get(Calendar.DAY_OF_MONTH)
 		val month 	   = date.get(Calendar.MONTH) + 1
 		val year  	   = date.get(Calendar.YEAR)
-		val historicalLink = String.format(historical, "%d".format(year), "%d".format(month), "%d".format(day))
+		val historicalLink = historical.format(year, month, day)
 		getExchangeRates(historicalLink, currency)
 	}
 
