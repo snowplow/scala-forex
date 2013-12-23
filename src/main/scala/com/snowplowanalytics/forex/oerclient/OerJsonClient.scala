@@ -42,7 +42,8 @@ class OerJsonClient(apiKey: String) extends OpenExchangeRates {
 	 */
 	private var historical = "historical/%04d-%02d-%02d.json?app_id=" + apiKey
 	private val mapper = new ObjectMapper()
-	
+
+
 	/**
 	 *  
 	 */

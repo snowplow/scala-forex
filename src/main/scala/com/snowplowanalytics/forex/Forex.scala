@@ -26,7 +26,7 @@ import scala.collection.JavaConversions._
 import com.twitter.util.LruMap
 
 // This project
-import oerclient.OpenExchangeRates
+import oerclient._
 
  
 // TODO: should we ask what version of the API the user has access to?
@@ -46,7 +46,7 @@ import oerclient.OpenExchangeRates
 case class Forex(config: ForexConfig) {
 
 
-  val client = OpenExchangeRates.getClient(config.appId)
+  val client = new OerJsonClient(config.appId)
 
   val nowishCache = if (config.nowishCacheSize > 0) 
                           new LruMap[NowishCacheKey, NowishCacheValue](config.nowishCacheSize)
