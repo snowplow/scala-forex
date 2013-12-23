@@ -69,16 +69,6 @@ case class Forex(config: ForexConfig) {
   // usually the number of digits of a currency value has only 6 digits 
   val common_scale      = 6 // TODO: change C-style max_scale etc to maxScale etc
 
-  def setSourceCurrency(source: CurrencyUnit): Forex = {
-    from = Some(source)
-    this
-  }
-
-  def setTargetCurrency(target: CurrencyUnit): Forex = {
-    to = Some(target)
-    this
-  }
-
   def setConversionAmount(amount: Int): Forex = {
     conversionAmount = new BigDecimal(amount)
     this
@@ -90,21 +80,18 @@ case class Forex(config: ForexConfig) {
     if (from == None) {
       throw new IllegalArgumentException("baseCurrency and source currency cannot both be null")
     } 
-    var Some(curr) = config.baseCurrency
-    var forex = setSourceCurrency(curr)
-    ForexLookupTo(forex)
+    ForexLookupTo(this)
   }
 
   // rate method sets the source currency to a specific currency
   // and returns ForexLookupTo object
   def rate(currency: CurrencyUnit): ForexLookupTo = {
-    var forex = setSourceCurrency(currency)
+    from = Some(currency)
     setConversionAmount(1)
-    ForexLookupTo(forex)
+    ForexLookupTo(this)
   }
 
   def rate(currency: String): ForexLookupTo = {
-    setConversionAmount(1)
     rate(CurrencyUnit.getInstance(currency))
   }
 
@@ -150,8 +137,8 @@ case class ForexLookupTo(fx: Forex) {
    * TODO
    */
   def to(currency: CurrencyUnit): ForexLookupWhen = {
-    var forex = fx.setTargetCurrency(currency)
-    ForexLookupWhen(forex)
+    fx.to = Some(currency)
+    ForexLookupWhen(fx)
   }
 
   def to(currency: String): ForexLookupWhen = {
@@ -162,9 +149,8 @@ case class ForexLookupTo(fx: Forex) {
 
 case class ForexLookupWhen(fx: Forex) {
   // if the amount is specified this time, we need to set the amount to 1 for next time
-  val conversionAmt = if (fx.conversionAmount != new BigDecimal(1)) {
-                          fx.conversionAmount
-                        }
+  val conversionAmt = if (fx.conversionAmount != new BigDecimal(1)) 
+                          fx.conversionAmount                        
                       else 
                           new BigDecimal(1)
                         
