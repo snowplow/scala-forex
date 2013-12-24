@@ -67,9 +67,9 @@ case class Forex(config: ForexConfig) {
   val getNearestDay     = config.getNearestDay
 
   // preserve 10 digits after decimal point of a number when performing division 
-  val max_scale         = 10 // TODO: change C-style max_scale etc to maxScale etc
+  val maxScale         = 10 
   // usually the number of digits of a currency value has only 6 digits 
-  val common_scale      = 6 // TODO: change C-style max_scale etc to maxScale etc
+  val commonScale      = 6 
 
   def setConversionAmount(amount: Int): Forex = {
     conversionAmount = new BigDecimal(amount)
@@ -206,7 +206,7 @@ case class ForexLookupWhen(fx: Forex) {
           // to:from found in LRU
           case Some(tpl) => { 
             val (time, rate) = tpl
-            val inverseRate = new BigDecimal(1).divide(rate, fx.common_scale, RoundingMode.HALF_EVEN)
+            val inverseRate = new BigDecimal(1).divide(rate, fx.commonScale, RoundingMode.HALF_EVEN)
             moneyInSourceCurrency.convertedTo(toCurr, inverseRate).toMoney(RoundingMode.HALF_EVEN)
           }
           // Neither direction found in LRU
@@ -248,7 +248,7 @@ case class ForexLookupWhen(fx: Forex) {
                           var rate = new BigDecimal(1)
                           fx.historicalCache.get((toCurr, fromCurr, eodDate)) match {                  
                             case Some(exchangeRate) =>                                              
-                                               rate = new BigDecimal(1).divide(exchangeRate, fx.common_scale, RoundingMode.HALF_EVEN)
+                                               rate = new BigDecimal(1).divide(exchangeRate, fx.commonScale, RoundingMode.HALF_EVEN)
                             case None =>
                                                rate = getHistoricalRate(eodDate)
                                                fx.historicalCache.put((fromCurr, toCurr, eodDate), rate)            
@@ -268,7 +268,7 @@ case class ForexLookupWhen(fx: Forex) {
   // get the forex rate between source currency and target currency, output = from:to
   private def getForexRate(usdOverFrom: BigDecimal, usdOverTo: BigDecimal): BigDecimal = {
     if (fromCurr != CurrencyUnit.USD) {
-      val fromOverUsd = new BigDecimal(1).divide(usdOverFrom, fx.common_scale, RoundingMode.HALF_EVEN)
+      val fromOverUsd = new BigDecimal(1).divide(usdOverFrom, fx.commonScale, RoundingMode.HALF_EVEN)
       fromOverUsd.multiply(usdOverTo)
     } else {
       usdOverTo
