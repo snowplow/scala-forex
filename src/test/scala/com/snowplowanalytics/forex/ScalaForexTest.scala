@@ -29,11 +29,11 @@ import org.joda.money._
 
 
 class ScalaOerTest extends Specification { 
-
-    val oer = ForexClient.getClient(System.getProperty("forex.key"))
-
-    val fx = new Forex(new ForexConfig(System.getProperty("forex.key"), baseCurrency = Some(CurrencyUnit.USD)))
-
+    // export SBT_OPTS="-Dforex.key=[key]" before running tests
+    val forexKey =  System.getenv("SBT_OPTS").split("=")(1)
+    val oer = ForexClient.getClient(forexKey)
+    val fx = new Forex(new ForexConfig(forexKey, baseCurrency = Some(CurrencyUnit.USD)))
+   
     val cnyTogbpNow = fx.rate(CurrencyUnit.getInstance("CNY")).to(CurrencyUnit.GBP).now
      "CNY/GBP live rate [%s]".format(cnyTogbpNow) should {
        "be smaller than 1 and greater than 0" in { 

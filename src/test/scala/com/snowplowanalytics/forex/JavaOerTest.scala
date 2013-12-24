@@ -30,9 +30,7 @@ import org.joda.money.CurrencyUnit
 
 class JavaOerTest extends Specification { 
 
-  //run "sbt -Dforex.key=<<Key>> test" in the command line
-  //e.g.  if your key is 123, then run "sbt -Dforex.key=123 test" 
-  val oer = ForexClient.getClient(System.getProperty("forex.key"))
+  val oer = ForexClient.getClient(System.getenv("SBT_OPTS").split("=")(1))
 
   val cal = DateTime.parse("2008-01-01T01:01:01.123+0900").toGregorianCalendar
 

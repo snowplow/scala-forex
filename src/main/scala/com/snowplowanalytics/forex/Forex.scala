@@ -38,30 +38,32 @@ import com.twitter.util.LruMap
 
 
 /**
- * Forex is 
- *
+ * Starts building the fluent interface 
  */
 
 case class Forex(config: ForexConfig) {
 
 
   val client = ForexClient.getClient(config.appId)
-
+  // LRU cache for nowish request, with tuple of source currency and target currency as the key
+  // and tuple of time and exchange rate as the value 
   val nowishCache = if (config.nowishCacheSize > 0) 
                           new LruMap[NowishCacheKey, NowishCacheValue](config.nowishCacheSize)
                     else null
-  
+  // LRU cache for historical request, with triple of source currency, target currency and time as the key 
+  // and exchange rate as the value
   val historicalCache = if (config.historicalCacheSize > 0)
                             new LruMap[HistoricalCacheKey, HistoricalCacheValue](config.historicalCacheSize)
                         else null
-
+  // currency to be converted
   var from = config.baseCurrency
-  
+  // target currency
   var to:Option[CurrencyUnit]   = None
 
   // default value for currency conversion is 1 unit of the source currency
   var conversionAmount  = new BigDecimal(1) 
 
+  // flag determining whether to get the exchange rate on previous day or according to the nearest day 
   val getNearestDay     = config.getNearestDay
 
   // preserve 10 digits after decimal point of a number when performing division 
