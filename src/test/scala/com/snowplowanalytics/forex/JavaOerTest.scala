@@ -30,7 +30,7 @@ import org.joda.money.CurrencyUnit
 
 class JavaOerTest extends Specification { 
 
-  val oer = ForexClient.getClient(System.getenv("SBT_OPTS").split("=")(1))
+  val oer = ForexClient.getClient(sys.env("SBT_OPTS").split("=")(1))
 
   val cal = DateTime.parse("2008-01-01T01:01:01.123+0900").toGregorianCalendar
 

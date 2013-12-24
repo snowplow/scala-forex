@@ -30,7 +30,7 @@ import org.joda.money._
 
 class ScalaOerTest extends Specification { 
     // export SBT_OPTS="-Dforex.key=[key]" before running tests
-    val forexKey =  System.getenv("SBT_OPTS").split("=")(1)
+    val forexKey =  sys.env("SBT_OPTS").split("=")(1)
     val oer = ForexClient.getClient(forexKey)
     val fx = new Forex(new ForexConfig(forexKey, baseCurrency = Some(CurrencyUnit.USD)))
    

@@ -38,7 +38,7 @@ import com.twitter.util.LruMap
 
 
 /**
- * Starts building the fluent interface 
+ * Starts building the fluent interface for currency look-up and conversion 
  */
 
 case class Forex(config: ForexConfig) {
@@ -63,7 +63,7 @@ case class Forex(config: ForexConfig) {
   // default value for currency conversion is 1 unit of the source currency
   var conversionAmount  = new BigDecimal(1) 
 
-  // flag determining whether to get the exchange rate on previous day or according to the nearest day 
+  // flag which determines whether to get the exchange rate on previous day or on the closer day 
   val getNearestDay     = config.getNearestDay
 
   // preserve 10 digits after decimal point of a number when performing division 
@@ -76,8 +76,12 @@ case class Forex(config: ForexConfig) {
     this
   }
 
-  // rate method leaves the source currency to be default value(i.e. USD) 
-  //and returns ForexLookupTo object
+  /**
+  * starts building a currency look up from the desired currency, 
+  * or from USD if the source currency is not given. 
+  * @param currency - the source currency 
+  * @return ForexLookupTo object which is the start of the fluent interface
+  */
   def rate: ForexLookupTo = {
     if (from == None) {
       throw new IllegalArgumentException("baseCurrency and source currency cannot both be null")
@@ -85,14 +89,13 @@ case class Forex(config: ForexConfig) {
     ForexLookupTo(this)
   }
 
-  // rate method sets the source currency to a specific currency
-  // and returns ForexLookupTo object
   def rate(currency: CurrencyUnit): ForexLookupTo = {
     from = Some(currency)
     setConversionAmount(1)
     ForexLookupTo(this)
   }
 
+  // wrapper method for rate
   def rate(currency: String): ForexLookupTo = {
     rate(CurrencyUnit.getInstance(currency))
   }
@@ -103,15 +106,14 @@ case class Forex(config: ForexConfig) {
    * amount. Returns a ForexLookupTo to finish
    * the conversion.
    *
-   * @param amount The amount of currency to
+   * @param amount - The amount of currency to
    * convert
-   * @param currency The *source* currency.
+   * @param currency - The *source* currency.
    * (The target currency will be supplied
    * to the ForexLookupTo later).
    * @returns a ForexLookupTo, part of the
    * currency conversion fluent interface.
    */
-
   def convert(amount: Int): ForexLookupTo = {
     setConversionAmount(amount)
     rate
@@ -121,7 +123,7 @@ case class Forex(config: ForexConfig) {
     setConversionAmount(amount)
     rate(currency)
   }
-
+  // wrapper method 
   def convert(amount: Int, currency: String): ForexLookupTo = {
     convert(amount, CurrencyUnit.getInstance(currency))
   }
@@ -129,26 +131,33 @@ case class Forex(config: ForexConfig) {
 
 
 /**
- * Describe this here
+ * ForexLookupTo is part of the fluent interface
  *
- * @pvalue fx - TODO desc what fx is
+ * @pvalue fx - Forex object which is returned from the methods in Forex class
  */
 case class ForexLookupTo(fx: Forex) {
   
   /**
-   * TODO
+   * this method sets the target currency to the desired one
+   * @param currency - target currency
+   * @return ForexLookupWhen object which is part of the fluent interface
    */
   def to(currency: CurrencyUnit): ForexLookupWhen = {
     fx.to = Some(currency)
     ForexLookupWhen(fx)
   }
-
+  // wrapper method
   def to(currency: String): ForexLookupWhen = {
     to(CurrencyUnit.getInstance(currency))
   }
 
 }
 
+/**
+* ForexLookupWhen is the end of the fluent interface,
+* methods in this class perform currency lookup and conversion
+* @pvalue fx - Forex object returned from the methods in the ForexLookupTo class
+*/
 case class ForexLookupWhen(fx: Forex) {
   // if the amount is specified this time, we need to set the amount to 1 for next time
   val conversionAmt = if (fx.conversionAmount != new BigDecimal(1)) 
@@ -160,6 +169,10 @@ case class ForexLookupWhen(fx: Forex) {
   val Some(toCurr)   = fx.to
   val moneyInSourceCurrency = BigMoney.of(fromCurr, conversionAmt)
 
+  /**
+  * perform live currency look up or conversion
+  * @returns Money representation according to the live exchange rate 
+  */
   def now: Money =  {
         val usdOverFrom = fx.client.getCurrencyValue(fromCurr)            
         val usdOverTo   = fx.client.getCurrencyValue(toCurr)
@@ -168,7 +181,11 @@ case class ForexLookupWhen(fx: Forex) {
   }
   
   
-
+  /**
+  * a cached version of the live exchange rate is used, 
+  * if the timestamp of that exchange rate is less than 
+  * or equal to `nowishSecs` (see above) old. Otherwise a new lookup is performed.
+  */
   def nowish: Money = {
     val nowishTime = DateTime.now.minusSeconds(fx.config.nowishSecs)
     fx.nowishCache.get((fromCurr, toCurr)) match {
@@ -206,7 +223,10 @@ case class ForexLookupWhen(fx: Forex) {
     live
   }
 
-
+  /**
+  * gets the latest end-of-day rate prior to the datetime by default or
+  * on the closer day if the getNearestDay flag is true, caching is available
+  */
   def at(tradeDate: DateTime): Money = {
     val latestEod = if (fx.getNearestDay == EodRoundUp) {
       tradeDate.withTimeAtStartOfDay.plusDays(1)
@@ -216,7 +236,9 @@ case class ForexLookupWhen(fx: Forex) {
     eod(latestEod)   
   }
 
-
+  /**
+  * gets the end-of-day rate for the specified day, caching is available
+  */
   def eod(eodDate: DateTime): Money = { 
     fx.historicalCache.get((fromCurr, toCurr, eodDate)) match {
     

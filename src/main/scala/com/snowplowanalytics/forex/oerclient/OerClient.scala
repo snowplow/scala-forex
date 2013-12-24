@@ -50,9 +50,6 @@ class OerClient(apiKey: String) extends ForexClient {
 	private var historical = "historical/%04d-%02d-%02d.json?app_id=" + apiKey
 	private val mapper = new ObjectMapper()
 
-	/**
-	 *  
-	 */
 	def getCurrencyValue(currency: CurrencyUnit):BigDecimal = {
 		getExchangeRates(lastest, currency)
 	}
@@ -65,6 +62,8 @@ class OerClient(apiKey: String) extends ForexClient {
 		getExchangeRates(historicalLink, currency)
 	}
 
+	// helper method which returns the exchange rate for a desired currency 
+	// with the base currency be the default currency USD 
 	private def getExchangeRates(downloadPath: String, currency: CurrencyUnit): BigDecimal = {
 		try {
 			val url = new URL(oerUrl + downloadPath)

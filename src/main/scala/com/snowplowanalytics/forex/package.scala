@@ -20,22 +20,15 @@ import java.math.BigDecimal
 import org.joda.time._
 import org.joda.money.CurrencyUnit
 
-/**
- * Scala package object to hold types,
- * helper methods etc.
- *
- * See:
- * http://www.artima.com/scalazine/articles/package_objects.html
- */
 package object forex {
 
   /**
    * The key and value for each cache entry.
    */
-  type NowishCacheKey         = Tuple2[CurrencyUnit, CurrencyUnit]
-  type NowishCacheValue       = Tuple2[DateTime, BigDecimal]
-  type HistoricalCacheKey     = Tuple3[CurrencyUnit, CurrencyUnit, DateTime]
-  type HistoricalCacheValue   = BigDecimal
+  type NowishCacheKey         = Tuple2[CurrencyUnit, CurrencyUnit] // source currency , target currency 
+  type NowishCacheValue       = Tuple2[DateTime, BigDecimal] // timestamp, exchange rate 
+  type HistoricalCacheKey     = Tuple3[CurrencyUnit, CurrencyUnit, DateTime] // source currency, target currency, timestamp
+  type HistoricalCacheValue   = BigDecimal // exchange rate
 
 
 }

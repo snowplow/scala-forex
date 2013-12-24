@@ -21,13 +21,13 @@ import org.joda.money.CurrencyUnit
 import oerclient._
 
 /**
- * companion object 
+ * companion object for ForexClient trait
  */
 object ForexClient {
 
 	/**
-	 * Generate and get a new Open Exchange Rates client
-	 * @return a Open Exchange Rates client
+	 * Generate and get a new Forex client
+	 * @return an Forex client
 	 */
 	def getClient(apiKey: String): ForexClient = {
 		new OerClient(apiKey)

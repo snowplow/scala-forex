@@ -19,10 +19,14 @@ object EodRoundDown extends EodRounding
 object EodRoundUp extends EodRounding
 
 /**
- * This lets us configure our Forex object.
+ * Configure class for Forex
  *
- * @pvalue nowishCacheSize
- * @...
+ * @pvalue appId - key for the api
+ * @pvalue nowishCacheSize -  cache for nowish look up
+ * @pvalue nowishSecs - time range for nowish look up
+ * @pvalue historicalCacheSize -  cache for historical lookup
+ * @pvalue getNearestDay - flag for deciding whether to get the exchange rate on closer day or previous day
+ * @pvalue baseCurrency  - base currency does not have default value 
  */
 case class ForexConfig(
   appId: String,
