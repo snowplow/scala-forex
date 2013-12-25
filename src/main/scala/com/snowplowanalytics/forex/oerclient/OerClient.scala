@@ -65,16 +65,10 @@ class OerClient(apiKey: String) extends ForexClient {
 	// helper method which returns the exchange rate for a desired currency 
 	// with the base currency be the default currency USD 
 	private def getExchangeRates(downloadPath: String, currency: CurrencyUnit): BigDecimal = {
-		try {
-			val url = new URL(oerUrl + downloadPath)
-			val conn = url.openConnection()
-			val node = mapper.readTree(conn.getInputStream())
-			node.findValue(currency.toString).getDecimalValue()
-	    } catch {
-	    	case (e: FileNotFoundException) => throw new UnavailableExchangeRateException("exchange rate unavailable")
-	    	case (e: MalformedURLException) => throw new MalformedURLException("invalid URL")
-			case (e: IOException) =>           throw new IOException(e.getMessage)
-		}
+		val url = new URL(oerUrl + downloadPath)
+		val conn = url.openConnection()
+		val node = mapper.readTree(conn.getInputStream())
+		node.findValue(currency.toString).getDecimalValue()
 	}
 }
 

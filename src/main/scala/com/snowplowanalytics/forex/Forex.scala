@@ -26,7 +26,9 @@ import scala.collection.JavaConversions._
 // LRUCache
 import com.twitter.util.LruMap
 
-
+import java.net.MalformedURLException
+import java.io.FileNotFoundException
+import java.io.IOException
  
 // TODO: should we ask what version of the API the user has access to?
 // Because e.g. Enterprise is more powerful than Developer. Because
@@ -71,11 +73,6 @@ case class Forex(config: ForexConfig) {
   // usually the number of digits of a currency value has only 6 digits 
   val commonScale      = 6 
 
-  def setConversionAmount(amount: Int): Forex = {
-    conversionAmount = new BigDecimal(amount)
-    this
-  }
-
   /**
   * starts building a currency look up from the desired currency, 
   * or from USD if the source currency is not given. 
@@ -91,7 +88,6 @@ case class Forex(config: ForexConfig) {
 
   def rate(currency: CurrencyUnit): ForexLookupTo = {
     from = Some(currency)
-    setConversionAmount(1)
     ForexLookupTo(this)
   }
 
@@ -115,12 +111,12 @@ case class Forex(config: ForexConfig) {
    * currency conversion fluent interface.
    */
   def convert(amount: Int): ForexLookupTo = {
-    setConversionAmount(amount)
+    conversionAmount = new BigDecimal(amount)
     rate
   }
   
   def convert(amount: Int, currency: CurrencyUnit): ForexLookupTo = {
-    setConversionAmount(amount)
+    conversionAmount = new BigDecimal(amount)
     rate(currency)
   }
   // wrapper method 
@@ -173,11 +169,17 @@ case class ForexLookupWhen(fx: Forex) {
   * perform live currency look up or conversion
   * @returns Money representation according to the live exchange rate 
   */
-  def now: Money =  {
+  def now: Either[String, Money] =  {
+      try {
         val usdOverFrom = fx.client.getCurrencyValue(fromCurr)            
         val usdOverTo   = fx.client.getCurrencyValue(toCurr)
         val rate        = getForexRate(usdOverFrom, usdOverTo)
-        moneyInSourceCurrency.convertedTo(toCurr, rate).toMoney(RoundingMode.HALF_EVEN)
+        Right(moneyInSourceCurrency.convertedTo(toCurr, rate).toMoney(RoundingMode.HALF_EVEN))
+      } catch {
+        case (e: FileNotFoundException) => Left("exchange rate unavailable")
+        case (e: MalformedURLException) => Left("invalid URL")
+        case (e: IOException) =>           Left(e.getMessage)
+      }
   }
   
   
@@ -186,40 +188,49 @@ case class ForexLookupWhen(fx: Forex) {
   * if the timestamp of that exchange rate is less than 
   * or equal to `nowishSecs` (see above) old. Otherwise a new lookup is performed.
   */
-  def nowish: Money = {
-    val nowishTime = DateTime.now.minusSeconds(fx.config.nowishSecs)
-    fx.nowishCache.get((fromCurr, toCurr)) match {
-      // from:to found in LRU cache
-      case Some(tpl) => {
-        val (timeStamp, exchangeRate) = tpl
-        if (nowishTime.isBefore(timeStamp) || nowishTime.equals(timeStamp)) {
-           // the timestamp in the cache is within the allowed range 
-          moneyInSourceCurrency.convertedTo(toCurr, exchangeRate).toMoney(RoundingMode.HALF_EVEN)
-        } else {
-          //update the exchange rate  
-          getLiveRateAndUpdateCache
-        }
-      }
-      // from:to not found in LRU
-      case None => {
-        fx.nowishCache.get((toCurr, fromCurr)) match {
-          // to:from found in LRU
-          case Some(tpl) => { 
-            val (time, rate) = tpl
-            val inverseRate = new BigDecimal(1).divide(rate, fx.commonScale, RoundingMode.HALF_EVEN)
-            moneyInSourceCurrency.convertedTo(toCurr, inverseRate).toMoney(RoundingMode.HALF_EVEN)
-          }
-          // Neither direction found in LRU
-          case None => {
+  def nowish: Either[String, Money] = {
+    try {
+      val nowishTime = DateTime.now.minusSeconds(fx.config.nowishSecs)
+      fx.nowishCache.get((fromCurr, toCurr)) match {
+        // from:to found in LRU cache
+        case Some(tpl) => {
+          val (timeStamp, exchangeRate) = tpl
+          if (nowishTime.isBefore(timeStamp) || nowishTime.equals(timeStamp)) {
+             // the timestamp in the cache is within the allowed range 
+            Right(moneyInSourceCurrency.convertedTo(toCurr, exchangeRate).toMoney(RoundingMode.HALF_EVEN))
+          } else {
+            //update the exchange rate  
             getLiveRateAndUpdateCache
           }
         }
+        // from:to not found in LRU
+        case None => {
+          fx.nowishCache.get((toCurr, fromCurr)) match {
+            // to:from found in LRU
+            case Some(tpl) => { 
+              val (time, rate) = tpl
+              val inverseRate = new BigDecimal(1).divide(rate, fx.commonScale, RoundingMode.HALF_EVEN)
+              Right(moneyInSourceCurrency.convertedTo(toCurr, inverseRate).toMoney(RoundingMode.HALF_EVEN))
+            }
+            // Neither direction found in LRU
+            case None => {
+              getLiveRateAndUpdateCache
+            }
+          }
+        }
       }
+   } catch {
+      case (e: FileNotFoundException) => Left("exchange rate unavailable")
+      case (e: MalformedURLException) => Left("invalid URL")
+      case (e: IOException) =>           Left(e.getMessage)
     }
   }
-  private def getLiveRateAndUpdateCache: Money = {
+  private def getLiveRateAndUpdateCache: Either[String, Money]= {
     val live = now
-    fx.nowishCache.put((fromCurr, toCurr), (DateTime.now, live.getAmount))
+    live match {
+      case Left(errorMessage) => live
+      case Right(forexMoney)  => fx.nowishCache.put((fromCurr, toCurr), (DateTime.now, forexMoney.getAmount))  
+    }
     live
   }
 
@@ -227,7 +238,7 @@ case class ForexLookupWhen(fx: Forex) {
   * gets the latest end-of-day rate prior to the datetime by default or
   * on the closer day if the getNearestDay flag is true, caching is available
   */
-  def at(tradeDate: DateTime): Money = {
+  def at(tradeDate: DateTime): Either[String, Money] = {
     val latestEod = if (fx.getNearestDay == EodRoundUp) {
       tradeDate.withTimeAtStartOfDay.plusDays(1)
     } else {
@@ -239,30 +250,36 @@ case class ForexLookupWhen(fx: Forex) {
   /**
   * gets the end-of-day rate for the specified day, caching is available
   */
-  def eod(eodDate: DateTime): Money = { 
-    fx.historicalCache.get((fromCurr, toCurr, eodDate)) match {
-    
-      case Some(rate) => 
-                          moneyInSourceCurrency.convertedTo(toCurr, rate).toMoney(RoundingMode.HALF_EVEN)
-      case None       =>  
-                          var rate = new BigDecimal(1)
-                          fx.historicalCache.get((toCurr, fromCurr, eodDate)) match {                  
-                            case Some(exchangeRate) =>                                              
-                                               rate = new BigDecimal(1).divide(exchangeRate, fx.commonScale, RoundingMode.HALF_EVEN)
-                            case None =>
-                                               rate = getHistoricalRate(eodDate)
-                                               fx.historicalCache.put((fromCurr, toCurr, eodDate), rate)            
-                          }
-                          moneyInSourceCurrency.convertedTo(toCurr, rate).toMoney(RoundingMode.HALF_EVEN)
+  def eod(eodDate: DateTime): Either[String, Money] = { 
+    try {
+      fx.historicalCache.get((fromCurr, toCurr, eodDate)) match {
+      
+        case Some(rate) => 
+                            Right(moneyInSourceCurrency.convertedTo(toCurr, rate).toMoney(RoundingMode.HALF_EVEN))
+        case None       =>  
+                            var rate = new BigDecimal(1)
+                            fx.historicalCache.get((toCurr, fromCurr, eodDate)) match {                  
+                              case Some(exchangeRate) =>                                              
+                                                 rate = new BigDecimal(1).divide(exchangeRate, fx.commonScale, RoundingMode.HALF_EVEN)
+                              case None =>
+                                                 rate = getHistoricalRate(eodDate)
+                                                 fx.historicalCache.put((fromCurr, toCurr, eodDate), rate)            
+                            }
+                            Right(moneyInSourceCurrency.convertedTo(toCurr, rate).toMoney(RoundingMode.HALF_EVEN))
+      }
+    } catch {
+        case (e: FileNotFoundException) => Left("exchange rate unavailable")
+        case (e: MalformedURLException) => Left("invalid URL")
+        case (e: IOException) =>           Left(e.getMessage)
     }
   }
 
   // get historical forex rate between two currencies on a given date  
   private def getHistoricalRate(date: DateTime): BigDecimal = {
-     val dateCal     = date.toGregorianCalendar
-     val usdOverTo   = fx.client.getHistoricalCurrencyValue(toCurr, dateCal)
-     val usdOverFrom = fx.client.getHistoricalCurrencyValue(fromCurr, dateCal)
-     getForexRate(usdOverFrom, usdOverTo)
+    val dateCal     = date.toGregorianCalendar
+    val usdOverTo   = fx.client.getHistoricalCurrencyValue(toCurr, dateCal)
+    val usdOverFrom = fx.client.getHistoricalCurrencyValue(fromCurr, dateCal)
+    getForexRate(usdOverFrom, usdOverTo)
   }
 
   // get the forex rate between source currency and target currency, output = from:to
