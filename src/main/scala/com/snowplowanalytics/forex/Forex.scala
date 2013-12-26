@@ -163,6 +163,8 @@ case class ForexLookupWhen(fx: Forex) {
   */
   def now: Either[String, Money] =  {
       try {
+        fx.from = fx.config.baseCurrency
+        fx.conversionAmount = new BigDecimal(1)
         val usdOverFrom = fx.client.getCurrencyValue(fromCurr)            
         val usdOverTo   = fx.client.getCurrencyValue(toCurr)
         val rate        = getForexRate(usdOverFrom, usdOverTo)
@@ -182,6 +184,8 @@ case class ForexLookupWhen(fx: Forex) {
   */
   def nowish: Either[String, Money] = {
     try {
+      fx.from = fx.config.baseCurrency
+      fx.conversionAmount = new BigDecimal(1)
       val nowishTime = DateTime.now.minusSeconds(fx.config.nowishSecs)
       fx.nowishCache.get((fromCurr, toCurr)) match {
         // from:to found in LRU cache
@@ -235,6 +239,8 @@ case class ForexLookupWhen(fx: Forex) {
   * on the closer day if the getNearestDay flag is true, caching is available
   */
   def at(tradeDate: DateTime): Either[String, Money] = {
+    fx.from = fx.config.baseCurrency
+    fx.conversionAmount = new BigDecimal(1)
     val latestEod = if (fx.getNearestDay == EodRoundUp) {
       tradeDate.withTimeAtStartOfDay.plusDays(1)
     } else {
@@ -248,6 +254,8 @@ case class ForexLookupWhen(fx: Forex) {
   */
   def eod(eodDate: DateTime): Either[String, Money] = { 
     try {
+      fx.from = fx.config.baseCurrency
+      fx.conversionAmount = new BigDecimal(1)
       fx.historicalCache.get((fromCurr, toCurr, eodDate)) match {
       
         case Some(rate) => 
