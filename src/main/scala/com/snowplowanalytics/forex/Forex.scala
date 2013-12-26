@@ -271,7 +271,7 @@ case class ForexLookupWhen(fx: Forex) {
   }
 
   /**get historical forex rate between two currencies on a given date  
-  /* @returns exchange rate as BigDecimal 
+  * @returns exchange rate as BigDecimal 
   */
   private def getHistoricalRate(date: DateTime): BigDecimal = {
     val dateCal     = date.toGregorianCalendar
