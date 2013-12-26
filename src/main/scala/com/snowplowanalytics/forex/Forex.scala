@@ -30,15 +30,6 @@ import java.net.MalformedURLException
 import java.io.FileNotFoundException
 import java.io.IOException
  
-// TODO: should we ask what version of the API the user has access to?
-// Because e.g. Enterprise is more powerful than Developer. Because
-// Enterprise allows a baseCurrency to be set. Which means that
-// conversions are easier.
-// If a baseCurrency can't be set, then for EUR -> GBP, I have to convert
-// EUR -> USD -> GBP. Not very nice!
-
-
-
 /**
  * Starts building the fluent interface for currency look-up and conversion 
  */
@@ -128,7 +119,6 @@ case class Forex(config: ForexConfig) {
 
 /**
  * ForexLookupTo is part of the fluent interface
- *
  * @pvalue fx - Forex object which is returned from the methods in Forex class
  */
 case class ForexLookupTo(fx: Forex) {
@@ -153,6 +143,8 @@ case class ForexLookupTo(fx: Forex) {
 * ForexLookupWhen is the end of the fluent interface,
 * methods in this class perform currency lookup and conversion
 * @pvalue fx - Forex object returned from the methods in the ForexLookupTo class
+* methods return error mesage as string if an exception is caught 
+* or Money if an exchange rate is available 
 */
 case class ForexLookupWhen(fx: Forex) {
   // if the amount is specified this time, we need to set the amount to 1 for next time
@@ -163,11 +155,11 @@ case class ForexLookupWhen(fx: Forex) {
                         
   val Some(fromCurr) = fx.from 
   val Some(toCurr)   = fx.to
+  // money in a given amount 
   val moneyInSourceCurrency = BigMoney.of(fromCurr, conversionAmt)
 
   /**
-  * perform live currency look up or conversion
-  * @returns Money representation according to the live exchange rate 
+  * perform live currency look up or conversion, no chaching needed
   */
   def now: Either[String, Money] =  {
       try {
@@ -186,7 +178,7 @@ case class ForexLookupWhen(fx: Forex) {
   /**
   * a cached version of the live exchange rate is used, 
   * if the timestamp of that exchange rate is less than 
-  * or equal to `nowishSecs` (see above) old. Otherwise a new lookup is performed.
+  * or equal to `nowishSecs` old. Otherwise a new lookup is performed.
   */
   def nowish: Either[String, Money] = {
     try {
@@ -225,6 +217,10 @@ case class ForexLookupWhen(fx: Forex) {
       case (e: IOException) =>           Left(e.getMessage)
     }
   }
+
+  /*
+  * gets live exchange rate and put it in the cache
+  */
   private def getLiveRateAndUpdateCache: Either[String, Money]= {
     val live = now
     live match {
@@ -274,7 +270,9 @@ case class ForexLookupWhen(fx: Forex) {
     }
   }
 
-  // get historical forex rate between two currencies on a given date  
+  /**get historical forex rate between two currencies on a given date  
+  /* @returns exchange rate as BigDecimal 
+  */
   private def getHistoricalRate(date: DateTime): BigDecimal = {
     val dateCal     = date.toGregorianCalendar
     val usdOverTo   = fx.client.getHistoricalCurrencyValue(toCurr, dateCal)
@@ -282,7 +280,9 @@ case class ForexLookupWhen(fx: Forex) {
     getForexRate(usdOverFrom, usdOverTo)
   }
 
-  // get the forex rate between source currency and target currency, output = from:to
+  /** get the forex rate between source currency and target currency
+  * @returns ratio of from:to as BigDecimal
+  */
   private def getForexRate(usdOverFrom: BigDecimal, usdOverTo: BigDecimal): BigDecimal = {
     if (fromCurr != CurrencyUnit.USD) {
       val fromOverUsd = new BigDecimal(1).divide(usdOverFrom, fx.commonScale, RoundingMode.HALF_EVEN)
