@@ -11,24 +11,26 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.forex
-
+// java
 import java.math.BigDecimal
 import java.util.Calendar
 import java.util.Map
+// joda
 import org.joda.money.CurrencyUnit
+import org.joda.time._
+// OpenExchangeRate client
 import oerclient._
 
 /**
  * companion object for ForexClient trait
  */
 object ForexClient {
-
 	/**
 	 * Generate and get a new Forex client
 	 * @return an Forex client
 	 */
-	def getClient(apiKey: String): ForexClient = {
-		new OerClient(apiKey)
+	def getClient(fx: Forex, apiKey: String): ForexClient = {
+		new OerClient(fx, apiKey)
 	}
 } 
 
@@ -52,5 +54,5 @@ trait ForexClient {
 	 *            Date of desired rate
 	 * @return Value of exchange rate in desired date
 	 */
-	 def getHistoricalCurrencyValue(currency: CurrencyUnit, date: Calendar):BigDecimal
+	 def getHistoricalCurrencyValue(currency: CurrencyUnit, date: DateTime):BigDecimal
 }

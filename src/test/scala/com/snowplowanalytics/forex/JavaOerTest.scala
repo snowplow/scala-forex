@@ -25,15 +25,13 @@ import org.specs2.mutable.Specification
 
 // Joda 
 import org.joda.time._
-import org.joda.money.CurrencyUnit
-
+import org.joda.money._
 
 class JavaOerTest extends Specification { 
-
-  val oer = ForexClient.getClient(sys.env("SBT_OPTS").split("=")(1))
-
-  val cal = DateTime.parse("2008-01-01T01:01:01.123+0900").toGregorianCalendar
-
+  val forexKey =  sys.env("SBT_OPTS").split("=")(1)
+  val fx = new Forex(new ForexConfig(forexKey, false))
+  val oer = ForexClient.getClient(fx, forexKey)
+  val date = DateTime.parse("2008-01-01T01:01:01.123+0900")
 
   "live currency value for USD" should { 
     "always equal to 1" in {
@@ -50,7 +48,7 @@ class JavaOerTest extends Specification {
 
   "historical currency value for USD on 01/01/2008" should {
     "always equal to 1 as well" in {
-      oer.getHistoricalCurrencyValue(CurrencyUnit.USD, cal) must_== (new BigDecimal(1))
+      oer.getHistoricalCurrencyValue(CurrencyUnit.USD, date) must_== (new BigDecimal(1))
     }
   }
 

@@ -26,13 +26,12 @@ import org.specs2.mutable.Specification
 import org.joda.time._
 import org.joda.money._
 
-
 class ScalaOerTest extends Specification { 
-    // export SBT_OPTS="-Dforex.key=[key]" before running tests
+    // run 'export SBT_OPTS=-Dforex.key=[key]' in command line before running tests
     val forexKey =  sys.env("SBT_OPTS").split("=")(1)
-    val oer = ForexClient.getClient(forexKey)
-    val fx = new Forex(new ForexConfig(forexKey, baseCurrency = Some(CurrencyUnit.USD)))
-   
+    val fx = new Forex(new ForexConfig(forexKey, false))
+    val oer = ForexClient.getClient(fx, forexKey)
+    
     val cnyTogbpNow = fx.rate(CurrencyUnit.getInstance("CNY")).to(CurrencyUnit.GBP).now
     cnyTogbpNow match {
       case Left(message) => println(message)

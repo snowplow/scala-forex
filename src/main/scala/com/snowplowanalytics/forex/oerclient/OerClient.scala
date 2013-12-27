@@ -22,53 +22,95 @@ import java.net.MalformedURLException
 import java.net.URL
 import java.net.URLConnection
 import java.util.Calendar
-
 // Json
 import org.codehaus.jackson.JsonNode
 import org.codehaus.jackson.map.ObjectMapper
-
-// Joda money
+// Joda 
 import org.joda.money.CurrencyUnit
-
+import org.joda.time._
+// LRUCache
+import com.twitter.util.LruMap
+// forexClient
 import com.snowplowanalytics.forex.ForexClient
+// Forex
+import com.snowplowanalytics.forex.Forex
+
 
 /**
  * Implements Json for Open Exchange Rates(http://openexchangerates.org)
  * @param apiKey The API key to Open Exchange Rates
  */
-class OerClient(apiKey: String) extends ForexClient {
+
+class OerClient(fx: Forex, apiKey: String) extends ForexClient {
 	private val oerUrl = "http://openexchangerates.org/api/"
+
+	// sets the base currency in the url 
+	private val base    = if (fx.config.configurableBase) "&base=" + fx.config.baseCurrency 
+						  else ""
 	/**
 	 * The constant that will hold the URI for
 	 * a latest-exchange rate lookup from OER
 	 */
-	private val lastest = "latest.json?app_id=" + apiKey
+	private val lastest = "latest.json?app_id=" + apiKey + base
 	/**
 	 * The constant will hold the URI for a 
 	 * historical-exchange rate lookup from OER
 	 */
-	private var historical = "historical/%04d-%02d-%02d.json?app_id=" + apiKey
+	private var historical = "historical/%04d-%02d-%02d.json?app_id=" + apiKey + base
 	private val mapper = new ObjectMapper()
+	private val lruNowishCache = fx.nowishCache
+	private val lruHistoricalCache = fx.historicalCache
 
 	def getCurrencyValue(currency: CurrencyUnit):BigDecimal = {
-		getExchangeRates(lastest, currency)
+		val key = new Tuple2(fx.config.baseCurrency, currency) 
+		lruNowishCache.get(key) match {
+     		case Some(value)      =>  val (date, rate) = value
+                                	rate 
+     		case None             => 
+                          				val node = getJsonNodeFromAPI(lastest, currency)
+	                                val currencyNameIterator = node.getFieldNames
+	                                while (currencyNameIterator.hasNext) {  
+	                                  val currencyName = currencyNameIterator.next
+	                                  val keyPair   = new Tuple2(fx.config.baseCurrency, CurrencyUnit.getInstance(currencyName))
+	                                  val valuePair = new Tuple2(DateTime.now, node.findValue(currencyName).getDecimalValue)
+	                                  lruNowishCache.put(keyPair, valuePair)
+	                                }
+	                                node.findValue(currency.toString).getDecimalValue
+		}
 	}
 
-	def getHistoricalCurrencyValue(currency: CurrencyUnit, date: Calendar ): BigDecimal = {
-		val day   	   = date.get(Calendar.DAY_OF_MONTH)
-		val month 	   = date.get(Calendar.MONTH) + 1
-		val year  	   = date.get(Calendar.YEAR)
+	def getHistoricalCurrencyValue(currency: CurrencyUnit, date: DateTime): BigDecimal = {
+    val dateCal = date.toGregorianCalendar
+		val day   	   = dateCal.get(Calendar.DAY_OF_MONTH)
+		val month 	   = dateCal.get(Calendar.MONTH) + 1
+		val year  	   = dateCal.get(Calendar.YEAR)
 		val historicalLink = historical.format(year, month, day)
-		getExchangeRates(historicalLink, currency)
+		val key = new Tuple3(fx.config.baseCurrency, currency, date) 
+		lruHistoricalCache.get(key) match {
+	      case Some(rate) =>  	rate
+	      case None       =>
+	                    		  	val node = getJsonNodeFromAPI(historicalLink, currency)
+		                          val currencyNameIterator = node.getFieldNames 
+		                          while (currencyNameIterator.hasNext) {  
+		                            val currencyName = currencyNameIterator.next
+		                            val keySet  = new Tuple3(fx.config.baseCurrency, CurrencyUnit.getInstance(currencyName), date)
+		                            lruHistoricalCache.put(keySet, node.findValue(currencyName).getDecimalValue)
+		                          }
+		                          node.findValue(currency.toString).getDecimalValue
+    }  
 	}
 
-	// helper method which returns the exchange rate for a desired currency 
-	// with the base currency be the default currency USD 
-	private def getExchangeRates(downloadPath: String, currency: CurrencyUnit): BigDecimal = {
-		val url = new URL(oerUrl + downloadPath)
-		val conn = url.openConnection()
-		val node = mapper.readTree(conn.getInputStream())
-		node.findValue(currency.toString).getDecimalValue()
+	// helper method which returns the node which contains a list of currency and rate pair
+	private def getJsonNodeFromAPI(downloadPath: String, currency: CurrencyUnit): JsonNode = {
+		val url  = new URL(oerUrl + downloadPath)
+		val conn = url.openConnection
+		val root = mapper.readTree(conn.getInputStream).getElements
+    var resNode       = root.next
+    while (root.hasNext) {
+      resNode = root.next
+    }
+    resNode
 	}
+
 }
 

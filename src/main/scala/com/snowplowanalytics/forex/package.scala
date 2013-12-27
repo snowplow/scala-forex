@@ -14,14 +14,11 @@ package com.snowplowanalytics
 
 // Java
 import java.math.BigDecimal
-
-
 // Joda 
 import org.joda.time._
 import org.joda.money.CurrencyUnit
 
 package object forex {
-
   /**
    * The key and value for each cache entry.
    */
@@ -29,6 +26,4 @@ package object forex {
   type NowishCacheValue       = Tuple2[DateTime, BigDecimal] // timestamp, exchange rate 
   type HistoricalCacheKey     = Tuple3[CurrencyUnit, CurrencyUnit, DateTime] // source currency, target currency, timestamp
   type HistoricalCacheValue   = BigDecimal // exchange rate
-
-
 }
