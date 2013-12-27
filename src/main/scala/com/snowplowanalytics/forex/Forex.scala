@@ -110,7 +110,7 @@ case class Forex(config: ForexConfig) {
     rate(currency)
   }
   // wrapper method for convert(Int, CurrencyUnit)
-  def convert(amount: Int, currency: String): ForexLookupTo = {
+  def convert(amount: Int, currency: String): ForexLookupTo = {      
     convert(amount, CurrencyUnit.getInstance(currency))
   }
 }
@@ -166,14 +166,14 @@ case class ForexLookupWhen(fx: Forex) {
     try {
       fx.from = fx.config.baseCurrency
       fx.conversionAmount = new BigDecimal(1)
-      val baseOverFrom = fx.client.getCurrencyValue(fromCurr)            
-      val baseOverTo   = fx.client.getCurrencyValue(toCurr)
-      val rate        = getForexRate(baseOverFrom, baseOverTo)
+      val baseOverFrom = fx.client.getCurrencyValue(fromCurr) 
+      val baseOverTo = fx.client.getCurrencyValue(toCurr) 
+      val rate = getForexRate(baseOverFrom, baseOverTo)
       Right(moneyInSourceCurrency.convertedTo(toCurr, rate).toMoney(RoundingMode.HALF_EVEN))
     } catch {
       case (e: FileNotFoundException) => Left("exchange rate unavailable")
       case (e: MalformedURLException) => Left("invalid URL")
-      case (e: IOException) =>           Left(e.getMessage)
+      case (e: IOException)           => Left(e.getMessage)
     }
   }
   
@@ -284,8 +284,8 @@ case class ForexLookupWhen(fx: Forex) {
   * @returns exchange rate as BigDecimal 
   */
   private def getHistoricalRate(date: DateTime): BigDecimal = {
-    val baseOverTo   = fx.client.getHistoricalCurrencyValue(toCurr, date)
     val baseOverFrom = fx.client.getHistoricalCurrencyValue(fromCurr, date)
+    val baseOverTo   = fx.client.getHistoricalCurrencyValue(toCurr, date)
     getForexRate(baseOverFrom, baseOverTo)
   }
 

@@ -26,7 +26,7 @@ import java.util.Calendar
 import org.codehaus.jackson.JsonNode
 import org.codehaus.jackson.map.ObjectMapper
 // Joda 
-import org.joda.money.CurrencyUnit
+import org.joda.money._
 import org.joda.time._
 // LRUCache
 import com.twitter.util.LruMap
@@ -61,7 +61,7 @@ class OerClient(fx: Forex, apiKey: String) extends ForexClient {
 	private val lruNowishCache = fx.nowishCache
 	private val lruHistoricalCache = fx.historicalCache
 
-	def getCurrencyValue(currency: CurrencyUnit):BigDecimal = {
+	def getCurrencyValue(currency: CurrencyUnit): BigDecimal= {
 		val key = new Tuple2(fx.config.baseCurrency, currency) 
 		lruNowishCache.get(key) match {
      		case Some(value)      =>  val (date, rate) = value
@@ -71,16 +71,20 @@ class OerClient(fx: Forex, apiKey: String) extends ForexClient {
 	                                val currencyNameIterator = node.getFieldNames
 	                                while (currencyNameIterator.hasNext) {  
 	                                  val currencyName = currencyNameIterator.next
-	                                  val keyPair   = new Tuple2(fx.config.baseCurrency, CurrencyUnit.getInstance(currencyName))
-	                                  val valuePair = new Tuple2(DateTime.now, node.findValue(currencyName).getDecimalValue)
-	                                  lruNowishCache.put(keyPair, valuePair)
+	                                  try {
+	                                 	 	val keyPair   = new Tuple2(fx.config.baseCurrency, CurrencyUnit.getInstance(currencyName))
+	                                		val valuePair = new Tuple2(DateTime.now, node.findValue(currencyName).getDecimalValue)
+	                                  	lruNowishCache.put(keyPair, valuePair)
+	                                	} catch {
+	                                		case (e: IllegalCurrencyException) => {}
+	                                	}
 	                                }
 	                                node.findValue(currency.toString).getDecimalValue
 		}
 	}
 
 	def getHistoricalCurrencyValue(currency: CurrencyUnit, date: DateTime): BigDecimal = {
-    val dateCal = date.toGregorianCalendar
+    val dateCal    = date.toGregorianCalendar
 		val day   	   = dateCal.get(Calendar.DAY_OF_MONTH)
 		val month 	   = dateCal.get(Calendar.MONTH) + 1
 		val year  	   = dateCal.get(Calendar.YEAR)
@@ -93,8 +97,12 @@ class OerClient(fx: Forex, apiKey: String) extends ForexClient {
 		                          val currencyNameIterator = node.getFieldNames 
 		                          while (currencyNameIterator.hasNext) {  
 		                            val currencyName = currencyNameIterator.next
-		                            val keySet  = new Tuple3(fx.config.baseCurrency, CurrencyUnit.getInstance(currencyName), date)
-		                            lruHistoricalCache.put(keySet, node.findValue(currencyName).getDecimalValue)
+		                            try {
+			                            val keySet  = new Tuple3(fx.config.baseCurrency, CurrencyUnit.getInstance(currencyName), date)
+			                         	  lruHistoricalCache.put(keySet, node.findValue(currencyName).getDecimalValue)
+			                          } catch{
+			                          	case (e: IllegalCurrencyException) => {}
+			                          }		                          			                          	
 		                          }
 		                          node.findValue(currency.toString).getDecimalValue
     }  

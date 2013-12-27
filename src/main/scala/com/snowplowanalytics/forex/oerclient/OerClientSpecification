@@ -12,7 +12,7 @@
  */
 
  
-package com.snowplowanalytics.forex
+package com.snowplowanalytics.forex.oerclient
 
 // Java
 import java.math.BigDecimal
