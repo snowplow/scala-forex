@@ -46,8 +46,8 @@ import com.snowplowanalytics.forex.Forex
 class OerClient(config: ForexConfig) extends ForexClient(config) {
 	private val oerUrl = "http://openexchangerates.org/api/"
 	// sets the base currency in the url 
-	private val base    = if (config.configurableBase) "&base=" + config.baseCurrency 
-						  else ""
+	private val base   = if (config.configurableBase) "&base=" + config.baseCurrency 
+						           else ""
 	/**
 	 * The constant that will hold the URI for
 	 * a latest-exchange rate lookup from OER
@@ -63,19 +63,19 @@ class OerClient(config: ForexConfig) extends ForexClient(config) {
 		val key = new Tuple2(config.baseCurrency, currency) 
 		nowishCache.get(key) match {
      		case Some(value) =>
-							  val (date, rate) = value
+                val (date, rate) = value
                 rate 
      		case None        => 
-        			  val node = getJsonNodeFromAPI(lastest, currency)
+                val node = getJsonNodeFromAPI(lastest, currency)
                 val currencyNameIterator = node.getFieldNames
                 while (currencyNameIterator.hasNext) {  
                   val currencyName = currencyNameIterator.next
                   try {
-                 	 	val keyPair   = new Tuple2(config.baseCurrency, CurrencyUnit.getInstance(currencyName))
-                		val valuePair = new Tuple2(DateTime.now, node.findValue(currencyName).getDecimalValue)                                                                       
+                 	  val keyPair   = new Tuple2(config.baseCurrency, CurrencyUnit.getInstance(currencyName))
+                	  val valuePair = new Tuple2(DateTime.now, node.findValue(currencyName).getDecimalValue)                                                                       
                     nowishCache.put(keyPair, valuePair)
                 	} catch {
-                		case (e: IllegalCurrencyException) => {}
+                	  case (e: IllegalCurrencyException) => {}
                 	}
                 }
                 node.findValue(currency.toString).getDecimalValue
@@ -93,7 +93,7 @@ class OerClient(config: ForexConfig) extends ForexClient(config) {
 	      case Some(rate) =>  
                 rate
 	      case None       =>
-        		  	val node = getJsonNodeFromAPI(historicalLink, currency)
+                val node = getJsonNodeFromAPI(historicalLink, currency)
                 val currencyNameIterator = node.getFieldNames 
                 while (currencyNameIterator.hasNext) {  
                   val currencyName = currencyNameIterator.next
@@ -101,7 +101,7 @@ class OerClient(config: ForexConfig) extends ForexClient(config) {
                     val keySet  = new Tuple3(config.baseCurrency, CurrencyUnit.getInstance(currencyName), date)
                  	  eodCache.put(keySet, node.findValue(currencyName).getDecimalValue)
                   } catch{
-                  	case (e: IllegalCurrencyException) => {}
+                    case (e: IllegalCurrencyException) => {}
                   }		                          			                          	
                 }
                 node.findValue(currency.toString).getDecimalValue
