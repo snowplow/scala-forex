@@ -60,9 +60,6 @@ class OerClient(config: ForexConfig) extends ForexClient(config) {
 	 */
 	private var historical = "historical/%04d-%02d-%02d.json?app_id=" + config.appId + base
 	private val mapper = new ObjectMapper()
-	// private val lruNowishCache     = nowishCache
-	// private val lruHistoricalCache = historicalCache
-
 	def getCurrencyValue(currency: CurrencyUnit): BigDecimal= {
 		val key = new Tuple2(config.baseCurrency, currency) 
 		nowishCache.get(key) match {
@@ -93,7 +90,7 @@ class OerClient(config: ForexConfig) extends ForexClient(config) {
 		val year  	   = dateCal.get(Calendar.YEAR)
 		val historicalLink = historical.format(year, month, day)
 		val key = new Tuple3(config.baseCurrency, currency, date) 
-		historicalCache.get(key) match {
+		eodCache.get(key) match {
 	      case Some(rate) =>  	rate
 	      case None       =>
 	                    		  	val node = getJsonNodeFromAPI(historicalLink, currency)
@@ -102,7 +99,7 @@ class OerClient(config: ForexConfig) extends ForexClient(config) {
 		                            val currencyName = currencyNameIterator.next
 		                            try {
 			                            val keySet  = new Tuple3(config.baseCurrency, CurrencyUnit.getInstance(currencyName), date)
-			                         	  historicalCache.put(keySet, node.findValue(currencyName).getDecimalValue)
+			                         	  eodCache.put(keySet, node.findValue(currencyName).getDecimalValue)
 			                          } catch{
 			                          	case (e: IllegalCurrencyException) => {}
 			                          }		                          			                          	

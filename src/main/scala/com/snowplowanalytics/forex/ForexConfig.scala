@@ -41,7 +41,7 @@ case class ForexConfig(
   										// There are 165 currencies in total, the combinations of a currency pair
   										// has 165 * (165 - 1) possibilities. (X,Y) is the same as (Y,X) hence 165 * 164 / 2
   nowishSecs: Int              = 300,   // i.e. 5 mins by default 
-  historicalCacheSize: Int     = 405900,  // 165 * 164 / 2 * 30 = 405900, assuming the cache stores data within a month
+  eodCacheSize: Int     = 405900,  // 165 * 164 / 2 * 30 = 405900, assuming the cache stores data within a month
   getNearestDay: EodRounding   = EodRoundDown,
   baseCurrency: CurrencyUnit   = CurrencyUnit.USD  
 ) 

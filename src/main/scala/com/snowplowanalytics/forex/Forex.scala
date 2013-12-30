@@ -34,10 +34,7 @@ import scala.collection.JavaConversions._
  */
 
 case class Forex(config: ForexConfig) {
-
   val client = ForexClient.getOerClient(config)
-  // currency to be converted
-  var from = config.baseCurrency
   // target currency
   var to   = config.baseCurrency
   // default value for currency conversion is 1 unit of the source currency
@@ -55,6 +52,7 @@ case class Forex(config: ForexConfig) {
   * @returns ForexLookupTo object which is the part of the fluent interface
   */
   def rate: ForexLookupTo = {
+    from = config.baseCurrency
     ForexLookupTo(this)
   }
 
@@ -248,18 +246,18 @@ case class ForexLookupWhen(fx: Forex) {
     try {
       fx.from = fx.config.baseCurrency
       fx.conversionAmount = new BigDecimal(1)
-      fx.client.historicalCache.get((fromCurr, toCurr, eodDate)) match {
+      fx.client.eodCache.get((fromCurr, toCurr, eodDate)) match {
       
         case Some(rate) => 
                             Right(moneyInSourceCurrency.convertedTo(toCurr, rate).toMoney(RoundingMode.HALF_EVEN))
         case None       =>  
                             var rate = new BigDecimal(1)
-                            fx.client.historicalCache.get((toCurr, fromCurr, eodDate)) match {                  
+                            fx.client.eodCache.get((toCurr, fromCurr, eodDate)) match {                  
                               case Some(exchangeRate) =>                                              
                                                  rate = new BigDecimal(1).divide(exchangeRate, fx.commonScale, RoundingMode.HALF_EVEN)
                               case None =>
                                                  rate = getHistoricalRate(eodDate)
-                                                 fx.client.historicalCache.put((fromCurr, toCurr, eodDate), rate)            
+                                                 fx.client.eodCache.put((fromCurr, toCurr, eodDate), rate)            
                             }
                             Right(moneyInSourceCurrency.convertedTo(toCurr, rate).toMoney(RoundingMode.HALF_EVEN))
       }

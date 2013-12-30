@@ -45,8 +45,8 @@ abstract class ForexClient(config: ForexConfig) {
                     else null
   // LRU cache for historical request, with triple of source currency, target currency and time as the key 
   // and exchange rate as the value
-  val historicalCache = if (config.historicalCacheSize > 0)
-                            new LruMap[HistoricalCacheKey, HistoricalCacheValue](config.historicalCacheSize)
+  val eodCache = if (config.eodCacheSize > 0)
+                            new LruMap[EodCacheKey, EodCacheValue](config.eodCacheSize)
                         else null
 	/**
 	 * Get the latest exchange rate from a given currency

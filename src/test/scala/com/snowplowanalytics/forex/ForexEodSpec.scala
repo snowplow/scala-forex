@@ -36,7 +36,7 @@ class ForexEodSpec extends Specification {
   }
   val gbpmoney = gbpEodRate.right.get
   "USD to GBP eod rate [%s]".format(gbpmoney) should {
-    "be > 0, historicalCache size = [%s]".format(fx.client.historicalCache.size) in {
+    "be > 0, historicalCache size = [%s]".format(fx.client.eodCache.size) in {
         gbpmoney.isPositive
     }
   }

@@ -24,6 +24,6 @@ package object forex {
    */
   type NowishCacheKey         = Tuple2[CurrencyUnit, CurrencyUnit] // source currency , target currency 
   type NowishCacheValue       = Tuple2[DateTime, BigDecimal] // timestamp, exchange rate 
-  type HistoricalCacheKey     = Tuple3[CurrencyUnit, CurrencyUnit, DateTime] // source currency, target currency, timestamp
-  type HistoricalCacheValue   = BigDecimal // exchange rate
+  type EodCacheKey     		  = Tuple3[CurrencyUnit, CurrencyUnit, DateTime] // source currency, target currency, timestamp
+  type EodCacheValue   		  = BigDecimal // exchange rate
 }

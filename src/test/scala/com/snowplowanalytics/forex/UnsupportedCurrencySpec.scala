@@ -25,6 +25,9 @@ import org.joda.money._
 
 class UnsupportedCurrencySpec extends Specification { 
   val fx  = TestHelper.fx 
+  
+  // must _== Left(msg)
+  
   "a BTC lookup" should {
   	"throw IllegalCurrencyException" in {
  		 def btcException: Either[String, Money] = {
