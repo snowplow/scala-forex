@@ -26,7 +26,7 @@ import org.joda.money._
 import scala.collection.JavaConversions._
 // UnavailableExchangeRateException
 import com.snowplowanalytics.forex.oerclient.UnavailableExchangeRateException
-
+ 
 /**
  * Starts building the fluent interface for currency look-up and conversion,
  * Forex class has methods rate and convert which return ForexLookupTo object
@@ -61,8 +61,14 @@ case class Forex(config: ForexConfig) {
   }
 
   // wrapper method for rate(CurrencyUnit)
-  def rate(currency: String): ForexLookupTo = {
-    rate(CurrencyUnit.getInstance(currency))
+  // if the string is invalid, getInstance will throw IllegalCurrencyException
+  def rate(currency: String): Either[String,ForexLookupTo] = {
+    try {
+      val currInstance = CurrencyUnit.getInstance(currency)
+      Right(rate(currInstance))
+    } catch {
+      case (e: IllegalCurrencyException) => Left(e.getMessage)
+    }   
   }
 
   /**
@@ -88,8 +94,14 @@ case class Forex(config: ForexConfig) {
     ForexLookupTo(amount, currency, this)
   }
   // wrapper method for convert(Int, CurrencyUnit)
-  def convert(amount: Int, currency: String): ForexLookupTo = {      
-    convert(amount, CurrencyUnit.getInstance(currency))
+  // if the string is invalid, getInstance will throw IllegalCurrencyException
+  def convert(amount: Int, currency: String): Either[String, ForexLookupTo] = {      
+    try {
+      val currInstance = CurrencyUnit.getInstance(currency)
+      Right(convert(amount, currInstance))
+    } catch {
+      case (e: IllegalCurrencyException) => Left(e.getMessage)
+    }
   }
 }
 
@@ -104,7 +116,6 @@ case class Forex(config: ForexConfig) {
  * @pvalue fromCurr - the source currency, the argument will be passed to ForexLookUpWhen class  
  */
 case class ForexLookupTo(conversionAmount: Int, fromCurr: CurrencyUnit, fx: Forex) {
-  
   /**
    * this method sets the target currency to the desired one
    * @param currency - target currency
@@ -114,10 +125,15 @@ case class ForexLookupTo(conversionAmount: Int, fromCurr: CurrencyUnit, fx: Fore
     ForexLookupWhen(conversionAmount, fromCurr, toCurr, fx)
   }
   // wrapper method for to(CurrencyUnit)
-  def to(toCurr: String): ForexLookupWhen = {
-    to(CurrencyUnit.getInstance(toCurr))
+  // if the string is invalid, getInstance will throw IllegalCurrencyException
+  def to(toCurr: String): Either[String, ForexLookupWhen] = {
+    try {
+      val currInstance = CurrencyUnit.getInstance(toCurr)
+      Right(to(currInstance))
+    } catch {
+      case (e: IllegalCurrencyException) => Left(e.getMessage)
+    }
   }
-
 }
 
 /**
@@ -145,7 +161,6 @@ case class ForexLookupWhen(conversionAmount: Int, fromCurr: CurrencyUnit, toCurr
       val rate = getForexRate(baseOverFrom, baseOverTo)
       Right(moneyInSourceCurrency.convertedTo(toCurr, rate).toMoney(RoundingMode.HALF_EVEN))
     } catch {
-      case (e: IllegalCurrencyException) => Left(e.getMessage)
       case (e: MalformedURLException)    => Left("invalid app Id")
       case (e: IOException)              => Left(e.getMessage)
     }
