@@ -61,11 +61,11 @@ class OerClient(config: ForexConfig) extends ForexClient(config) {
 	private val mapper = new ObjectMapper()
 	def getCurrencyValue(currency: CurrencyUnit): BigDecimal= {
 		val key = new Tuple2(config.baseCurrency, currency) 
-		nowishCache.get(key) match {
-     		case Some(value) =>
+	  nowishCache.get(key) match {
+      case Some(value) =>
                 val (date, rate) = value
                 rate 
-     		case None        => 
+     	case None        => 
                 val node = getJsonNodeFromAPI(lastest, currency)
                 val currencyNameIterator = node.getFieldNames
                 while (currencyNameIterator.hasNext) {  
@@ -84,15 +84,15 @@ class OerClient(config: ForexConfig) extends ForexClient(config) {
 
 	def getHistoricalCurrencyValue(currency: CurrencyUnit, date: DateTime): BigDecimal = {
     val dateCal    = date.toGregorianCalendar
-		val day   	   = dateCal.get(Calendar.DAY_OF_MONTH)
-		val month 	   = dateCal.get(Calendar.MONTH) + 1
+	  val day   	   = dateCal.get(Calendar.DAY_OF_MONTH)
+	  val month 	   = dateCal.get(Calendar.MONTH) + 1
 		val year  	   = dateCal.get(Calendar.YEAR)
 		val historicalLink = historical.format(year, month, day)
 		val key = new Tuple3(config.baseCurrency, currency, date) 
 		eodCache.get(key) match {
-	      case Some(rate) =>  
+	    case Some(rate) =>  
                 rate
-	      case None       =>
+	    case None       =>
                 val node = getJsonNodeFromAPI(historicalLink, currency)
                 val currencyNameIterator = node.getFieldNames 
                 while (currencyNameIterator.hasNext) {  
@@ -110,9 +110,9 @@ class OerClient(config: ForexConfig) extends ForexClient(config) {
 
 	// helper method which returns the node which contains a list of currency and rate pair
 	private def getJsonNodeFromAPI(downloadPath: String, currency: CurrencyUnit): JsonNode = {
-		val url  = new URL(oerUrl + downloadPath)
-		val conn = url.openConnection
-		val root = mapper.readTree(conn.getInputStream).getElements
+	  val url  = new URL(oerUrl + downloadPath)
+	  val conn = url.openConnection
+	  val root = mapper.readTree(conn.getInputStream).getElements
     var resNode       = root.next
     while (root.hasNext) {
       resNode = root.next

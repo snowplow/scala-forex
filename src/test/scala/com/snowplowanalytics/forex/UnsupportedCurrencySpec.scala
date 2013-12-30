@@ -23,6 +23,9 @@ import org.specs2.mutable.Specification
 // Joda time
 import org.joda.money._
 
+/**
+*  testing for unsupported currencies in joda money, e.g. bitcoin(BTC)
+*/
 class UnsupportedCurrencySpec extends Specification { 
   val fx  = TestHelper.fx 
   

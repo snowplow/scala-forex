@@ -24,6 +24,9 @@ import org.specs2.mutable.Specification
 import org.joda.money._
 import org.joda.time._
 
+/**
+*  testing for exceptions caused by invalid dates
+*/
 class UnsupportedEodSpec extends Specification { 
   // run 'export SBT_OPTS=-Dforex.key=[key]' in command line before running tests
   val fx  = TestHelper.fx 

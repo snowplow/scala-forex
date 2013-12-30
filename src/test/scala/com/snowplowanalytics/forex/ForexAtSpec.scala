@@ -24,6 +24,10 @@ import org.specs2.mutable.Specification
 import org.joda.time._
 import org.joda.money._
 
+/**
+* testing method for getting the latest end-of-day rate 
+* prior to the datetime or the day after according to the user's setting 
+*/
 class ForexAtSpec extends Specification { 
   val fx  = TestHelper.fx 
   val tradeDate = new DateTime(2011, 3, 13, 11, 39, 27, 567, DateTimeZone.forID("America/New_York"))
