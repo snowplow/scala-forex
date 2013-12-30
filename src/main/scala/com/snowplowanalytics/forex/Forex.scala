@@ -35,10 +35,6 @@ import scala.collection.JavaConversions._
 
 case class Forex(config: ForexConfig) {
   val client = ForexClient.getOerClient(config)
-  // default value for currency conversion is 1 unit of the source currency
-  var conversionAmount  = new BigDecimal(1) 
-  // flag which determines whether to get the exchange rate on previous day or on the closer day 
-  val getNearestDay     = config.getNearestDay
   // preserve 10 digits after decimal point of a number when performing division 
   val maxScale         = 10 
   // usually the number of digits of a currency value has only 6 digits 
@@ -50,7 +46,7 @@ case class Forex(config: ForexConfig) {
   * @returns ForexLookupTo object which is the part of the fluent interface
   */
   def rate: ForexLookupTo = {
-    ForexLookupTo(config.baseCurrency, this)
+    ForexLookupTo(1, config.baseCurrency, this)
   }
 
   /**
@@ -60,7 +56,7 @@ case class Forex(config: ForexConfig) {
   * @returns ForexLookupTo object which is the part of the fluent interface
   */
   def rate(currency: CurrencyUnit): ForexLookupTo = {
-    ForexLookupTo(currency, this)
+    ForexLookupTo(1, currency, this)
   }
 
   // wrapper method for rate(CurrencyUnit)
@@ -84,13 +80,11 @@ case class Forex(config: ForexConfig) {
    * currency conversion fluent interface.
    */
   def convert(amount: Int): ForexLookupTo = {
-    conversionAmount = new BigDecimal(amount)
-    rate
+    ForexLookupTo(amount, config.baseCurrency, this)
   }
   
   def convert(amount: Int, currency: CurrencyUnit): ForexLookupTo = {
-    conversionAmount = new BigDecimal(amount)
-    rate(currency)
+    ForexLookupTo(amount, currency, this)
   }
   // wrapper method for convert(Int, CurrencyUnit)
   def convert(amount: Int, currency: String): ForexLookupTo = {      
@@ -105,7 +99,7 @@ case class Forex(config: ForexConfig) {
  * which will then be passed to ForexLookupWhen class
  * @pvalue fx - Forex object which was configured ealier 
  */
-case class ForexLookupTo(fromCurr: CurrencyUnit, fx: Forex) {
+case class ForexLookupTo(conversionAmount: Int, fromCurr: CurrencyUnit, fx: Forex) {
   
   /**
    * this method sets the target currency to the desired one
@@ -113,7 +107,7 @@ case class ForexLookupTo(fromCurr: CurrencyUnit, fx: Forex) {
    * @return ForexLookupWhen object which is part of the fluent interface
    */
   def to(toCurr: CurrencyUnit): ForexLookupWhen = {
-    ForexLookupWhen(fromCurr, toCurr, fx)
+    ForexLookupWhen(conversionAmount, fromCurr, toCurr, fx)
   }
   // wrapper method for to(CurrencyUnit)
   def to(toCurr: String): ForexLookupWhen = {
@@ -131,9 +125,9 @@ case class ForexLookupTo(fromCurr: CurrencyUnit, fx: Forex) {
 * same for the conversion amount, which is set to 1 unit 
 * @pvalue fx - Forex object 
 */
-case class ForexLookupWhen(fromCurr: CurrencyUnit, toCurr: CurrencyUnit, fx: Forex) {
-  val conversionAmt = if (fx.conversionAmount != new BigDecimal(1)) 
-                          fx.conversionAmount                        
+case class ForexLookupWhen(conversionAmount: Int, fromCurr: CurrencyUnit, toCurr: CurrencyUnit, fx: Forex) {
+  val conversionAmt = if (conversionAmount != 1) 
+                          new BigDecimal(conversionAmount)                      
                       else 
                           new BigDecimal(1)
                         
@@ -144,7 +138,6 @@ case class ForexLookupWhen(fromCurr: CurrencyUnit, toCurr: CurrencyUnit, fx: For
   */
   def now: Either[String, Money] =  {
     try {
-      fx.conversionAmount = new BigDecimal(1)
       val baseOverFrom = fx.client.getCurrencyValue(fromCurr) 
       val baseOverTo = fx.client.getCurrencyValue(toCurr) 
       val rate = getForexRate(baseOverFrom, baseOverTo)
@@ -164,7 +157,6 @@ case class ForexLookupWhen(fromCurr: CurrencyUnit, toCurr: CurrencyUnit, fx: For
   */
   def nowish: Either[String, Money] = {
     try {
-      fx.conversionAmount = new BigDecimal(1)
       val nowishTime = DateTime.now.minusSeconds(fx.config.nowishSecs)
       fx.client.nowishCache.get((fromCurr, toCurr)) match {
         // from:to found in LRU cache
@@ -220,8 +212,7 @@ case class ForexLookupWhen(fromCurr: CurrencyUnit, toCurr: CurrencyUnit, fx: For
   * on the closer day if the getNearestDay flag is true, caching is available
   */
   def at(tradeDate: DateTime): Either[String, Money] = {
-    fx.conversionAmount = new BigDecimal(1)
-    val latestEod = if (fx.getNearestDay == EodRoundUp) {
+    val latestEod = if (fx.config.getNearestDay == EodRoundUp) {
       tradeDate.withTimeAtStartOfDay.plusDays(1)
     } else {
       tradeDate.withTimeAtStartOfDay
@@ -234,7 +225,6 @@ case class ForexLookupWhen(fromCurr: CurrencyUnit, toCurr: CurrencyUnit, fx: For
   */
   def eod(eodDate: DateTime): Either[String, Money] = { 
     try {
-      fx.conversionAmount = new BigDecimal(1)
       fx.client.eodCache.get((fromCurr, toCurr, eodDate)) match {
       
         case Some(rate) => 
