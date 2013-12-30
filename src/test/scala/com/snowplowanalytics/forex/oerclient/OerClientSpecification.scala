@@ -53,8 +53,5 @@ class OerClientTest extends Specification {
       oer.getHistoricalCurrencyValue(CurrencyUnit.USD, date) must_== (new BigDecimal(1))
     }
   }
-
-
-
 }
 
