@@ -24,8 +24,6 @@ import org.joda.time._
 import org.joda.money._
 // Scala
 import scala.collection.JavaConversions._
-// LRUCache
-import com.twitter.util.LruMap
 
  
 /**
@@ -36,17 +34,8 @@ import com.twitter.util.LruMap
  */
 
 case class Forex(config: ForexConfig) {
-  // LRU cache for nowish request, with tuple of source currency and target currency as the key
-  // and tuple of time and exchange rate as the value 
-  val nowishCache = if (config.nowishCacheSize > 0) 
-                          new LruMap[NowishCacheKey, NowishCacheValue](config.nowishCacheSize)
-                    else null
-  // LRU cache for historical request, with triple of source currency, target currency and time as the key 
-  // and exchange rate as the value
-  val historicalCache = if (config.historicalCacheSize > 0)
-                            new LruMap[HistoricalCacheKey, HistoricalCacheValue](config.historicalCacheSize)
-                        else null
-  val client = ForexClient.getClient(this, config.appId)
+
+  val client = ForexClient.getOerClient(config)
   // currency to be converted
   var from = config.baseCurrency
   // target currency
@@ -188,9 +177,10 @@ case class ForexLookupWhen(fx: Forex) {
       fx.from = fx.config.baseCurrency
       fx.conversionAmount = new BigDecimal(1)
       val nowishTime = DateTime.now.minusSeconds(fx.config.nowishSecs)
-      fx.nowishCache.get((fromCurr, toCurr)) match {
+      fx.client.nowishCache.get((fromCurr, toCurr)) match {
         // from:to found in LRU cache
         case Some(tpl) => {
+          println("found in nowish cache")
           val (timeStamp, exchangeRate) = tpl
           if (nowishTime.isBefore(timeStamp) || nowishTime.equals(timeStamp)) {
              // the timestamp in the cache is within the allowed range 
@@ -202,9 +192,10 @@ case class ForexLookupWhen(fx: Forex) {
         }
         // from:to not found in LRU
         case None => {
-          fx.nowishCache.get((toCurr, fromCurr)) match {
+          fx.client.nowishCache.get((toCurr, fromCurr)) match {
             // to:from found in LRU
             case Some(tpl) => { 
+               println("inverse found in nowish cache")
               val (time, rate) = tpl
               val inverseRate = new BigDecimal(1).divide(rate, fx.commonScale, RoundingMode.HALF_EVEN)
               Right(moneyInSourceCurrency.convertedTo(toCurr, inverseRate).toMoney(RoundingMode.HALF_EVEN))
@@ -230,7 +221,7 @@ case class ForexLookupWhen(fx: Forex) {
     val live = now
     live match {
       case Left(errorMessage) => live
-      case Right(forexMoney)  => fx.nowishCache.put((fromCurr, toCurr), (DateTime.now, forexMoney.getAmount))  
+      case Right(forexMoney)  => fx.client.nowishCache.put((fromCurr, toCurr), (DateTime.now, forexMoney.getAmount))  
     }
     live
   }
@@ -257,18 +248,18 @@ case class ForexLookupWhen(fx: Forex) {
     try {
       fx.from = fx.config.baseCurrency
       fx.conversionAmount = new BigDecimal(1)
-      fx.historicalCache.get((fromCurr, toCurr, eodDate)) match {
+      fx.client.historicalCache.get((fromCurr, toCurr, eodDate)) match {
       
         case Some(rate) => 
                             Right(moneyInSourceCurrency.convertedTo(toCurr, rate).toMoney(RoundingMode.HALF_EVEN))
         case None       =>  
                             var rate = new BigDecimal(1)
-                            fx.historicalCache.get((toCurr, fromCurr, eodDate)) match {                  
+                            fx.client.historicalCache.get((toCurr, fromCurr, eodDate)) match {                  
                               case Some(exchangeRate) =>                                              
                                                  rate = new BigDecimal(1).divide(exchangeRate, fx.commonScale, RoundingMode.HALF_EVEN)
                               case None =>
                                                  rate = getHistoricalRate(eodDate)
-                                                 fx.historicalCache.put((fromCurr, toCurr, eodDate), rate)            
+                                                 fx.client.historicalCache.put((fromCurr, toCurr, eodDate), rate)            
                             }
                             Right(moneyInSourceCurrency.convertedTo(toCurr, rate).toMoney(RoundingMode.HALF_EVEN))
       }

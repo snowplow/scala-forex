@@ -20,22 +20,34 @@ import org.joda.money.CurrencyUnit
 import org.joda.time._
 // OpenExchangeRate client
 import oerclient._
+// LRUCache
+import com.twitter.util.LruMap
 
 /**
  * companion object for ForexClient trait
  */
 object ForexClient {
 	/**
-	 * Generate and get a new Forex client
+	 * Generate and get a new OER Forex client
 	 * @return an Forex client
 	 */
-	def getClient(fx: Forex, apiKey: String): ForexClient = {
-		new OerClient(fx, apiKey)
+	def getOerClient(config: ForexConfig): ForexClient = {
+		new OerClient(config)
 	}
 } 
 
 
-trait ForexClient {
+abstract class ForexClient(config: ForexConfig) {
+	// LRU cache for nowish request, with tuple of source currency and target currency as the key
+  // and tuple of time and exchange rate as the value 
+  val nowishCache = if (config.nowishCacheSize > 0) 
+                          new LruMap[NowishCacheKey, NowishCacheValue](config.nowishCacheSize)
+                    else null
+  // LRU cache for historical request, with triple of source currency, target currency and time as the key 
+  // and exchange rate as the value
+  val historicalCache = if (config.historicalCacheSize > 0)
+                            new LruMap[HistoricalCacheKey, HistoricalCacheValue](config.historicalCacheSize)
+                        else null
 	/**
 	 * Get the latest exchange rate from a given currency
 	 * 

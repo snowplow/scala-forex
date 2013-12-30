@@ -32,6 +32,8 @@ import org.joda.time._
 import com.twitter.util.LruMap
 // forexClient
 import com.snowplowanalytics.forex.ForexClient
+// forexConfig
+import com.snowplowanalytics.forex.ForexConfig
 // Forex
 import com.snowplowanalytics.forex.Forex
 
@@ -41,40 +43,41 @@ import com.snowplowanalytics.forex.Forex
  * @param apiKey The API key to Open Exchange Rates
  */
 
-class OerClient(fx: Forex, apiKey: String) extends ForexClient {
+class OerClient(config: ForexConfig) extends ForexClient(config) {
 	private val oerUrl = "http://openexchangerates.org/api/"
 
 	// sets the base currency in the url 
-	private val base    = if (fx.config.configurableBase) "&base=" + fx.config.baseCurrency 
+	private val base    = if (config.configurableBase) "&base=" + config.baseCurrency 
 						  else ""
 	/**
 	 * The constant that will hold the URI for
 	 * a latest-exchange rate lookup from OER
 	 */
-	private val lastest = "latest.json?app_id=" + apiKey + base
+	private val lastest = "latest.json?app_id=" + config.appId + base
 	/**
 	 * The constant will hold the URI for a 
 	 * historical-exchange rate lookup from OER
 	 */
-	private var historical = "historical/%04d-%02d-%02d.json?app_id=" + apiKey + base
+	private var historical = "historical/%04d-%02d-%02d.json?app_id=" + config.appId + base
 	private val mapper = new ObjectMapper()
-	private val lruNowishCache = fx.nowishCache
-	private val lruHistoricalCache = fx.historicalCache
+	// private val lruNowishCache     = nowishCache
+	// private val lruHistoricalCache = historicalCache
 
 	def getCurrencyValue(currency: CurrencyUnit): BigDecimal= {
-		val key = new Tuple2(fx.config.baseCurrency, currency) 
-		lruNowishCache.get(key) match {
-     		case Some(value)      =>  val (date, rate) = value
+		val key = new Tuple2(config.baseCurrency, currency) 
+		nowishCache.get(key) match {
+     		case Some(value)      =>
+     								              val (date, rate) = value
                                 	rate 
      		case None             => 
-                          				val node = getJsonNodeFromAPI(lastest, currency)
+                          			  val node = getJsonNodeFromAPI(lastest, currency)
 	                                val currencyNameIterator = node.getFieldNames
 	                                while (currencyNameIterator.hasNext) {  
 	                                  val currencyName = currencyNameIterator.next
 	                                  try {
-	                                 	 	val keyPair   = new Tuple2(fx.config.baseCurrency, CurrencyUnit.getInstance(currencyName))
-	                                		val valuePair = new Tuple2(DateTime.now, node.findValue(currencyName).getDecimalValue)
-	                                  	lruNowishCache.put(keyPair, valuePair)
+	                                 	 	val keyPair   = new Tuple2(config.baseCurrency, CurrencyUnit.getInstance(currencyName))
+	                                		val valuePair = new Tuple2(DateTime.now, node.findValue(currencyName).getDecimalValue)                                                                       
+                                      nowishCache.put(keyPair, valuePair)
 	                                	} catch {
 	                                		case (e: IllegalCurrencyException) => {}
 	                                	}
@@ -89,8 +92,8 @@ class OerClient(fx: Forex, apiKey: String) extends ForexClient {
 		val month 	   = dateCal.get(Calendar.MONTH) + 1
 		val year  	   = dateCal.get(Calendar.YEAR)
 		val historicalLink = historical.format(year, month, day)
-		val key = new Tuple3(fx.config.baseCurrency, currency, date) 
-		lruHistoricalCache.get(key) match {
+		val key = new Tuple3(config.baseCurrency, currency, date) 
+		historicalCache.get(key) match {
 	      case Some(rate) =>  	rate
 	      case None       =>
 	                    		  	val node = getJsonNodeFromAPI(historicalLink, currency)
@@ -98,8 +101,8 @@ class OerClient(fx: Forex, apiKey: String) extends ForexClient {
 		                          while (currencyNameIterator.hasNext) {  
 		                            val currencyName = currencyNameIterator.next
 		                            try {
-			                            val keySet  = new Tuple3(fx.config.baseCurrency, CurrencyUnit.getInstance(currencyName), date)
-			                         	  lruHistoricalCache.put(keySet, node.findValue(currencyName).getDecimalValue)
+			                            val keySet  = new Tuple3(config.baseCurrency, CurrencyUnit.getInstance(currencyName), date)
+			                         	  historicalCache.put(keySet, node.findValue(currencyName).getDecimalValue)
 			                          } catch{
 			                          	case (e: IllegalCurrencyException) => {}
 			                          }		                          			                          	

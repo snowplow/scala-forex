@@ -11,6 +11,8 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
  
+
+ 
 package com.snowplowanalytics.forex
 
 // Java
@@ -18,28 +20,26 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 // Scala
 import scala.collection.JavaConversions._
-
 // Specs2
 import org.specs2.mutable.Specification
-
-// Joda time
+// Joda 
 import org.joda.time._
 import org.joda.money._
 
 class ForexNowishSpec extends Specification { 
-	// run 'export SBT_OPTS=-Dforex.key=[key]' in command line before running tests
-	val forexKey =  sys.env("SBT_OPTS").split("=")(1)
-	val fx = new Forex(new ForexConfig(forexKey, false))
-	val oer = ForexClient.getClient(fx, forexKey)
+  val fx  = TestHelper.fx 
+  val cnyOverGbpNowish = fx.rate(CurrencyUnit.getInstance("CNY")).to(CurrencyUnit.GBP).nowish
   
-  val gbpOvercnyNowish = fx.rate(CurrencyUnit.getInstance("CNY")).to(CurrencyUnit.GBP).nowish
-  gbpOvercnyNowish match {
-    case Left(message) => println(message)
-    case Right(money)  => 
-                          "CNY/GBP near-live rate [%s]".format(money) should {
-                            "be smaller than 1 and greater than 0, nowishCache size = [%s]".format(fx.nowishCache.size) in {
-                                money.isLessThan(Money.of(CurrencyUnit.GBP, 1))
-                            }
-                          }
+  "this conversion" should {
+    "always result in a Right" in {
+      cnyOverGbpNowish.isRight  
+    }
+  }
+  val gbpmoney = cnyOverGbpNowish.right.get
+   "CNY/GBP near-live rate [%s]".format(gbpmoney) should {
+     "be smaller than 1, nowishCache size = [%s]".format(fx.client.nowishCache.size) in {
+         gbpmoney.isLessThan(Money.of(CurrencyUnit.GBP, 1))
+     }
   }
 }
+

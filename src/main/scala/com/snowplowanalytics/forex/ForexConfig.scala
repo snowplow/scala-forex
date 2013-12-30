@@ -35,7 +35,8 @@ object EodRoundUp extends EodRounding
 
 case class ForexConfig(
   appId: String,
-  configurableBase: Boolean,
+  configurableBase: Boolean,			// boolean flag to identify the type of user,
+  										// i.e. if the user is entitled to configure the base currency
   nowishCacheSize: Int         = 13530, // nowishCache = (165 * 164 / 2) = 13530.
   										// There are 165 currencies in total, the combinations of a currency pair
   										// has 165 * (165 - 1) possibilities. (X,Y) is the same as (Y,X) hence 165 * 164 / 2
