@@ -60,7 +60,7 @@ class OerClient(config: ForexConfig) extends ForexClient(config) {
 	private var historical = "historical/%04d-%02d-%02d.json?app_id=" + config.appId + base
 	private val mapper = new ObjectMapper()
 	def getCurrencyValue(currency: CurrencyUnit): BigDecimal= {
-		val key = new Tuple2(config.baseCurrency, currency) 
+	  val key = new Tuple2(config.baseCurrency, currency) 
 	  nowishCache.get(key) match {
       case Some(value) =>
                 val (date, rate) = value

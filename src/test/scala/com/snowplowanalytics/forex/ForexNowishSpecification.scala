@@ -29,7 +29,7 @@ import org.joda.money._
 /**
 * testing method for getting the approximate exchange rate
 */
-class ForexNowishSpec extends Specification { 
+class ForexNowishSpecification extends Specification { 
   val fx  = TestHelper.fx 
   val cnyOverGbpNowish = fx.rate(CurrencyUnit.getInstance("CNY")).to(CurrencyUnit.GBP).nowish
   

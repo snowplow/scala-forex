@@ -27,7 +27,7 @@ import org.joda.time._
 /**
 *  testing for exceptions caused by invalid dates
 */
-class UnsupportedEodSpec extends Specification { 
+class UnsupportedEodSpecification extends Specification { 
   // run 'export SBT_OPTS=-Dforex.key=[key]' in command line before running tests
   val fx  = TestHelper.fx 
   

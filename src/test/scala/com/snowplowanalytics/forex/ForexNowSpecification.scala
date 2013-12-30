@@ -28,7 +28,7 @@ import org.joda.money._
 /**
 * testing method for getting the live exchange rate
 */
-class ForexNowSpec extends Specification { 
+class ForexNowSpecification extends Specification { 
   val fx  = TestHelper.fx 
   val tradeInYenNow = fx.convert(10000).to(CurrencyUnit.JPY).now
   "this conversion" should {

@@ -29,7 +29,7 @@ import org.joda.money._
 /**
 * Testing methods for Open exchange rate client 
 */
-class OerClientTest extends Specification { 
+class OerClientSpecification extends Specification { 
   val forexKey =  sys.env("SBT_OPTS").split("=")(1)
   val fx = new Forex(new ForexConfig(forexKey, false))
   val oerClientt = ForexClient.getOerClient(fx.config)

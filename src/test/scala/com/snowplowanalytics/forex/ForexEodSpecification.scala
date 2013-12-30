@@ -28,7 +28,7 @@ import org.joda.money._
 /**
 * Testing method for getting the end-of-date exchange rate
 */
-class ForexEodSpec extends Specification { 
+class ForexEodSpecification extends Specification { 
   val fx  = TestHelper.fx 
   val eodDate = new DateTime(2011, 3, 13, 0, 0)
   val gbpEodRate =  fx.rate.to(CurrencyUnit.GBP).eod(eodDate)
