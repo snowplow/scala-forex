@@ -31,14 +31,11 @@ class UnsupportedEodSpecification extends Specification {
   // run 'export SBT_OPTS=-Dforex.key=[key]' in command line before running tests
   val fx  = TestHelper.fx 
   
+  val rateIn1900 = fx.rate.to(CurrencyUnit.GBP).eod(new DateTime(1900, 3, 13, 0, 0))
   "a historical lookup in 1900" should {
-	"throw an exception" in {
-		 def eodException: Either[String, Money] = {
-		 	val eodDate = new DateTime(1900, 3, 13, 0, 0)
-		 	fx.rate.to(CurrencyUnit.GBP).eod(eodDate)
-		 }
-	 		eodException.isLeft
-	 }
+		"throw an exception" in {
+	 		rateIn1900.isLeft
+	 	}
   }
 
 }

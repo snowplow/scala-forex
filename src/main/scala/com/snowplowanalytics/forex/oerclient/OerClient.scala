@@ -71,18 +71,21 @@ class OerClient(config: ForexConfig) extends ForexClient(config) {
                 while (currencyNameIterator.hasNext) {  
                   val currencyName = currencyNameIterator.next
                   try {
-                 	  val keyPair   = new Tuple2(config.baseCurrency, CurrencyUnit.getInstance(currencyName))
+                    val keyPair   = new Tuple2(config.baseCurrency, CurrencyUnit.getInstance(currencyName))
                 	  val valuePair = new Tuple2(DateTime.now, node.findValue(currencyName).getDecimalValue)                                                                       
                     nowishCache.put(keyPair, valuePair)
-                	} catch {
-                	  case (e: IllegalCurrencyException) => {}
-                	}
+                  } catch {
+                    case (e: IllegalCurrencyException) => {}
+                  }
                 }
                 node.findValue(currency.toString).getDecimalValue
 		}
 	}
 
 	def getHistoricalCurrencyValue(currency: CurrencyUnit, date: DateTime): BigDecimal = {
+    if (date.isBefore(new DateTime(1999,1,1,0,0)) || date.isAfter(DateTime.now)) {
+      throw new UnavailableExchangeRateException("exchange rate unavailable on the date[%s]".format(date))
+    }
     val dateCal    = date.toGregorianCalendar
 	  val day   	   = dateCal.get(Calendar.DAY_OF_MONTH)
 	  val month 	   = dateCal.get(Calendar.MONTH) + 1
@@ -99,10 +102,10 @@ class OerClient(config: ForexConfig) extends ForexClient(config) {
                   val currencyName = currencyNameIterator.next
                   try {
                     val keySet  = new Tuple3(config.baseCurrency, CurrencyUnit.getInstance(currencyName), date)
-                 	  eodCache.put(keySet, node.findValue(currencyName).getDecimalValue)
-                  } catch{
+                  	eodCache.put(keySet, node.findValue(currencyName).getDecimalValue)  
+                  } catch {
                     case (e: IllegalCurrencyException) => {}
-                  }		                          			                          	
+                  }                        			                          	
                 }
                 node.findValue(currency.toString).getDecimalValue
     }  

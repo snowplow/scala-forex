@@ -19,13 +19,14 @@ import java.math.RoundingMode
 import java.net.MalformedURLException
 import java.io.FileNotFoundException
 import java.io.IOException
-// Joda time
+// Joda 
 import org.joda.time._
 import org.joda.money._
 // Scala
 import scala.collection.JavaConversions._
+// UnavailableExchangeRateException
+import com.snowplowanalytics.forex.oerclient.UnavailableExchangeRateException
 
- 
 /**
  * Starts building the fluent interface for currency look-up and conversion,
  * Forex class has methods rate and convert which return ForexLookupTo object
@@ -98,6 +99,9 @@ case class Forex(config: ForexConfig) {
  * it only has method to which returns ForexLookupWhen object 
  * which will then be passed to ForexLookupWhen class
  * @pvalue fx - Forex object which was configured ealier 
+ * @pvalue conversionAmount - the amount of money to be converted, it is set to 1 unit for look up operation, 
+ * the argument will be passed to ForexLookUpWhen class 
+ * @pvalue fromCurr - the source currency, the argument will be passed to ForexLookUpWhen class  
  */
 case class ForexLookupTo(conversionAmount: Int, fromCurr: CurrencyUnit, fx: Forex) {
   
@@ -121,16 +125,14 @@ case class ForexLookupTo(conversionAmount: Int, fromCurr: CurrencyUnit, fx: Fore
 * methods in this class are the final stage of currency lookup and conversion
 * and return error mesage as string if an exception is caught 
 * or Money if an exchange rate is found 
-* note that the source currency is set to the base currency after each lookup or conversion
-* same for the conversion amount, which is set to 1 unit 
+* if MalFormedURLException is caught, then the user must entered wrong app Id, which the API cannot recognise
 * @pvalue fx - Forex object 
+* @pvalue conversionAmount - the amount of money to be converted, it is set to 1 unit for look up operation
+* @pvalue fromCurr - the source currency
+* @pvalue toCurr   - the target currency
 */
 case class ForexLookupWhen(conversionAmount: Int, fromCurr: CurrencyUnit, toCurr: CurrencyUnit, fx: Forex) {
-  val conversionAmt = if (conversionAmount != 1) 
-                          new BigDecimal(conversionAmount)                      
-                      else 
-                          new BigDecimal(1)
-                        
+  val conversionAmt = new BigDecimal(conversionAmount)                      
   // money in a given amount 
   val moneyInSourceCurrency = BigMoney.of(fromCurr, conversionAmt)
   /**
@@ -143,9 +145,9 @@ case class ForexLookupWhen(conversionAmount: Int, fromCurr: CurrencyUnit, toCurr
       val rate = getForexRate(baseOverFrom, baseOverTo)
       Right(moneyInSourceCurrency.convertedTo(toCurr, rate).toMoney(RoundingMode.HALF_EVEN))
     } catch {
-      case (e: FileNotFoundException) => Left("exchange rate unavailable")
-      case (e: MalformedURLException) => Left("invalid URL")
-      case (e: IOException)           => Left(e.getMessage)
+      case (e: IllegalCurrencyException) => Left(e.getMessage)
+      case (e: MalformedURLException)    => Left("invalid app Id")
+      case (e: IOException)              => Left(e.getMessage)
     }
   }
   
@@ -189,7 +191,7 @@ case class ForexLookupWhen(conversionAmount: Int, fromCurr: CurrencyUnit, toCurr
         }
       }
    } catch {
-      case (e: FileNotFoundException) => Left("exchange rate unavailable")
+      case (e: IllegalCurrencyException) => Left(e.getMessage)
       case (e: MalformedURLException) => Left("invalid URL")
       case (e: IOException) =>           Left(e.getMessage)
     }
@@ -241,7 +243,8 @@ case class ForexLookupWhen(conversionAmount: Int, fromCurr: CurrencyUnit, toCurr
                             Right(moneyInSourceCurrency.convertedTo(toCurr, rate).toMoney(RoundingMode.HALF_EVEN))
       }
     } catch {
-        case (e: FileNotFoundException) => Left("exchange rate unavailable")
+        case (e: IllegalCurrencyException) => Left(e.getMessage)
+        case (e: UnavailableExchangeRateException) => Left(e.msg)
         case (e: MalformedURLException) => Left("invalid URL")
         case (e: IOException) =>           Left(e.getMessage)
     }
