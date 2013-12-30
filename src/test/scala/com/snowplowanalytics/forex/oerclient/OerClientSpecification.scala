@@ -16,41 +16,37 @@ package com.snowplowanalytics.forex.oerclient
 
 // Java
 import java.math.BigDecimal
-
 // Scala
 import scala.collection.JavaConversions._
-
 // Specs2
 import org.specs2.mutable.Specification
-
 // Joda 
 import org.joda.time._
 import org.joda.money._
+// TestHelper
+import com.snowplowanalytics.forex.TestHelper
 /**
 * Testing methods for Open exchange rate client 
 */
 class OerClientSpecification extends Specification { 
-  val forexKey =  sys.env("SBT_OPTS").split("=")(1)
-  val fx = new Forex(new ForexConfig(forexKey, false))
-  val oerClientt = ForexClient.getOerClient(fx.config)
-  val date = DateTime.parse("2008-01-01T01:01:01.123+0900")
-
+  val fx  = TestHelper.fx
   "live currency value for USD" should { 
     "always equal to 1" in {
-      oer.getCurrencyValue(CurrencyUnit.USD) must_== (new BigDecimal(1))
+      fx.client.getCurrencyValue(CurrencyUnit.USD) must_== (new BigDecimal(1))
     }
   }
 
-  val gbpLiveRate =  oer.getCurrencyValue(CurrencyUnit.GBP)
+  val gbpLiveRate =  fx.client.getCurrencyValue(CurrencyUnit.GBP)
   "live currency value for GBP [%s]".format(gbpLiveRate) should {
     "be less than 1" in {
       gbpLiveRate must be < (new BigDecimal(1))
     }
   }
 
+  val date = DateTime.parse("2008-01-01T01:01:01.123+0900")
   "historical currency value for USD on 01/01/2008" should {
     "always equal to 1 as well" in {
-      oer.getHistoricalCurrencyValue(CurrencyUnit.USD, date) must_== (new BigDecimal(1))
+      fx.client.getHistoricalCurrencyValue(CurrencyUnit.USD, date) must_== (new BigDecimal(1))
     }
   }
 }
