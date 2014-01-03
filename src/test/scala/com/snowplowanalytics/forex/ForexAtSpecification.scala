@@ -30,31 +30,44 @@ import org.joda.money._
 */
 class ForexAtSpecification extends Specification { 
   val fx  = TestHelper.fx 
-  val tradeDate = new DateTime(2011, 3, 13, 11, 39, 27, 567, DateTimeZone.forID("America/New_York"))
-  val gbpLatestEodRate = fx.rate.to(CurrencyUnit.GBP).at(tradeDate)
-  "this conversion" should {
-    "always result in a Right" in {
-      gbpLatestEodRate.isRight  
-    }
-  }
-  val gbpmoney = gbpLatestEodRate.right.get
+  val fxWithBaseGBP = TestHelper.fxWithBaseGBP
 
-  "USD to GBP latest eod rate [%s]".format(gbpmoney) should {
+  /**
+  * GBP->CAD with USD as baseCurrency
+  */
+  val tradeDate = new DateTime(2011, 3, 13, 11, 39, 27, 567, DateTimeZone.forID("America/New_York"))
+ 
+  val gbpToCadWithBaseUsd = fx.rate(CurrencyUnit.GBP).to(CurrencyUnit.CAD).at(tradeDate)
+ 
+  val cadMoney = gbpToCadWithBaseUsd.right.get
+
+  "GBP to CAD with USD as base currency returning latest eod rate [%s]".format(cadMoney) should {
     "be > 0" in {
-        gbpmoney.isPositive
+        cadMoney.isPositive
     }
   }
   
+  /**
+  * GBP-> CAD with GBP as base currency
+  */
+  val gbpToCadWithBaseGbp = fxWithBaseGBP.rate.to(CurrencyUnit.CAD).at(tradeDate)
+  
+  val cadMoneyWithBaseGbp = gbpToCadWithBaseGbp.right.get
 
-  val cnyOverGbpHistorical = fx.rate(CurrencyUnit.getInstance("CNY")).to(CurrencyUnit.GBP).at(tradeDate)
-  "this conversion" should {
-    "always result in a Right" in {
-      cnyOverGbpHistorical.isRight  
+  "GBP to CAD with GBP as base currency returning latest eod rate [%s]".format(cadMoneyWithBaseGbp) should {
+    "be > 0" in {
+        cadMoneyWithBaseGbp.isPositive
     }
   }
+
+  /**
+  * CNY -> GBP with USD as base currency
+  */
+  val cnyOverGbpHistorical = fx.rate(CurrencyUnit.getInstance("CNY")).to(CurrencyUnit.GBP).at(tradeDate)
+
   val cnyTogbpmoney = cnyOverGbpHistorical.right.get
 
-  "CNY to GBP latest eod rate [%s]".format(cnyTogbpmoney) should {
+  "CNY to GBP with USD as base currency returning latest eod rate [%s]".format(cnyTogbpmoney) should {
     "be > 0" in {
       cnyTogbpmoney.isPositive
     }

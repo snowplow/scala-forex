@@ -31,33 +31,45 @@ import org.joda.money._
 */
 class ForexNowishSpecification extends Specification { 
   val fx  = TestHelper.fx 
-  
+  val fxWithBaseGBP = TestHelper.fxWithBaseGBP  
+ 
+  /**
+  * CAD -> GBP with base currency USD 
+  */
   val cadOverGbpNowish = fx.rate(CurrencyUnit.getInstance("CAD")).to(CurrencyUnit.GBP).nowish
-  
-  "this conversion" should {
-    "always result in a Right" in {
-      cadOverGbpNowish.isRight  
-    }
-  }
+ 
   val gbpmoney = cadOverGbpNowish.right.get
-   "CAD/GBP near-live rate [%s]".format(gbpmoney) should {
-     "be smaller than 1" in {
+  
+  "CAD to GBP with USD as base currency returning near-live rate [%s]".format(gbpmoney) should {
+     "be smaller than 1 pound" in {
          gbpmoney.isLessThan(Money.of(CurrencyUnit.GBP, 1))
      }
   }
 
-  val jpyTogbpNowish = fx.rate(CurrencyUnit.getInstance("JPY")).to(CurrencyUnit.GBP).nowish
-  "this conversion" should {
-    "always result in a Right" in {
-      jpyTogbpNowish.isRight  
-    }
-  }
-  val jpyTogbpmoney = jpyTogbpNowish.right.get 
-  "JPY/GBP live rate [%s]".format(jpyTogbpmoney) should {
-    "be smaller than 1 and greater than 0" in { 
-      jpyTogbpmoney.isLessThan(Money.of(CurrencyUnit.GBP, 1))
+  /**
+  * GBP -> JPY with base currency USD
+  */
+  val gbpToJpyWithBaseUsd = fx.rate(CurrencyUnit.GBP).to(CurrencyUnit.getInstance("JPY")).nowish
+
+  val jpyMoneyWithBaseUsd = gbpToJpyWithBaseUsd.right.get 
+  
+  "GBP to JPY with USD as base currency returning near-live rate [%s]".format(jpyMoneyWithBaseUsd) should {
+    "be greater than 1 Yen" in { 
+      jpyMoneyWithBaseUsd.isGreaterThan(BigMoney.of(CurrencyUnit.getInstance("JPY"), 1).toMoney(RoundingMode.HALF_EVEN))
     }
   }                        
+
+  /**
+  * GBP -> JPY with base currency GBP
+  */
+  val gbpToJpyWithBaseGbp = fx.rate.to(CurrencyUnit.getInstance("JPY")).nowish
+   
+  val jpyMoneyWithBaseGbp = gbpToJpyWithBaseUsd.right.get 
   
+  "GBP to JPY with GBP as base currency returning near-live rate [%s]".format(jpyMoneyWithBaseGbp) should {
+    "be greater than 1 Yen" in { 
+      jpyMoneyWithBaseGbp.isGreaterThan(BigMoney.of(CurrencyUnit.getInstance("JPY"), 1).toMoney(RoundingMode.HALF_EVEN))
+    }
+  }      
 }
 

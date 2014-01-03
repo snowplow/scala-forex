@@ -12,12 +12,15 @@
  */
 package com.snowplowanalytics.forex
 
+import org.joda.money._
 /**
  * make all tests share one forex object
  */
 object TestHelper {
 
   val key = sys.env("OER_KEY") // Warning: this will give nasty errors if env var not exported
-  val conf = new ForexConfig(key, false)
-  val fx = new Forex(conf)
+  val conf = new ForexConfig(key, false) // with default base currency USD
+  val fx = new Forex(conf) // forex object with USD as base currency
+  val confWithBaseGBP = new ForexConfig(key, true, baseCurrency = CurrencyUnit.GBP) // set base currency to GBP
+  val fxWithBaseGBP = new Forex(confWithBaseGBP) // forex object with GBP as base currency
 }

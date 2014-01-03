@@ -28,6 +28,8 @@ import org.joda.money._
 
 /**
 * Testing method for getting the end-of-date exchange rate
+* since historical forex rate is fixed, the actual look up result should be 
+* the same as the value in the table
 */
 class ForexEodSpecification extends Specification with DataTables { 
 
@@ -35,7 +37,8 @@ class ForexEodSpecification extends Specification with DataTables {
   
   override def is = 
     "forex rate between two currencies for a specific date is always the same" ! e1
-
+  
+  // value obtained from OER API
   def e1 = 
     "SOURCE CURRENCY"   || "TARGET CURRENCY"   | "DATE"        | "EXPECTED OUTPUT"  |
     "USD"               !! "GBP"               ! "2011-03-13"  ! "0.62"             |
@@ -46,7 +49,7 @@ class ForexEodSpecification extends Specification with DataTables {
       (fromCurr, toCurr, date, exp) =>
         fx.rate(CurrencyUnit.getInstance(fromCurr))
           .to(CurrencyUnit.getInstance(toCurr))
-          .eod(DateTime.parse(date)).right.get.getAmount.toString must_== exp
+          .eod(DateTime.parse(date)).right.get.getAmount.toString must_== exp  
     }
 }
 

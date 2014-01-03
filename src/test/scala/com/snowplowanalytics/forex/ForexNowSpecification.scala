@@ -30,30 +30,44 @@ import org.joda.money._
 */
 class ForexNowSpecification extends Specification { 
   val fx  = TestHelper.fx 
+  val fxWithBaseGBP = TestHelper.fxWithBaseGBP
+  
+  /**
+  * trade 10000 USD to JPY at live exchange rate
+  */
   val tradeInYenNow = fx.convert(10000).to(CurrencyUnit.JPY).now
-  "this conversion" should {
-    "always result in a Right" in {
-      tradeInYenNow.isRight  
-    }
-  }
-  val jpymoney = tradeInYenNow.right.get
-   "convert 10000 USD dollars to Yen now = [%s]".format(jpymoney) should {
+
+  val jpyMoneyWithBaseUsd = tradeInYenNow.right.get
+  
+  "convert 10000 USD dollars to Yen now = [%s]".format(jpyMoneyWithBaseUsd) should {
      "be > 10000" in {
-      jpymoney.isGreaterThan(Money.of(CurrencyUnit.JPY, 10000, RoundingMode.HALF_EVEN))
+      jpyMoneyWithBaseUsd.isGreaterThan(Money.of(CurrencyUnit.JPY, 10000, RoundingMode.HALF_EVEN))
      }
   }
 
-  val cnyTogbpNow = fx.rate(CurrencyUnit.getInstance("CNY")).to(CurrencyUnit.GBP).now
-  "this conversion" should {
-    "always result in a Right" in {
-      cnyTogbpNow.isRight  
-    }
-  }
-  val gbpmoney = cnyTogbpNow.right.get 
-  "CNY/GBP live rate [%s]".format(gbpmoney) should {
-    "be smaller than 1 and greater than 0" in { 
-      gbpmoney.isLessThan(Money.of(CurrencyUnit.GBP, 1))
+  /**
+  * GBP -> SGD with USD as base currency
+  */
+  val gbpToSgdWithBaseUsd = fx.rate(CurrencyUnit.GBP).to(CurrencyUnit.getInstance("SGD")).now
+
+  val sgdMoneyWithBaseUsd = gbpToSgdWithBaseUsd.right.get 
+  
+  "GBP to SGD with base currency USD live exchange rate [%s]".format(sgdMoneyWithBaseUsd) should {
+    "be greater than 1 SGD" in { 
+      sgdMoneyWithBaseUsd.isGreaterThan(Money.of(CurrencyUnit.getInstance("SGD"), 1))
     }
   }                        
+   
+  /**
+  * GBP -> SGD with GBP as base currency
+  */
+  val gbpToSgdWithBaseGbp = fxWithBaseGBP.rate.to(CurrencyUnit.getInstance("SGD")).now
   
+  val sgdMoneyWithBaseGbp = gbpToSgdWithBaseUsd.right.get 
+  
+  "GBP to SGD with base currency GBP live exchange rate [%s]".format(sgdMoneyWithBaseGbp) should {
+    "be greater than 1 SGD" in { 
+      sgdMoneyWithBaseGbp.isGreaterThan(Money.of(CurrencyUnit.getInstance("SGD"), 1))
+    }
+  }        
 }
