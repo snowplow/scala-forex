@@ -18,7 +18,7 @@ package com.snowplowanalytics.forex
 import java.math.BigDecimal
 import java.math.RoundingMode
 // Scala
-import scala.collection.JavaConversions._
+// import scala.collection.JavaConversions._
 // Specs2
 import org.specs2.mutable.Specification
 // Joda 

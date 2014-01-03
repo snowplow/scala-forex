@@ -1,9 +1,13 @@
 language: scala
 scala:
-- 2.10.0
-- 2.10.1
+   - 2.9.2
+   - 2.9.3
+   - 2.10.0
+   - 2.10.1
 jdk:
-- oraclejdk7
+  - oraclejdk7
+  - openjdk6
+  - openjdk7
 env:
   global:
   - secure: kxIeiY9eiOSNOr9yn76bCHL/3/XnxyYT8MSSKcdmrAVcYxN9zohWo9kAXQNPi9mDeQxoVYaIG2EOd01gddjTa/DdVyeij93XDSS31e+HmtfqfF7rDa/r819MOemYwP0lgn2lOHnf5BNu6MQtRUnwXCUz6lUh/hXIYBD4TBQmVl4=

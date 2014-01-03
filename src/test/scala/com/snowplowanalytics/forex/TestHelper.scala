@@ -16,5 +16,8 @@ package com.snowplowanalytics.forex
  * make all tests share one forex object
  */
 object TestHelper {
-  val fx = new Forex(new ForexConfig(sys.env("OER_KEY"), false))
+
+  val key = sys.env("OER_KEY") // Warning: this will give nasty errors if env var not exported
+  val conf = new ForexConfig(key, false)
+  val fx = new Forex(conf)
 }

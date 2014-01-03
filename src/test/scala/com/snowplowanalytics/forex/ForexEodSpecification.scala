@@ -18,7 +18,7 @@ package com.snowplowanalytics.forex
 import java.math.BigDecimal
 import java.math.RoundingMode
 // Scala
-import scala.collection.JavaConversions._
+// import scala.collection.JavaConversions._
 // Specs2
 import org.specs2.mutable.Specification
 import org.specs2.matcher.DataTables
@@ -30,9 +30,9 @@ import org.joda.money._
 * Testing method for getting the end-of-date exchange rate
 */
 class ForexEodSpecification extends Specification with DataTables { 
+
   val fx  = TestHelper.fx 
   
-
   override def is = 
     "forex rate between two currencies for a specific date is always the same" ! e1
 
@@ -45,8 +45,8 @@ class ForexEodSpecification extends Specification with DataTables {
     "GBP"               !! "SGD"               ! "2008-03-13"  ! "2.80"             |> {
       (fromCurr, toCurr, date, exp) =>
         fx.rate(CurrencyUnit.getInstance(fromCurr))
-            .to(CurrencyUnit.getInstance(toCurr))
-              .eod(DateTime.parse(date)).right.get.getAmount.toString must_== exp
+          .to(CurrencyUnit.getInstance(toCurr))
+          .eod(DateTime.parse(date)).right.get.getAmount.toString must_== exp
     }
 }
 
