@@ -10,4 +10,5 @@ jdk:
 - openjdk7
 env:
   global:
-    secure: mab0QeaiidIOZ2lOGgKtRcnjBObEcT0YgcRoXUTBxuomFwz5pFFARsplMzQBbS66bBAs8MrncfvcoCQTeQsaiwPgP11RjsjyfYp80sCzWG713gcR4HI+u6vjlED1oOBH5QdsGQd1Ce8RyXoAv64L/QdneFZMYKVGcw5yvbx2gyg=
+  - secure: mab0QeaiidIOZ2lOGgKtRcnjBObEcT0YgcRoXUTBxuomFwz5pFFARsplMzQBbS66bBAs8MrncfvcoCQTeQsaiwPgP11RjsjyfYp80sCzWG713gcR4HI+u6vjlED1oOBH5QdsGQd1Ce8RyXoAv64L/QdneFZMYKVGcw5yvbx2gyg=
+  - secure: 0SgjtZLYr1dUzSUCuuHf5wcSZT1tn12RsFswFv0e/RwgxmhXjtzqqt0CwHHWFY9LUjRQd5tOelz1Ah12cqJZItiMAd2PYA1ZDtn3en7/OwRabVXx8fa+A3TFYXeeHQWegFrFT5tZZ4Gu05WKNLCFivqefL0Qz3m+rZAZEnU/B+M=
