@@ -64,7 +64,7 @@ abstract class ForexClient(config: ForexConfig) {
 	 *            Desired currency
 	 * @param date
 	 *            Date of desired rate
-	 * @return Value of exchange rate in desired date
+	 * @return Value of exchange rate on desired date or error message if the date is invalid
 	 */
-	 def getHistoricalCurrencyValue(currency: CurrencyUnit, date: DateTime):BigDecimal
+	 def getHistoricalCurrencyValue(currency: CurrencyUnit, date: DateTime):Either[String, BigDecimal]
 }

@@ -82,9 +82,9 @@ class OerClient(config: ForexConfig) extends ForexClient(config) {
 		}
 	}
 
-	def getHistoricalCurrencyValue(currency: CurrencyUnit, date: DateTime): BigDecimal = {
+	def getHistoricalCurrencyValue(currency: CurrencyUnit, date: DateTime): Either[String, BigDecimal] = {
     if (date.isBefore(new DateTime(1999,1,1,0,0)) || date.isAfter(DateTime.now)) {
-      throw new UnavailableExchangeRateException("exchange rate unavailable on the date[%s]".format(date))
+      Left("exchange rate unavailable on the date[%s]".format(date))
     }
     val dateCal    = date.toGregorianCalendar
 	  val day   	   = dateCal.get(Calendar.DAY_OF_MONTH)
@@ -94,7 +94,7 @@ class OerClient(config: ForexConfig) extends ForexClient(config) {
 		val key = new Tuple3(config.baseCurrency, currency, date) 
 		eodCache.get(key) match {
 	    case Some(rate) =>  
-                rate
+                Right(rate)
 	    case None       =>
                 val node = getJsonNodeFromAPI(historicalLink, currency)
                 val currencyNameIterator = node.getFieldNames 
@@ -107,7 +107,7 @@ class OerClient(config: ForexConfig) extends ForexClient(config) {
                     case (e: IllegalCurrencyException) => {}
                   }                        			                          	
                 }
-                node.findValue(currency.toString).getDecimalValue
+                Right(node.findValue(currency.toString).getDecimalValue)
     }  
 	}
 

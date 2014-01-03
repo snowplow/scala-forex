@@ -252,27 +252,35 @@ case class ForexLookupWhen(conversionAmount: Int, fromCurr: CurrencyUnit, toCurr
                               case Some(exchangeRate) =>                                              
                                                  rate = new BigDecimal(1).divide(exchangeRate, fx.commonScale, RoundingMode.HALF_EVEN)
                               case None =>
-                                                 rate = getHistoricalRate(eodDate)
-                                                 fx.client.eodCache.put((fromCurr, toCurr, eodDate), rate)            
+                                                 if (getHistoricalRate(eodDate).isRight) {
+                                                   rate = getHistoricalRate(eodDate).right.get
+                                                   fx.client.eodCache.put((fromCurr, toCurr, eodDate), rate) 
+                                                 } else {
+                                                    getHistoricalRate(eodDate)
+                                                 }          
                             }
                             Right(moneyInSourceCurrency.convertedTo(toCurr, rate).toMoney(RoundingMode.HALF_EVEN))
       }
     } catch {
         case (e: IllegalCurrencyException) => Left(e.getMessage)
-        case (e: UnavailableExchangeRateException) => Left(e.msg)
         case (e: MalformedURLException) => Left("invalid URL")
         case (e: IOException) =>           Left(e.getMessage)
     }
   }
 
   /**
-  * gets historical forex rate between two currencies on a given date  
-  * @returns exchange rate as BigDecimal 
+  * gets historical forex rate between two currencies on a given date,
+    baseOverFrom and baseOverTo have the same date so either they both return Left or both return Right 
+  * @returns exchange rate as BigDecimal or error message if the date given is invalid
   */
-  private def getHistoricalRate(date: DateTime): BigDecimal = {
+  private def getHistoricalRate(date: DateTime): Either[String, BigDecimal] = {
     val baseOverFrom = fx.client.getHistoricalCurrencyValue(fromCurr, date)
     val baseOverTo   = fx.client.getHistoricalCurrencyValue(toCurr, date)
-    getForexRate(baseOverFrom, baseOverTo)
+    if (baseOverFrom.isRight && baseOverTo.isRight) {
+      Right(getForexRate(baseOverFrom.right.get, baseOverTo.right.get))
+    } else {
+      Left(baseOverFrom.left.get)
+    }
   }
 
   /** 

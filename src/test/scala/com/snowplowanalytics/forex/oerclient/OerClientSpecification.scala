@@ -46,7 +46,7 @@ class OerClientSpecification extends Specification {
   val date = DateTime.parse("2008-01-01T01:01:01.123+0900")
   "historical currency value for USD on 01/01/2008" should {
     "always equal to 1 as well" in {
-      fx.client.getHistoricalCurrencyValue(CurrencyUnit.USD, date) must_== (new BigDecimal(1))
+      fx.client.getHistoricalCurrencyValue(CurrencyUnit.USD, date) must_== Right((new BigDecimal(1)))
     }
   }
 }
