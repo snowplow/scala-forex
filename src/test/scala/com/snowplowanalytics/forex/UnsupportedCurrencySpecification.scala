@@ -29,42 +29,16 @@ import org.joda.money._
 class UnsupportedCurrencySpecification extends Specification { 
   val fx  = TestHelper.fx 
   
-  "a BTC lookup in CurrencyUnit" should {
-    "throw IllegalCurrencyException" in {
-      def btcException: Either[String, Money] = {
-        fx.rate(CurrencyUnit.getInstance("BTC")).to(CurrencyUnit.GBP).now
-      }
-      btcException must throwA[IllegalCurrencyException]
+  
+  "joda money" should {
+    Seq("BTC", "RRU", "EEK") foreach { currency =>
+      (" not support currency: " + currency) >> {
+        def unsupportedCurrencyException: Either[String, Money] = {
+          fx.rate(CurrencyUnit.getInstance(currency)).to(CurrencyUnit.GBP).now
+        }
+        unsupportedCurrencyException must throwA[IllegalCurrencyException]
+      } 
     }
   }
- 
-  "a BTC lookup in String wrapper method" should {
-    "throw the same exception" in {
-      val btcLookup = fx.rate("BTC")
-      btcLookup.isLeft
-    }
-  }
-
-  "an EEK lookup in CurrencyUnit" should {
-    "throw IllegalCurrencyException" in {
-      def btcException: Either[String, Money] = {
-        fx.rate(CurrencyUnit.getInstance("EEK")).to(CurrencyUnit.GBP).now
-      }
-      btcException must throwA[IllegalCurrencyException]
-    }
-  }
-
-  "an EEK lookup in String wrapper method" should {
-    "throw the same exception" in {
-      val eekLookup = fx.rate("EEK")
-      eekLookup.isLeft
-    }
-  }
-
-  "convert USD to BTC" should {
-    "throw an IllegalCurrencyException" in {
-      val usdTobtc = fx.rate.to("BTC")
-      usdTobtc.isLeft
-    }
-  }
+  
 }
