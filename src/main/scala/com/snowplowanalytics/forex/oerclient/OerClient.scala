@@ -37,84 +37,99 @@ import com.snowplowanalytics.forex.ForexConfig
 // Forex
 import com.snowplowanalytics.forex.Forex
 
-
 /**
  * Implements Json for Open Exchange Rates(http://openexchangerates.org)
  * @param apiKey The API key to Open Exchange Rates
  */
 
 class OerClient(config: ForexConfig) extends ForexClient(config) {
-	private val oerUrl = "http://openexchangerates.org/api/"
-	// sets the base currency in the url 
-	private val base   = if (config.configurableBase) "&base=" + config.baseCurrency 
-						           else ""
-	/**
-	 * The constant that will hold the URI for
-	 * a latest-exchange rate lookup from OER
-	 */
-	private val lastest = "latest.json?app_id=" + config.appId + base
-	/**
-	 * The constant will hold the URI for a 
-	 * historical-exchange rate lookup from OER
-	 */
-	private var historical = "historical/%04d-%02d-%02d.json?app_id=" + config.appId + base
-	private val mapper = new ObjectMapper()
-	def getCurrencyValue(currency: CurrencyUnit): BigDecimal= {
-	  val key = new Tuple2(config.baseCurrency, currency) 
-	  nowishCache.get(key) match {
+
+  private val oerUrl = "http://openexchangerates.org/api/"
+
+  // sets the base currency in the url 
+  private val base   = if (config.configurableBase) "&base=" + config.baseCurrency 
+                       else ""
+  /**
+   * The constant that will hold the URI for
+   * a latest-exchange rate lookup from OER
+   */
+  private val lastest = "latest.json?app_id=" + config.appId + base
+
+  /**
+   * The constant will hold the URI for a 
+   * historical-exchange rate lookup from OER
+   */
+  private var historical = "historical/%04d-%02d-%02d.json?app_id=" + config.appId + base
+
+  /**
+   *
+   */
+  private val mapper = new ObjectMapper()
+  
+  /**
+   *
+   */
+  def getCurrencyValue(currency: CurrencyUnit): BigDecimal= {
+    val key = new Tuple2(config.baseCurrency, currency) 
+    nowishCache.get(key) match {
       case Some(value) =>
                 val (date, rate) = value
                 rate 
-     	case None        => 
+      case None        => 
                 val node = getJsonNodeFromAPI(lastest)
                 val currencyNameIterator = node.getFieldNames
                 while (currencyNameIterator.hasNext) {  
                   val currencyName = currencyNameIterator.next
                   try {
                     val keyPair   = new Tuple2(config.baseCurrency, CurrencyUnit.getInstance(currencyName))
-                	  val valuePair = new Tuple2(DateTime.now, node.findValue(currencyName).getDecimalValue)                                                                       
+                    val valuePair = new Tuple2(DateTime.now, node.findValue(currencyName).getDecimalValue)                                                                       
                     nowishCache.put(keyPair, valuePair)
                   } catch {
                     case (e: IllegalCurrencyException) => {}
                   }
                 }
                 node.findValue(currency.toString).getDecimalValue
-		}
-	}
+    }
+  }
 
-	def getHistoricalCurrencyValue(currency: CurrencyUnit, date: DateTime): Either[String, BigDecimal] = {
+  /**
+   *
+   */
+  def getHistoricalCurrencyValue(currency: CurrencyUnit, date: DateTime): Either[String, BigDecimal] = {
     if (date.isBefore(new DateTime(1999,1,1,0,0)) || date.isAfter(DateTime.now)) {
       Left("exchange rate unavailable on the date[%s]".format(date))
     }
     val dateCal    = date.toGregorianCalendar
-	  val day   	   = dateCal.get(Calendar.DAY_OF_MONTH)
-	  val month 	   = dateCal.get(Calendar.MONTH) + 1
-		val year  	   = dateCal.get(Calendar.YEAR)
-		val historicalLink = historical.format(year, month, day)
-		val key = new Tuple3(config.baseCurrency, currency, date) 
-		eodCache.get(key) match {
-	    case Some(rate) =>  
+    val day        = dateCal.get(Calendar.DAY_OF_MONTH)
+    val month      = dateCal.get(Calendar.MONTH) + 1
+    val year       = dateCal.get(Calendar.YEAR)
+    val historicalLink = historical.format(year, month, day)
+    val key = new Tuple3(config.baseCurrency, currency, date) 
+    eodCache.get(key) match {
+      case Some(rate) =>  
                 Right(rate)
-	    case None       =>
+      case None       =>
                 val node = getJsonNodeFromAPI(historicalLink)
                 val currencyNameIterator = node.getFieldNames 
                 while (currencyNameIterator.hasNext) {  
                   val currencyName = currencyNameIterator.next
                   try {
                     val keySet  = new Tuple3(config.baseCurrency, CurrencyUnit.getInstance(currencyName), date)
-                  	eodCache.put(keySet, node.findValue(currencyName).getDecimalValue)  
+                    eodCache.put(keySet, node.findValue(currencyName).getDecimalValue)  
                   } catch {
                     case (e: IllegalCurrencyException) => {}
-                  }                        			                          	
+                  }                                                         
                 }
                 Right(node.findValue(currency.toString).getDecimalValue)
     }  
-	}
+  }
 
-	// helper method which returns the node which contains a list of currency and rate pair
-	private def getJsonNodeFromAPI(downloadPath: String): JsonNode = {
-	  val url  = new URL(oerUrl + downloadPath)
-	  val conn = url.openConnection
+  /**
+   * helper method which returns the node which contains a list of currency and rate pair
+   */  
+  private def getJsonNodeFromAPI(downloadPath: String): JsonNode = {
+    val url  = new URL(oerUrl + downloadPath)
+    val conn = url.openConnection
     val root = mapper.readTree(conn.getInputStream).getElements
     var resNode       = root.next
     while (root.hasNext) {
@@ -124,4 +139,3 @@ class OerClient(config: ForexConfig) extends ForexClient(config) {
   }
 
 }
-
