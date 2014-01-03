@@ -10,22 +10,12 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
- 
 package com.snowplowanalytics.forex
 
-// Java
-import java.math.BigDecimal
-import java.math.RoundingMode
-// Scala
-import scala.collection.JavaConversions._
-// Specs2
-import org.specs2.mutable.Specification
-// Joda 
-import org.joda.time._
-import org.joda.money._
-
-// make all tests share one forex object
+/**
+ * make all tests share one forex object
+ */
 object TestHelper {
   // run 'export SBT_OPTS=-Dforex.key=[key]' in command line before running tests
-  val fx = new Forex(new ForexConfig(sys.env("SBT_OPTS").split("=")(1)  , false))
+  val fx = new Forex(new ForexConfig(System.getenv("SBT_OPTS").split("=")(1), false))
 }
