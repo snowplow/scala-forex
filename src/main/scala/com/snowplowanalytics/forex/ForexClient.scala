@@ -40,14 +40,14 @@ object ForexClient {
 abstract class ForexClient(config: ForexConfig) {
   // LRU cache for nowish request, with tuple of source currency and target currency as the key
   // and tuple of time and exchange rate as the value 
-  val nowishCache = if (config.nowishCacheSize > 0) 
-                          new LruMap[NowishCacheKey, NowishCacheValue](config.nowishCacheSize)
-                    else null
+  val nowishCacheOption = if (config.nowishCacheSize > 0) 
+                          Some(new LruMap[NowishCacheKey, NowishCacheValue](config.nowishCacheSize))
+                    else None
   // LRU cache for historical request, with triple of source currency, target currency and time as the key 
   // and exchange rate as the value
-  val eodCache = if (config.eodCacheSize > 0)
-                            new LruMap[EodCacheKey, EodCacheValue](config.eodCacheSize)
-                        else null
+  val eodCacheOption = if (config.eodCacheSize > 0)
+                            Some(new LruMap[EodCacheKey, EodCacheValue](config.eodCacheSize))
+                        else None
   /**
    * Get the latest exchange rate from a given currency
    * 

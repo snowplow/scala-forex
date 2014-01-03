@@ -59,15 +59,19 @@ class OerClient(config: ForexConfig) extends ForexClient(config) {
    * The constant will hold the URI for a 
    * historical-exchange rate lookup from OER
    */
-  private var historical = "historical/%04d-%02d-%02d.json?app_id=" + config.appId + base
+  private val historical = "historical/%04d-%02d-%02d.json?app_id=" + config.appId + base
 
   /**
-   *
+   * mapper for reading JSON objects 
    */
   private val mapper = new ObjectMapper()
   
+  val Some(nowishCache) = nowishCacheOption
+  val Some(eodCache)    = eodCacheOption
   /**
-   *
+   * get live currency value for the desired currency 
+   * update nowishCache if an API request has to be done,
+   * silently drop the currency types which Joda money does not support  
    */
   def getCurrencyValue(currency: CurrencyUnit): BigDecimal= {
     val key = new Tuple2(config.baseCurrency, currency) 
@@ -93,7 +97,10 @@ class OerClient(config: ForexConfig) extends ForexClient(config) {
   }
 
   /**
-   *
+   * get historical forex rate for the given currency and date
+   * return error message if the date is invalid 
+   * update eodCache if an API request has to be done,
+   * silently drop the currency types which Joda money does not support  
    */
   def getHistoricalCurrencyValue(currency: CurrencyUnit, date: DateTime): Either[String, BigDecimal] = {
     if (date.isBefore(new DateTime(1999,1,1,0,0)) || date.isAfter(DateTime.now)) {

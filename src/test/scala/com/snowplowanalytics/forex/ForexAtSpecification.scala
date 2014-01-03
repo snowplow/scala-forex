@@ -40,7 +40,7 @@ class ForexAtSpecification extends Specification {
   val gbpmoney = gbpLatestEodRate.right.get
 
   "USD to GBP latest eod rate [%s]".format(gbpmoney) should {
-    "be > 0, historicalCache size = [%s]".format(fx.client.eodCache.size) in {
+    "be > 0" in {
         gbpmoney.isPositive
     }
   }
@@ -55,7 +55,7 @@ class ForexAtSpecification extends Specification {
   val cnyTogbpmoney = cnyOverGbpHistorical.right.get
 
   "CNY to GBP latest eod rate [%s]".format(cnyTogbpmoney) should {
-    "be > 0, historicalCache size = [%s]".format(fx.client.eodCache.size) in {
+    "be > 0" in {
       cnyTogbpmoney.isPositive
     }
   }
