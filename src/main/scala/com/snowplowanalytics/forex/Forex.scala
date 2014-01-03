@@ -149,6 +149,8 @@ case class ForexLookupWhen(conversionAmount: Int, fromCurr: CurrencyUnit, toCurr
   val conversionAmt = new BigDecimal(conversionAmount)                      
   // money in a given amount 
   val moneyInSourceCurrency = BigMoney.of(fromCurr, conversionAmt)
+  val Some(nowishCache) = fx.client.nowishCacheOption
+  val Some(eodCache)    = fx.client.eodCacheOption
   /**
   * perform live currency look up or conversion, no caching needed
   */
@@ -173,7 +175,7 @@ case class ForexLookupWhen(conversionAmount: Int, fromCurr: CurrencyUnit, toCurr
   def nowish: Either[String, Money] = {
     try {
       val nowishTime = DateTime.now.minusSeconds(fx.config.nowishSecs)
-      fx.client.nowishCache.get((fromCurr, toCurr)) match {
+      nowishCache.get((fromCurr, toCurr)) match {
         // from:to found in LRU cache
         case Some(tpl) => {
           println("found in nowish cache")
@@ -188,7 +190,7 @@ case class ForexLookupWhen(conversionAmount: Int, fromCurr: CurrencyUnit, toCurr
         }
         // from:to not found in LRU
         case None => {
-          fx.client.nowishCache.get((toCurr, fromCurr)) match {
+          nowishCache.get((toCurr, fromCurr)) match {
             // to:from found in LRU
             case Some(tpl) => { 
                println("inverse found in nowish cache")
@@ -217,7 +219,7 @@ case class ForexLookupWhen(conversionAmount: Int, fromCurr: CurrencyUnit, toCurr
     val live = now
     live match {
       case Left(errorMessage) => live
-      case Right(forexMoney)  => fx.client.nowishCache.put((fromCurr, toCurr), (DateTime.now, forexMoney.getAmount))  
+      case Right(forexMoney)  => nowishCache.put((fromCurr, toCurr), (DateTime.now, forexMoney.getAmount))  
     }
     live
   }
@@ -240,19 +242,19 @@ case class ForexLookupWhen(conversionAmount: Int, fromCurr: CurrencyUnit, toCurr
   */
   def eod(eodDate: DateTime): Either[String, Money] = { 
     try {
-      fx.client.eodCache.get((fromCurr, toCurr, eodDate)) match {
+      eodCache.get((fromCurr, toCurr, eodDate)) match {
       
         case Some(rate) => 
                             Right(moneyInSourceCurrency.convertedTo(toCurr, rate).toMoney(RoundingMode.HALF_EVEN))
         case None       =>  
                             var rate = new BigDecimal(1)
-                            fx.client.eodCache.get((toCurr, fromCurr, eodDate)) match {                  
+                            eodCache.get((toCurr, fromCurr, eodDate)) match {                  
                               case Some(exchangeRate) =>                                              
                                                  rate = new BigDecimal(1).divide(exchangeRate, fx.commonScale, RoundingMode.HALF_EVEN)
                               case None =>
                                                  if (getHistoricalRate(eodDate).isRight) {
                                                    rate = getHistoricalRate(eodDate).right.get
-                                                   fx.client.eodCache.put((fromCurr, toCurr, eodDate), rate) 
+                                                   eodCache.put((fromCurr, toCurr, eodDate), rate) 
                                                  } else {
                                                     getHistoricalRate(eodDate)
                                                  }          

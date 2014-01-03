@@ -31,18 +31,33 @@ import org.joda.money._
 */
 class ForexNowishSpecification extends Specification { 
   val fx  = TestHelper.fx 
-  val cnyOverGbpNowish = fx.rate(CurrencyUnit.getInstance("CNY")).to(CurrencyUnit.GBP).nowish
+  
+  val cadOverGbpNowish = fx.rate(CurrencyUnit.getInstance("CAD")).to(CurrencyUnit.GBP).nowish
   
   "this conversion" should {
     "always result in a Right" in {
-      cnyOverGbpNowish.isRight  
+      cadOverGbpNowish.isRight  
     }
   }
-  val gbpmoney = cnyOverGbpNowish.right.get
-   "CNY/GBP near-live rate [%s]".format(gbpmoney) should {
-     "be smaller than 1, nowishCache size = [%s]".format(fx.client.nowishCache.size) in {
+  val gbpmoney = cadOverGbpNowish.right.get
+   "CAD/GBP near-live rate [%s]".format(gbpmoney) should {
+     "be smaller than 1" in {
          gbpmoney.isLessThan(Money.of(CurrencyUnit.GBP, 1))
      }
   }
+
+  val jpyTogbpNowish = fx.rate(CurrencyUnit.getInstance("JPY")).to(CurrencyUnit.GBP).nowish
+  "this conversion" should {
+    "always result in a Right" in {
+      jpyTogbpNowish.isRight  
+    }
+  }
+  val gbpmoney = jpyTogbpNowish.right.get 
+  "JPY/GBP live rate [%s]".format(gbpmoney) should {
+    "be smaller than 1 and greater than 0" in { 
+      jpyTogbpNowish.isLessThan(Money.of(CurrencyUnit.GBP, 1))
+    }
+  }                        
+  
 }
 
