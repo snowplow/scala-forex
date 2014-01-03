@@ -17,8 +17,12 @@ object Dependencies {
   val resolutionRepos = Seq(
     // For scala-util
     "Snowplow Analytics Maven repo" at "http://maven.snplow.com/releases/",
-    "Twitter Maven Repo" at "http://maven.twttr.com/" // For Twitter's util functions
-  )
+    // For Twitter's LRU cache
+    "Twitter Maven Repo" at "http://maven.twttr.com/"
+  ) ++ Seq(
+    "snapshots",
+    "releases"
+  ).map(Resolver.sonatypeRepo)
 
   object V {
     // Java
@@ -31,7 +35,7 @@ object Dependencies {
     val collUtil   = "6.3.4"
     val scalaUtil  = "0.1.0"
     // Scala (test only)
-    val specs2     = "2.3.4"
+    val specs2     = "2.3.7"
   }
 
   object Libraries {

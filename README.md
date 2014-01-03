@@ -1,4 +1,4 @@
-# Open Exchange Rates Scala Client
+# Scala Forex [![Build Status](https://travis-ci.org/snowplow/scala-forex.png)](https://travis-ci.org/snowplow/scala-forex)
 
 **NOT YET IMPLEMENTED.**
 
