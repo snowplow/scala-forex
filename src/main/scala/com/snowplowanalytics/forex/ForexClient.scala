@@ -31,8 +31,8 @@ object ForexClient {
    * Generate and get a new OER Forex client
    * @return an Forex client
    */
-  def getOerClient(config: ForexConfig): ForexClient = {
-    new OerClient(config)
+  def getOerClient(config: ForexConfig, oerConfig: OerClientConfig): ForexClient = {
+    new OerClient(config, oerConfig)
   }
 } 
 
@@ -40,12 +40,12 @@ object ForexClient {
 abstract class ForexClient(config: ForexConfig /*, oerConfig: OerClientConfig*/) {
   // LRU cache for nowish request, with tuple of source currency and target currency as the key
   // and tuple of time and exchange rate as the value 
-  val nowishCacheOption = if (config.nowishCacheSize > 0) 
+  val nowishCache = if (config.nowishCacheSize > 0) 
                           Some(new LruMap[NowishCacheKey, NowishCacheValue](config.nowishCacheSize))
                     else None
   // LRU cache for historical request, with triple of source currency, target currency and time as the key 
   // and exchange rate as the value
-  val eodCacheOption = if (config.eodCacheSize > 0)
+  val eodCache = if (config.eodCacheSize > 0)
                             Some(new LruMap[EodCacheKey, EodCacheValue](config.eodCacheSize))
                         else None
   /**

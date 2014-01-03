@@ -19,8 +19,8 @@ import org.joda.money._
 object TestHelper {
 
   val key = sys.env("OER_KEY") // Warning: this will give nasty errors if env var not exported
-  val conf = new ForexConfig(key, false) // with default base currency USD
-  val fx = new Forex(conf) // forex object with USD as base currency
-  val confWithBaseGBP = new ForexConfig(key, true, baseCurrency = CurrencyUnit.GBP) // set base currency to GBP
-  val fxWithBaseGBP = new Forex(confWithBaseGBP) // forex object with GBP as base currency
+  val conf = new OerClientConfig(key, false) // with default base currency USD
+  val fx = new Forex(new ForexConfig(), conf) // forex object with USD as base currency
+  val confWithBaseGBP = new OerClientConfig(key, true) // set base currency to GBP
+  val fxWithBaseGBP = new Forex(new ForexConfig(baseCurrency = CurrencyUnit.GBP), confWithBaseGBP) // forex object with GBP as base currency
 }
