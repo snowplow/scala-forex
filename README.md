@@ -190,7 +190,7 @@ So simply cache the first of those found, and calculate the other. Would need to
 
 ## Copyright and license
 
-ORE Scala Client is copyright 2013 Snowplow Analytics Ltd.
+Scala Forex is copyright 2013-2014 Snowplow Analytics Ltd.
 
 Licensed under the [Apache License, Version 2.0] [license] (the "License");
 you may not use this software except in compliance with the License.
