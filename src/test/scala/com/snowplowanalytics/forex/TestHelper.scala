@@ -16,5 +16,5 @@ package com.snowplowanalytics.forex
  * make all tests share one forex object
  */
 object TestHelper {
-  val fx = new Forex(new ForexConfig(System.getenv("SBT_OPTS").split("=")(1), false))
+  val fx = new Forex(new ForexConfig(sys.env("OER_KEY"), false))
 }
