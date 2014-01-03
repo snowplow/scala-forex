@@ -27,8 +27,8 @@ import org.joda.money._
 *  testing for unsupported currencies in joda money, e.g. bitcoin(BTC)
 */
 class UnsupportedCurrencySpecification extends Specification { 
-  val fx  = TestHelper.fx 
   
+  val fx  = TestHelper.fx 
   
   "joda money" should {
     Seq("BTC", "RRU", "EEK") foreach { currency =>

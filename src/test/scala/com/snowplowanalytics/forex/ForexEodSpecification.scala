@@ -21,6 +21,7 @@ import java.math.RoundingMode
 import scala.collection.JavaConversions._
 // Specs2
 import org.specs2.mutable.Specification
+import org.specs2.matcher.DataTables
 // Joda 
 import org.joda.time._
 import org.joda.money._
@@ -28,34 +29,24 @@ import org.joda.money._
 /**
 * Testing method for getting the end-of-date exchange rate
 */
-class ForexEodSpecification extends Specification { 
+class ForexEodSpecification extends Specification with DataTables { 
   val fx  = TestHelper.fx 
-  val eodDate = new DateTime(2011, 3, 13, 0, 0)
-  val gbpEodRate =  fx.rate.to(CurrencyUnit.GBP).eod(eodDate)
-  "this conversion" should {
-    "always result in a Right" in {
-      gbpEodRate.isRight  
-    }
-  }
-  val gbpmoney = gbpEodRate.right.get
-  "USD to GBP eod rate [%s]".format(gbpmoney) should {
-    "be > 0, historicalCache size = [%s]".format(fx.client.eodCache.size) in {
-        gbpmoney.isPositive
-    }
-  }
-
-  val tradeInYenHistorical = fx.convert(10000).to(CurrencyUnit.JPY).eod(eodDate) 
-  "this conversion" should {
-    "always result in a Right" in {
-      tradeInYenHistorical.isRight  
-    }
-  }
-  val yenmoney = tradeInYenHistorical.right.get
-  "convert 10000 USD dollars to Yen in 2011 = [%s]".format(yenmoney) should {
-    "be > 10000" in {
-      yenmoney.isGreaterThan(Money.of(CurrencyUnit.JPY, 10000, RoundingMode.HALF_EVEN))
-    }
-  }
   
+
+  override def is = 
+    "forex rate between two currencies for a specific date is always the same" ! e1
+
+  def e1 = 
+    "SOURCE CURRENCY"   || "TARGET CURRENCY"   | "DATE"        | "EXPECTED OUTPUT"  |
+    "USD"               !! "GBP"               ! "2011-03-13"  ! "0.62"             |
+    "USD"               !! "AED"               ! "2011-03-13"  ! "3.67"             |
+    "USD"               !! "CAD"               ! "2011-03-13"  ! "0.98"             |
+    "GBP"               !! "USD"               ! "2011-03-13"  ! "1.60"             |
+    "GBP"               !! "SGD"               ! "2008-03-13"  ! "2.80"             |> {
+      (fromCurr, toCurr, date, exp) =>
+        fx.rate(CurrencyUnit.getInstance(fromCurr))
+            .to(CurrencyUnit.getInstance(toCurr))
+              .eod(DateTime.parse(date)).right.get.getAmount.toString must_== exp
+    }
 }
 
