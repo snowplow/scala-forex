@@ -37,7 +37,7 @@ object ForexClient {
 } 
 
 
-abstract class ForexClient(config: ForexConfig) {
+abstract class ForexClient(config: ForexConfig /*, oerConfig: OerClientConfig*/) {
   // LRU cache for nowish request, with tuple of source currency and target currency as the key
   // and tuple of time and exchange rate as the value 
   val nowishCacheOption = if (config.nowishCacheSize > 0) 

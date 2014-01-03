@@ -15,8 +15,8 @@ package com.snowplowanalytics.forex
 import org.joda.money.CurrencyUnit
 
 /**
-* user defined type for getNearestDay flag
-*/
+ * User defined type for getNearestDay flag
+ */
 sealed trait EodRounding
 object EodRoundDown extends EodRounding
 object EodRoundUp extends EodRounding
@@ -32,7 +32,6 @@ object EodRoundUp extends EodRounding
  * @pvalue getNearestDay - flag for deciding whether to get the exchange rate on closer day or previous day
  * @pvalue baseCurrency  - base currency is set to be USD by default if configurableBase flag is false, otherwise it is user-defined 
  */
-
 case class ForexConfig(
   appId: String,
   configurableBase: Boolean,      // boolean flag to identify the type of user,
@@ -45,3 +44,13 @@ case class ForexConfig(
   getNearestDay: EodRounding   = EodRoundDown,
   baseCurrency: CurrencyUnit   = CurrencyUnit.USD  
 ) 
+
+// TODO: make a constructor for this Config so we can validate that appId is not null
+// TODO
+
+/**
+ * OER-specific configuration
+ *
+case class OerClientConfig(
+
+)  */
