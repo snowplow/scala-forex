@@ -27,18 +27,18 @@ import com.twitter.util.LruMap
  * companion object for ForexClient trait
  */
 object ForexClient {
-	/**
-	 * Generate and get a new OER Forex client
-	 * @return an Forex client
-	 */
-	def getOerClient(config: ForexConfig): ForexClient = {
-		new OerClient(config)
-	}
+  /**
+   * Generate and get a new OER Forex client
+   * @return an Forex client
+   */
+  def getOerClient(config: ForexConfig): ForexClient = {
+    new OerClient(config)
+  }
 } 
 
 
 abstract class ForexClient(config: ForexConfig) {
-	// LRU cache for nowish request, with tuple of source currency and target currency as the key
+  // LRU cache for nowish request, with tuple of source currency and target currency as the key
   // and tuple of time and exchange rate as the value 
   val nowishCache = if (config.nowishCacheSize > 0) 
                           new LruMap[NowishCacheKey, NowishCacheValue](config.nowishCacheSize)
@@ -48,23 +48,23 @@ abstract class ForexClient(config: ForexConfig) {
   val eodCache = if (config.eodCacheSize > 0)
                             new LruMap[EodCacheKey, EodCacheValue](config.eodCacheSize)
                         else null
-	/**
-	 * Get the latest exchange rate from a given currency
-	 * 
-	 * @param currency
-	 *            Desired currency
-	 * @return Latest value of exchange rate
-	 */
-	 def getCurrencyValue(currency: CurrencyUnit):BigDecimal
+  /**
+   * Get the latest exchange rate from a given currency
+   * 
+   * @param currency
+   *            Desired currency
+   * @return Latest value of exchange rate
+   */
+   def getCurrencyValue(currency: CurrencyUnit):BigDecimal
 
-	/**
-	 * Get a historical exchange rate from a given currency and date
-	 * 
-	 * @param currency
-	 *            Desired currency
-	 * @param date
-	 *            Date of desired rate
-	 * @return Value of exchange rate on desired date or error message if the date is invalid
-	 */
-	 def getHistoricalCurrencyValue(currency: CurrencyUnit, date: DateTime):Either[String, BigDecimal]
+  /**
+   * Get a historical exchange rate from a given currency and date
+   * 
+   * @param currency
+   *            Desired currency
+   * @param date
+   *            Date of desired rate
+   * @return Value of exchange rate on desired date or error message if the date is invalid
+   */
+   def getHistoricalCurrencyValue(currency: CurrencyUnit, date: DateTime):Either[String, BigDecimal]
 }

@@ -33,15 +33,15 @@ class UnsupportedEodSpecification extends Specification {
   
   val rateIn1900 = fx.rate.to(CurrencyUnit.GBP).eod(new DateTime(1900, 3, 13, 0, 0))
   "an end-of-date lookup in 1900" should {
-		"throw an exception" in {
-	 		rateIn1900.isLeft
-	 	}
+    "throw an exception" in {
+      rateIn1900.isLeft
+    }
   }
 
   val rateIn2020 = fx.rate.to(CurrencyUnit.GBP).eod(new DateTime(2020, 3, 13, 0, 0))
   "an end-of-date lookup in 2020" should {
-		"throw an exception" in {
-	 		rateIn2020.isLeft
-	 	}
+    "throw an exception" in {
+      rateIn2020.isLeft
+    }
   }
 }
