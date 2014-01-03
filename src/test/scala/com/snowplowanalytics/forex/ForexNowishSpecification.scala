@@ -52,10 +52,10 @@ class ForexNowishSpecification extends Specification {
       jpyTogbpNowish.isRight  
     }
   }
-  val gbpmoney = jpyTogbpNowish.right.get 
-  "JPY/GBP live rate [%s]".format(gbpmoney) should {
+  val jpyTogbpmoney = jpyTogbpNowish.right.get 
+  "JPY/GBP live rate [%s]".format(jpyTogbpmoney) should {
     "be smaller than 1 and greater than 0" in { 
-      jpyTogbpNowish.isLessThan(Money.of(CurrencyUnit.GBP, 1))
+      jpyTogbpmoney.isLessThan(Money.of(CurrencyUnit.GBP, 1))
     }
   }                        
   

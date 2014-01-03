@@ -53,7 +53,7 @@ class OerClient(config: ForexConfig) extends ForexClient(config) {
    * The constant that will hold the URI for
    * a latest-exchange rate lookup from OER
    */
-  private val lastest = "latest.json?app_id=" + config.appId + base
+  private val latest = "latest.json?app_id=" + config.appId + base
 
   /**
    * The constant will hold the URI for a 
@@ -80,7 +80,7 @@ class OerClient(config: ForexConfig) extends ForexClient(config) {
                 val (date, rate) = value
                 rate 
       case None        => 
-                val node = getJsonNodeFromAPI(lastest)
+                val node = getJsonNodeFromAPI(latest)
                 val currencyNameIterator = node.getFieldNames
                 while (currencyNameIterator.hasNext) {  
                   val currencyName = currencyNameIterator.next
@@ -89,7 +89,7 @@ class OerClient(config: ForexConfig) extends ForexClient(config) {
                     val valuePair = new Tuple2(DateTime.now, node.findValue(currencyName).getDecimalValue)                                                                       
                     nowishCache.put(keyPair, valuePair)
                   } catch {
-                    case (e: IllegalCurrencyException) => {}
+                    case (e: IllegalCurrencyException) => // Do nothing
                   }
                 }
                 node.findValue(currency.toString).getDecimalValue
