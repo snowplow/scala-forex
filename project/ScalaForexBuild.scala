@@ -13,7 +13,7 @@
 import sbt._
 import Keys._
 
-object ScalaOerForexBuild extends Build {
+object ScalaForexBuild extends Build {
 
   import Dependencies._
   import BuildSettings._
@@ -24,7 +24,7 @@ object ScalaOerForexBuild extends Build {
   }
 
   // Define our project, with basic project information and library dependencies
-  lazy val project = Project("scala-ore-forex", file("."))
+  lazy val project = Project("scala-forex", file("."))
     .settings(buildSettings: _*)
     .settings(
       libraryDependencies ++= Seq(
@@ -32,9 +32,12 @@ object ScalaOerForexBuild extends Build {
         Libraries.jodaConvert,
         Libraries.jodaMoney,
         Libraries.jackson,
-        Libraries.collUtil,
-        Libraries.scalaUtil,
-        Libraries.specs2
+        Libraries.scalaUtil
+      )
+    ).settings(
+      libraryDependencies <++= Dependencies.onVersion(
+        on292 = Seq(Libraries.collUtilOld, Libraries.specs2Old),
+        on210 = Seq(Libraries.collUtil, Libraries.specs2)
       )
     )
 }
