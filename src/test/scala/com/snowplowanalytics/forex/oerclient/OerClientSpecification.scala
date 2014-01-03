@@ -23,13 +23,14 @@ import org.specs2.mutable.Specification
 // Joda 
 import org.joda.time._
 import org.joda.money._
-// TestHelper
-import com.snowplowanalytics.forex.TestHelper
+
+import com.snowplowanalytics.forex.Forex
+import com.snowplowanalytics.forex.ForexConfig
 /**
 * Testing methods for Open exchange rate client 
 */
 class OerClientSpecification extends Specification { 
-  val fx  = TestHelper.fx
+  val fx = new Forex(new ForexConfig(System.getenv("SBT_OPTS").split("=")(1), false))
   "live currency value for USD" should { 
     "always equal to 1" in {
       fx.client.getCurrencyValue(CurrencyUnit.USD) must_== (new BigDecimal(1))

@@ -22,13 +22,14 @@ import scala.collection.JavaConversions._
 import org.specs2.mutable.Specification
 // Joda time
 import org.joda.money._
-
+import com.snowplowanalytics.forex.Forex
+import com.snowplowanalytics.forex.ForexConfig
 /**
 *  testing for unsupported currencies in joda money, e.g. bitcoin(BTC)
 */
 class UnsupportedCurrencySpecification extends Specification { 
   
-  val fx  = TestHelper.fx 
+  val fx = new Forex(new ForexConfig(System.getenv("SBT_OPTS").split("=")(1), false))
   
   "joda money" should {
     Seq("BTC", "RRU", "EEK") foreach { currency =>

@@ -16,9 +16,5 @@ package com.snowplowanalytics.forex
  * make all tests share one forex object
  */
 object TestHelper {
-  
-  val apiKey = System.getenv("SBT_OPTS").split("=")(1)
-
-  // run 'export SBT_OPTS=-Dforex.key=[key]' in command line before running tests
-  val fx = new Forex(new ForexConfig(apiKey, false))
+  val fx = new Forex(new ForexConfig(System.getenv("SBT_OPTS").split("=")(1), false))
 }

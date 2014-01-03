@@ -25,12 +25,13 @@ import org.specs2.mutable.Specification
 // Joda 
 import org.joda.time._
 import org.joda.money._
-
+import com.snowplowanalytics.forex.Forex
+import com.snowplowanalytics.forex.ForexConfig
 /**
 * testing method for getting the approximate exchange rate
 */
 class ForexNowishSpecification extends Specification { 
-  val fx  = TestHelper.fx 
+  val fx = new Forex(new ForexConfig(System.getenv("SBT_OPTS").split("=")(1), false))
   
   val cadOverGbpNowish = fx.rate(CurrencyUnit.getInstance("CAD")).to(CurrencyUnit.GBP).nowish
   

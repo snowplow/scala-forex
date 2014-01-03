@@ -23,13 +23,14 @@ import org.specs2.mutable.Specification
 // Joda 
 import org.joda.time._
 import org.joda.money._
-
+import com.snowplowanalytics.forex.Forex
+import com.snowplowanalytics.forex.ForexConfig
 /**
 * testing method for getting the latest end-of-day rate 
 * prior to the datetime or the day after according to the user's setting 
 */
 class ForexAtSpecification extends Specification { 
-  val fx  = TestHelper.fx 
+   val fx = new Forex(new ForexConfig(System.getenv("SBT_OPTS").split("=")(1), false))
   val tradeDate = new DateTime(2011, 3, 13, 11, 39, 27, 567, DateTimeZone.forID("America/New_York"))
   val gbpLatestEodRate = fx.rate.to(CurrencyUnit.GBP).at(tradeDate)
   "this conversion" should {
