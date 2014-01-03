@@ -66,7 +66,7 @@ class OerClient(config: ForexConfig) extends ForexClient(config) {
                 val (date, rate) = value
                 rate 
      	case None        => 
-                val node = getJsonNodeFromAPI(lastest, currency)
+                val node = getJsonNodeFromAPI(lastest)
                 val currencyNameIterator = node.getFieldNames
                 while (currencyNameIterator.hasNext) {  
                   val currencyName = currencyNameIterator.next
@@ -96,7 +96,7 @@ class OerClient(config: ForexConfig) extends ForexClient(config) {
 	    case Some(rate) =>  
                 Right(rate)
 	    case None       =>
-                val node = getJsonNodeFromAPI(historicalLink, currency)
+                val node = getJsonNodeFromAPI(historicalLink)
                 val currencyNameIterator = node.getFieldNames 
                 while (currencyNameIterator.hasNext) {  
                   val currencyName = currencyNameIterator.next
@@ -112,16 +112,16 @@ class OerClient(config: ForexConfig) extends ForexClient(config) {
 	}
 
 	// helper method which returns the node which contains a list of currency and rate pair
-	private def getJsonNodeFromAPI(downloadPath: String, currency: CurrencyUnit): JsonNode = {
+	private def getJsonNodeFromAPI(downloadPath: String): JsonNode = {
 	  val url  = new URL(oerUrl + downloadPath)
 	  val conn = url.openConnection
-	  val root = mapper.readTree(conn.getInputStream).getElements
+    val root = mapper.readTree(conn.getInputStream).getElements
     var resNode       = root.next
     while (root.hasNext) {
       resNode = root.next
     }
     resNode
-	}
+  }
 
 }
 

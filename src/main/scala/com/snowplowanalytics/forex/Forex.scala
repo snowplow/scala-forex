@@ -24,8 +24,6 @@ import org.joda.time._
 import org.joda.money._
 // Scala
 import scala.collection.JavaConversions._
-// UnavailableExchangeRateException
-import com.snowplowanalytics.forex.oerclient.UnavailableExchangeRateException
  
 /**
  * Starts building the fluent interface for currency look-up and conversion,
