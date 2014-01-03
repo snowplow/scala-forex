@@ -25,13 +25,12 @@ import org.specs2.matcher.DataTables
 // Joda 
 import org.joda.time._
 import org.joda.money._
-import com.snowplowanalytics.forex.Forex
-import com.snowplowanalytics.forex.ForexConfig
+
 /**
 * Testing method for getting the end-of-date exchange rate
 */
 class ForexEodSpecification extends Specification with DataTables { 
-  val fx = new Forex(new ForexConfig(System.getenv("SBT_OPTS").split("=")(1), false))
+  val fx  = TestHelper.fx 
   
 
   override def is = 

@@ -24,13 +24,12 @@ import org.specs2.mutable.Specification
 // Joda 
 import org.joda.time._
 import org.joda.money._
-import com.snowplowanalytics.forex.Forex
-import com.snowplowanalytics.forex.ForexConfig
+
 /**
 * testing method for getting the live exchange rate
 */
 class ForexNowSpecification extends Specification { 
- val fx = new Forex(new ForexConfig(System.getenv("SBT_OPTS").split("=")(1), false))
+  val fx  = TestHelper.fx 
   val tradeInYenNow = fx.convert(10000).to(CurrencyUnit.JPY).now
   "this conversion" should {
     "always result in a Right" in {

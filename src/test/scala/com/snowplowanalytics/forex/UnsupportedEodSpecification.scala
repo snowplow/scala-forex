@@ -23,15 +23,12 @@ import org.specs2.mutable.Specification
 // Joda 
 import org.joda.money._
 import org.joda.time._
-import com.snowplowanalytics.forex.Forex
-import com.snowplowanalytics.forex.ForexConfig
 
 /**
 *  testing for exceptions caused by invalid dates
 */
 class UnsupportedEodSpecification extends Specification { 
-
-   val fx = new Forex(new ForexConfig(System.getenv("SBT_OPTS").split("=")(1), false))
+  val fx  = TestHelper.fx 
   
   val rateIn1900 = fx.rate.to(CurrencyUnit.GBP).eod(new DateTime(1900, 3, 13, 0, 0))
   "an end-of-date lookup in 1900" should {
