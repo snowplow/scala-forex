@@ -207,7 +207,7 @@ The 'homeCurrency' is set to USD by default, only Unlimited or Enterprise users 
 
 ### End-of-day definition
 
-24:00 on that day or 00:00 on the next day
+The end of today is 00:00 on the next day
 
 ### Exchange rate lookup
 
