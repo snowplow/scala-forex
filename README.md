@@ -60,7 +60,7 @@ case class OerClientConfig(
 
 ## Usage
 
-The ORE Scala Client supports two types of usage:
+The OER Scala Client supports two types of usage:
 
 1. Exchange rate lookups
 2. Currency conversions
@@ -68,7 +68,7 @@ The ORE Scala Client supports two types of usage:
 Both usage types support live, near-live or historical (end-of-day) exchange rates.
 
 #### IMPORTANT:
-run "export OER_KEY=<<insert your app id here>>" in terminal before you do any queries, this is for setting the environment variable which is your unique app id.
+run "export OER_KEY=>>insert your app id here<<" in terminal before you do any queries, this is for setting the environment variable which is your unique app id.
 Use the following command to get the id. 
 ```scala
 val appId = sys.env("OER_KEY") 
