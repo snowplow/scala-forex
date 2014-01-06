@@ -29,14 +29,14 @@ class OerClientSpecification extends Specification {
   val fx  = TestHelper.fx
   "live currency value for USD" should { 
     "always equal to 1" in {
-      fx.client.getCurrencyValue(CurrencyUnit.USD) must_== (new BigDecimal(1))
+      fx.client.getLiveCurrencyValue(CurrencyUnit.USD).right.get must_== (new BigDecimal(1))
     }
   }
 
-  val gbpLiveRate =  fx.client.getCurrencyValue(CurrencyUnit.GBP)
-  "live currency value for GBP [%s]".format(gbpLiveRate) should {
+  val gbpLiveRate =  fx.client.getLiveCurrencyValue(CurrencyUnit.GBP)
+  "live currency value for GBP [%s]".format(gbpLiveRate.right.get) should {
     "be less than 1" in {
-      gbpLiveRate must be < (new BigDecimal(1))
+      gbpLiveRate.right.get must be < (new BigDecimal(1))
     }
   }
 

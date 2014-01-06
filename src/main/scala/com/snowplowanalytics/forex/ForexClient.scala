@@ -53,9 +53,9 @@ abstract class ForexClient(config: ForexConfig /*, oerConfig: OerClientConfig*/)
    * 
    * @param currency
    *            Desired currency
-   * @return Latest value of exchange rate
+   * @return Latest value of exchange rate or OerErr object
    */
-   def getCurrencyValue(currency: CurrencyUnit):BigDecimal
+   def getLiveCurrencyValue(currency: CurrencyUnit): Either[OerErr, BigDecimal]
 
   /**
    * Get a historical exchange rate from a given currency and date
@@ -64,7 +64,7 @@ abstract class ForexClient(config: ForexConfig /*, oerConfig: OerClientConfig*/)
    *            Desired currency
    * @param date
    *            Date of desired rate
-   * @return Value of exchange rate on desired date or error message if the date is invalid
+   * @return Value of exchange rate on desired date or OerErr object
    */
-   def getHistoricalCurrencyValue(currency: CurrencyUnit, date: DateTime):Either[String, BigDecimal]
+   def getHistoricalCurrencyValue(currency: CurrencyUnit, date: DateTime): Either[OerErr, BigDecimal]
 }

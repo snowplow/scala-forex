@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2013-2014 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
@@ -11,17 +11,13 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.forex
+package oerclient
 
-import org.joda.money._
 /**
- * make all tests share one forex object
- */
-object TestHelper {
-  val key = sys.env("OER_KEY") // Warning: this will give nasty errors if env var not exported
-  val oerConfig = OerClientConfig(key, false) // with default base currency USD
-  val fx = Forex(ForexConfig(), oerConfig) // forex object with USD as base currency
-  val forexConfig = ForexConfig(nowishCacheSize = 0, eodCacheSize = 0)
-  val fxWithoutCache = Forex(forexConfig, oerConfig) // forex object with caches disabled 
-  val confWithBaseGBP = OerClientConfig(key, true) // set base currency to GBP
-  val fxWithBaseGBP = Forex(ForexConfig(baseCurrency = "GBP"), confWithBaseGBP) // forex object with GBP as base currency
+* @pvalue errorMessage - error message from OER API
+*/
+case class OerErr(errorMessage: String) {
+    def getMessage: String = {
+        errorMessage
+    }
 }

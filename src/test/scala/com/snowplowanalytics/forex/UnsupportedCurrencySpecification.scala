@@ -20,6 +20,8 @@ import java.math.RoundingMode
 import org.specs2.mutable.Specification
 // Joda time
 import org.joda.money._
+// Oer Client
+import oerclient._
 
 /**
 *  testing for unsupported currencies in joda money, e.g. bitcoin(BTC)
@@ -30,7 +32,7 @@ class UnsupportedCurrencySpecification extends Specification {
   "joda money" should {
     Seq("BTC", "RRU", "EEK") foreach { currency =>
       (" not support currency: " + currency) >> {
-        def unsupportedCurrencyException: Either[String, Money] = {
+        def unsupportedCurrencyException: Either[OerErr, Money] = {
           fx.rate(CurrencyUnit.getInstance(currency)).to(CurrencyUnit.GBP).now
         }
         unsupportedCurrencyException must throwA[IllegalCurrencyException]

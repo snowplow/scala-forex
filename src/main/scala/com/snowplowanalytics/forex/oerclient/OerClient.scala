@@ -20,6 +20,7 @@ import java.math.BigDecimal
 import java.net.MalformedURLException
 import java.net.URL
 import java.net.URLConnection
+import java.net.HttpURLConnection
 import java.util.Calendar
 
 // Json
@@ -74,28 +75,32 @@ class OerClient(config: ForexConfig, oerConfig: OerClientConfig) extends ForexCl
    * If cache exists, update nowishCache when an API request has been done,
    * else just return the forex rate
    * @parameter currency - The desired currency we want to look up from the API
-   * @returns live exchange rate obtained from API
+   * @returns live exchange rate obtained from API, else OerErr object
    */
-  def getCurrencyValue(currency: CurrencyUnit): BigDecimal= {
+  def getLiveCurrencyValue(currency: CurrencyUnit): Either[OerErr, BigDecimal]= {
     val key = (CurrencyUnit.getInstance(config.baseCurrency), currency)     
-    val node = getJsonNodeFromAPI(latest)
-    nowishCache match {
-      case Some(cache) => {
-            val currencyNameIterator = node.getFieldNames
-            while (currencyNameIterator.hasNext) {  
-              val currencyName = currencyNameIterator.next
-              try {
-                val keyPair   = (CurrencyUnit.getInstance(config.baseCurrency), CurrencyUnit.getInstance(currencyName))
-                val valuePair = (DateTime.now, node.findValue(currencyName).getDecimalValue)                                                                       
-                cache.put(keyPair, valuePair)
-              } catch {
-                case (e: IllegalCurrencyException) => // drop the illegal currencies
-              }
-            } 
+    getJsonNodeFromApi(latest) match {
+      case Left(oerErr) => Left(oerErr)
+      case Right(node)  => {
+        nowishCache match {
+          case Some(cache) => {
+                val currencyNameIterator = node.getFieldNames
+                while (currencyNameIterator.hasNext) {  
+                  val currencyName = currencyNameIterator.next
+                  try {
+                    val keyPair   = (CurrencyUnit.getInstance(config.baseCurrency), CurrencyUnit.getInstance(currencyName))
+                    val valuePair = (DateTime.now, node.findValue(currencyName).getDecimalValue)                                                                       
+                    cache.put(keyPair, valuePair)
+                  } catch {
+                    case (e: IllegalCurrencyException) => // drop the illegal currencies
+                  }
+                } 
+          }
+          case None => // do nothing   
+        }
+        Right(node.findValue(currency.toString).getDecimalValue)
       }
-      case None => // do nothing   
     }
-    node.findValue(currency.toString).getDecimalValue
   }
 
   /**
@@ -119,35 +124,39 @@ class OerClient(config: ForexConfig, oerConfig: OerClientConfig) extends ForexCl
    * else just return the look up result
    * @parameter currency - The desired currency we want to look up from the API
    * @parameter date - The specific date we want to look up on
-   * @returns live exchange rate obtained from API if available, or error message if else
+   * @returns live exchange rate obtained from API if available, else OerErr object 
    */
-  def getHistoricalCurrencyValue(currency: CurrencyUnit, date: DateTime): Either[String, BigDecimal] = {
+  def getHistoricalCurrencyValue(currency: CurrencyUnit, date: DateTime): Either[OerErr, BigDecimal] = {
     
     /**
     * return error message if the date given is not supported by OER
     */
     if (date.isBefore(oerDataFrom) || date.isAfter(DateTime.now)) {
-      Left("Exchange rate unavailable on the date [%s]".format(date))
+      Left(OerErr("Exchange rate unavailable on the date [%s]".format(date)))
     } else {
       val historicalLink = buildHistoricalLink(date)
       val key = (CurrencyUnit.getInstance(config.baseCurrency), currency, date) 
-      val node = getJsonNodeFromAPI(historicalLink)
-      eodCache match {
-        case Some(cache) => {
-          val currencyNameIterator = node.getFieldNames 
-          while (currencyNameIterator.hasNext) {  
-            val currencyName = currencyNameIterator.next
-            try {
-              val keySet = (CurrencyUnit.getInstance(config.baseCurrency), CurrencyUnit.getInstance(currencyName), date)
-              cache.put(keySet, node.findValue(currencyName).getDecimalValue)  
-            } catch {
-              case (e: IllegalCurrencyException) => // drop the illegal currencies
-            }                                                         
+      getJsonNodeFromApi(historicalLink) match {
+        case Left(oerErr) => Left(oerErr)
+        case Right(node)  => {
+          eodCache match {
+          case Some(cache) => {
+            val currencyNameIterator = node.getFieldNames 
+            while (currencyNameIterator.hasNext) {  
+              val currencyName = currencyNameIterator.next
+              try {
+                val keySet = (CurrencyUnit.getInstance(config.baseCurrency), CurrencyUnit.getInstance(currencyName), date)
+                cache.put(keySet, node.findValue(currencyName).getDecimalValue)  
+              } catch {
+                case (e: IllegalCurrencyException) => // drop the illegal currencies
+              }                                                         
+            }
           }
+          case None => // do nothing
+          }
+          Right(node.findValue(currency.toString).getDecimalValue)
         }
-        case None => // do nothing
       }
-      Right(node.findValue(currency.toString).getDecimalValue)
     }
   }
 
@@ -156,17 +165,33 @@ class OerClient(config: ForexConfig, oerConfig: OerClientConfig) extends ForexCl
    a list of currency and rate pair.
    * @parameter downloadPath - The URI link for the API request
    * @returns JSON node which contains currency information obtained from API
+  *  or OerErr object which carries the error message returned by the API
    */  
-  private def getJsonNodeFromAPI(downloadPath: String): JsonNode = {
+  private def getJsonNodeFromApi(downloadPath: String): Either[OerErr, JsonNode] = {
     val url  = new URL(oerUrl + downloadPath)
     val conn = url.openConnection
-    
-    val root = mapper.readTree(conn.getInputStream).getElements
-    var resNode = root.next
-    while (root.hasNext) {
-      resNode = root.next
+    conn match {
+      case (httpUrlConn: HttpURLConnection) => {
+        if (httpUrlConn.getResponseCode >= 400) {
+          val errorStream = httpUrlConn.getErrorStream
+          val root = mapper.readTree(errorStream).getElements
+          var resNode = root.next
+          while (root.hasNext) {
+           resNode = root.next
+          }
+          return Left(OerErr(resNode.getTextValue))
+        } else {
+          val inputStream = httpUrlConn.getInputStream
+          val root = mapper.readTree(inputStream).getElements
+          var resNode = root.next
+          while (root.hasNext) {
+            resNode = root.next
+          }
+          return Right(resNode)
+        }
+      }
+      case _ => throw new ClassCastException
     }
-    resNode
   }
 
 }
