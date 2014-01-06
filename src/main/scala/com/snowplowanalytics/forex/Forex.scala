@@ -45,7 +45,7 @@ case class Forex(config: ForexConfig, oerConfig: OerClientConfig) {
   * @returns ForexLookupTo object which is the part of the fluent interface
   */
   def rate: ForexLookupTo = {
-    ForexLookupTo(1, config.baseCurrency, this)
+    ForexLookupTo(1, CurrencyUnit.getInstance(config.baseCurrency), this)
   }
 
   /**
@@ -85,7 +85,7 @@ case class Forex(config: ForexConfig, oerConfig: OerClientConfig) {
    * currency conversion fluent interface.
    */
   def convert(amount: Int): ForexLookupTo = {
-    ForexLookupTo(amount, config.baseCurrency, this)
+    ForexLookupTo(amount, CurrencyUnit.getInstance(config.baseCurrency), this)
   }
   
   def convert(amount: Int, currency: CurrencyUnit): ForexLookupTo = {
@@ -161,7 +161,7 @@ case class ForexLookupWhen(conversionAmount: Int, fromCurr: CurrencyUnit, toCurr
       Right(moneyInSourceCurrency.convertedTo(toCurr, rate).toMoney(RoundingMode.HALF_EVEN))
     } catch {
       case (e: MalformedURLException)    => Left("invalid app Id")
-      case (e: IOException)              => Left(e.getMessage)
+      case (e: IOException)              => Left(e.getMessage) // http request response code
     }
   }
   
@@ -229,7 +229,7 @@ case class ForexLookupWhen(conversionAmount: Int, fromCurr: CurrencyUnit, toCurr
   }
 
   /**
-  * gets the end-of-date rate for the specified day
+  * gets the end-of-day rate for the specified day
   */
   def eod(eodDate: DateTime): Either[String, Money] = { 
     fx.client.eodCache match {
@@ -283,7 +283,7 @@ case class ForexLookupWhen(conversionAmount: Int, fromCurr: CurrencyUnit, toCurr
   * @returns ratio of from:to as BigDecimal
   */
   private def getForexRate(baseOverFrom: BigDecimal, baseOverTo: BigDecimal): BigDecimal = {
-    if (fromCurr != fx.config.baseCurrency) {
+    if (fromCurr != CurrencyUnit.getInstance(fx.config.baseCurrency)) {
       val fromOverBase = new BigDecimal(1).divide(baseOverFrom, fx.commonScale, RoundingMode.HALF_EVEN)
       fromOverBase.multiply(baseOverTo)
     } else {

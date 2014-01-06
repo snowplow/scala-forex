@@ -77,7 +77,7 @@ class OerClient(config: ForexConfig, oerConfig: OerClientConfig) extends ForexCl
    * @returns live exchange rate obtained from API
    */
   def getCurrencyValue(currency: CurrencyUnit): BigDecimal= {
-    val key = (config.baseCurrency, currency) 
+    val key = (CurrencyUnit.getInstance(config.baseCurrency), currency)     
     val node = getJsonNodeFromAPI(latest)
     nowishCache match {
       case Some(cache) => {
@@ -85,7 +85,7 @@ class OerClient(config: ForexConfig, oerConfig: OerClientConfig) extends ForexCl
             while (currencyNameIterator.hasNext) {  
               val currencyName = currencyNameIterator.next
               try {
-                val keyPair   = (config.baseCurrency, CurrencyUnit.getInstance(currencyName))
+                val keyPair   = (CurrencyUnit.getInstance(config.baseCurrency), CurrencyUnit.getInstance(currencyName))
                 val valuePair = (DateTime.now, node.findValue(currencyName).getDecimalValue)                                                                       
                 cache.put(keyPair, valuePair)
               } catch {
@@ -130,7 +130,7 @@ class OerClient(config: ForexConfig, oerConfig: OerClientConfig) extends ForexCl
       Left("Exchange rate unavailable on the date [%s]".format(date))
     } else {
       val historicalLink = buildHistoricalLink(date)
-      val key = (config.baseCurrency, currency, date) 
+      val key = (CurrencyUnit.getInstance(config.baseCurrency), currency, date) 
       val node = getJsonNodeFromAPI(historicalLink)
       eodCache match {
         case Some(cache) => {
@@ -138,7 +138,7 @@ class OerClient(config: ForexConfig, oerConfig: OerClientConfig) extends ForexCl
           while (currencyNameIterator.hasNext) {  
             val currencyName = currencyNameIterator.next
             try {
-              val keySet = (config.baseCurrency, CurrencyUnit.getInstance(currencyName), date)
+              val keySet = (CurrencyUnit.getInstance(config.baseCurrency), CurrencyUnit.getInstance(currencyName), date)
               cache.put(keySet, node.findValue(currencyName).getDecimalValue)  
             } catch {
               case (e: IllegalCurrencyException) => // drop the illegal currencies

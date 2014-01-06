@@ -39,7 +39,7 @@ case class ForexConfig(
   nowishSecs: Int              = 300,   // i.e. 5 mins by default 
   eodCacheSize: Int            = 405900,  // 165 * 164 / 2 * 30 = 405900, assuming the cache stores data within a month
   getNearestDay: EodRounding   = EodRoundDown,
-  baseCurrency: CurrencyUnit   = CurrencyUnit.USD  
+  baseCurrency: String   = "USD" 
 ) 
 
 /**
