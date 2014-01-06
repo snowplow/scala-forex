@@ -16,8 +16,6 @@ package com.snowplowanalytics.forex
 // Java
 import java.math.BigDecimal
 import java.math.RoundingMode
-// Scala
-// import scala.collection.JavaConversions._
 // Specs2
 import org.specs2.mutable.Specification
 // Joda 
@@ -31,14 +29,14 @@ import org.joda.money._
 class ForexAtSpecification extends Specification { 
   val fx  = TestHelper.fx 
   val fxWithBaseGBP = TestHelper.fxWithBaseGBP
-
+  val fxWithoutCache = TestHelper.fxWithoutCache
   /**
-  * GBP->CAD with USD as baseCurrency
+  * GBP->CAD with USD as baseCurrency and with caching available
   */
   val tradeDate = new DateTime(2011, 3, 13, 11, 39, 27, 567, DateTimeZone.forID("America/New_York"))
  
   val gbpToCadWithBaseUsd = fx.rate(CurrencyUnit.GBP).to(CurrencyUnit.CAD).at(tradeDate)
- 
+
   val cadMoney = gbpToCadWithBaseUsd.right.get
 
   "GBP to CAD with USD as base currency returning latest eod rate [%s]".format(cadMoney) should {
@@ -47,6 +45,19 @@ class ForexAtSpecification extends Specification {
     }
   }
   
+  /**
+  * GBP->CAD with USD as baseCurrency but without caching 
+  */
+  val gbpToCadWithoutCaching = fxWithoutCache.rate(CurrencyUnit.GBP).to(CurrencyUnit.CAD).at(tradeDate)
+
+  val cadMoneyWithoutCaching = gbpToCadWithoutCaching.right.get
+
+  "GBP to CAD without caching and with USD as base currency returning latest eod rate [%s]".format(cadMoneyWithoutCaching) should {
+    "be > 0" in {
+        cadMoneyWithoutCaching.isPositive
+    }
+  }
+
   /**
   * GBP-> CAD with GBP as base currency
   */

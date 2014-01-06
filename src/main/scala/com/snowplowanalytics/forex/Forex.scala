@@ -116,7 +116,7 @@ case class Forex(config: ForexConfig, oerConfig: OerClientConfig) {
 case class ForexLookupTo(conversionAmount: Int, fromCurr: CurrencyUnit, fx: Forex) {
   /**
    * this method sets the target currency to the desired one
-   * @param currency - target currency
+   * @param currency - Target currency
    * @return ForexLookupWhen object which is part of the fluent interface
    */
   def to(toCurr: CurrencyUnit): ForexLookupWhen = {
@@ -141,9 +141,9 @@ case class ForexLookupTo(conversionAmount: Int, fromCurr: CurrencyUnit, fx: Fore
 * or Money if an exchange rate is found 
 * if MalFormedURLException is caught, then the user must entered wrong app Id, which the API cannot recognise
 * @pvalue fx - Forex object 
-* @pvalue conversionAmount - the amount of money to be converted, it is set to 1 unit for look up operation
-* @pvalue fromCurr - the source currency
-* @pvalue toCurr   - the target currency
+* @pvalue conversionAmount - The amount of money to be converted, it is set to 1 unit for look up operation
+* @pvalue fromCurr - The source currency
+* @pvalue toCurr   - The target currency
 */
 case class ForexLookupWhen(conversionAmount: Int, fromCurr: CurrencyUnit, toCurr: CurrencyUnit, fx: Forex) {
   val conversionAmt = new BigDecimal(conversionAmount)                      
@@ -169,10 +169,10 @@ case class ForexLookupWhen(conversionAmount: Int, fromCurr: CurrencyUnit, toCurr
   /**
   * a cached version of the live exchange rate is used if cache exists, 
   * if the timestamp of that exchange rate is less than 
-  * or equal to `nowishSecs` old. Otherwise a new lookup is performed.
+  * or equal to "nowishSecs" old. Otherwise a new lookup is performed.
   */
   def nowish: Either[String, Money] = {
-    if (fx.client.nowishCache.get.isEmpty) {
+    if (fx.client.nowishCache.isEmpty) {
       // if cache is disabled, nowish lookup will perform exactly the same as now()
       now
     } else {
@@ -195,7 +195,6 @@ case class ForexLookupWhen(conversionAmount: Int, fromCurr: CurrencyUnit, toCurr
             fx.client.nowishCache.get.get((toCurr, fromCurr)) match {
               // to:from found in LRU
               case Some(tpl) => { 
-                 println("inverse found in nowish cache")
                 val (time, rate) = tpl
                 val inverseRate = new BigDecimal(1).divide(rate, fx.commonScale, RoundingMode.HALF_EVEN)
                 Right(moneyInSourceCurrency.convertedTo(toCurr, inverseRate).toMoney(RoundingMode.HALF_EVEN))

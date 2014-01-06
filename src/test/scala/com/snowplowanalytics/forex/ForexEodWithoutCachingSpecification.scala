@@ -25,15 +25,15 @@ import org.joda.time._
 import org.joda.money._
 
 /**
-* Testing method for getting the end-of-date exchange rate
+* Testing method for getting the end-of-date exchange rate without caching available
 * since historical forex rate is fixed, the actual look up result should be 
 * the same as the value in the table
 */
-class ForexEodSpecification extends Specification with DataTables { 
-  val fx  = TestHelper.fx 
+class ForexEodWithoutCachingSpecification extends Specification with DataTables { 
+  val fxWithoutCaching = TestHelper.fxWithoutCache
 
   override def is = 
-    "end-of-date lookup tests: forex rate between two currencies for a specific date is always the same" ! e1
+    "end-of-date lookup without caching tests: forex rate between two currencies for a specific date is always the same" ! e1
   
   // table values obtained from OER API
   def e1 = 
@@ -44,12 +44,12 @@ class ForexEodSpecification extends Specification with DataTables {
     "GBP"               !! "USD"               ! "2011-03-13"  ! "1.60"             |
     "GBP"               !! "SGD"               ! "2008-03-13"  ! "2.80"             |> {
       (fromCurr, toCurr, date, exp) =>
-        fx.rate(CurrencyUnit.getInstance(fromCurr))
+        fxWithoutCaching.rate(CurrencyUnit.getInstance(fromCurr))
           .to(CurrencyUnit.getInstance(toCurr))
           .eod(DateTime.parse(date)).right.get.getAmount.toString must_== exp  
     }
 
 
-
+  
 }
 

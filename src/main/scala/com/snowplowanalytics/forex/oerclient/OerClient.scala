@@ -35,7 +35,7 @@ import com.twitter.util.LruMap
 
 /**
  * Implements Json for Open Exchange Rates(http://openexchangerates.org)
- * @param apiKey The API key to Open Exchange Rates
+ * @param apiKey - The API key to Open Exchange Rates
  */
 class OerClient(config: ForexConfig, oerConfig: OerClientConfig) extends ForexClient(config) {
 
@@ -64,10 +64,15 @@ class OerClient(config: ForexConfig, oerConfig: OerClientConfig) extends ForexCl
   private val mapper = new ObjectMapper()
 
   /**
+  * The earliest date OER service is availble
+  */
+  private val oerDataFrom = new DateTime(1999,1,1,0,0)
+
+  /**
    * Gets live currency value for the desired currency 
    * update nowishCache if an API request has to be done,
    * silently drop the currency types which Joda money does not support  
-   * @parameter - currency is the desired currency we want to look up from the API
+   * @parameter currency - The desired currency we want to look up from the API
    * @returns live exchange rate obtained from API
    */
   def getCurrencyValue(currency: CurrencyUnit): BigDecimal= {
@@ -100,28 +105,36 @@ class OerClient(config: ForexConfig, oerConfig: OerClientConfig) extends ForexCl
   }
 
   /**
+  * build the historical link for the URI according to the date
+  * @parameter date - The historical date for the currency look up, 
+  * which should be the same as date argument in the getHistoricalCurrencyValue method below
+  * @returns the link in string format   
+  */
+  private def buildHistoricalLink(date: DateTime) : String = {
+    val dateCal = date.toGregorianCalendar
+    val day     = dateCal.get(Calendar.DAY_OF_MONTH)
+    val month   = dateCal.get(Calendar.MONTH) + 1
+    val year    = dateCal.get(Calendar.YEAR)
+    historical.format(year, month, day)
+  }
+  /**
    * Gets historical forex rate for the given currency and date
    * return error message if the date is invalid 
    * update eodCache if an API request has to be done,
    * silently drop the currency types which Joda money does not support
-   * @parameter - currency is the desired currency we want to look up from the API
-   * @parameter - date is the specific date we want to look up on
+   * @parameter currency - The desired currency we want to look up from the API
+   * @parameter date - The specific date we want to look up on
    * @returns live exchange rate obtained from API if available, or error message if else
    */
   def getHistoricalCurrencyValue(currency: CurrencyUnit, date: DateTime): Either[String, BigDecimal] = {
     
     /**
-    * Early return if not supported by OER
-    * note that 1999-01-01 is the earliest date which exchange rates from OER API are available
+    * return error message if the date given is not supported by OER
     */
-    if (date.isBefore(new DateTime(1999,1,1,0,0)) || date.isAfter(DateTime.now)) {
+    if (date.isBefore(oerDataFrom) || date.isAfter(DateTime.now)) {
       Left("Exchange rate unavailable on the date [%s]".format(date))
     } else {
-      val dateCal = date.toGregorianCalendar
-      val day     = dateCal.get(Calendar.DAY_OF_MONTH)
-      val month   = dateCal.get(Calendar.MONTH) + 1
-      val year    = dateCal.get(Calendar.YEAR)
-      val historicalLink = historical.format(year, month, day)
+      val historicalLink = buildHistoricalLink(date)
       val key = (config.baseCurrency, currency, date) 
       val node = getJsonNodeFromAPI(historicalLink)
       
@@ -151,9 +164,8 @@ class OerClient(config: ForexConfig, oerConfig: OerClientConfig) extends ForexCl
   /**
    * Helper method which returns the node containing
    a list of currency and rate pair.
-   *
-   * TODO: params etc
-   *
+   * @parameter downloadPath - The URI link for the API request
+   * @returns JSON node which contains currency information obtained from API
    */  
   private def getJsonNodeFromAPI(downloadPath: String): JsonNode = {
     val url  = new URL(oerUrl + downloadPath)
