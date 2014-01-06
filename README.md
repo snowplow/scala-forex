@@ -23,12 +23,17 @@ There are three types of accounts, note that Enterprise and Unlimited allow user
 ForexConfig contains only general configuration options:
 
 nowishCacheSize is the size configuration for near-live(nowish) lookup cache, it can be disabled by setting its value to 0.
+
 nowishSecs is the time configuration for near-live lookup, if the time stamp for the currency rate is within the range from now-nowishSecs to now+nowishSecs then the exchange rate is returned.
+
 eodCacheSize is the size configuration for end-of-day(eod) lookup cache, it can be disabled by setting its value to 0.
+
 getNearestDay is the rounding configuration for latest prior eod(at) lookup. The lookup will be performed on the next day if the rounding mode is set to EodRoundUp, and on the previous day if EodRoundDown.
+
 baseCurrency can only be set to other currencies other than USD if the user has Unlimited or Enterprise account, if it is set to other currencies the configurableBase value in OerClient has to be set to true accordingly.    
 
 All configurations in Forex Client are set to recommended values, but users are free to set them to desired values. 
+
 Explanation for the default values see Section 3 : Usage notes.
 ```scala
 case class ForexConfig(
@@ -43,6 +48,7 @@ case class ForexConfig(
 OerClientConfig has congurations specific to the OER API:
 
 appId is the unique key for the user's account,
+
 configurableBase is a boolean value indicating if the base currency can be configured. The baseCurrency value in ForexConfig can be changed if the boolean value is set to true. Note that only Enterprise and Unlimited users are allowed to set the value to true.
 
 ```scala
