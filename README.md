@@ -4,11 +4,11 @@
 
 ## Introduction
 
-Open Exchange Rates Scala Client is a high-performance Scala library for performing currency conversions using the [Open Exchange Rates API] [ore-api].
+Open Exchange Rates Scala Client is a high-performance Scala library for performing currency conversions using the [Open Exchange Rates API] [oer-api].
 
 It includes a configurable LRU (Least Recently Used) cache to minimize calls to the Open Exchange Rates API; this makes the library usable in high-volume environments such as Hadoop and Storm.
 
-This ORE Scala Client for foreign exchange is built on top of the [Open Exchange Rates Java Client] [ore-java], [Joda-Money] [joda-money] and [Joda-Time] [joda-time].
+This OER Scala Client for foreign exchange is built on top of the [Open Exchange Rates Java Client] [oer-java], [Joda-Money] [joda-money] and [Joda-Time] [joda-time].
 
 ## Installation
 

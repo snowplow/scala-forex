@@ -69,37 +69,31 @@ class OerClient(config: ForexConfig, oerConfig: OerClientConfig) extends ForexCl
   private val oerDataFrom = new DateTime(1999,1,1,0,0)
 
   /**
-   * Gets live currency value for the desired currency 
-   * update nowishCache if an API request has to be done,
-   * silently drop the currency types which Joda money does not support  
+   * Gets live currency value for the desired currency, 
+   * silently drop the currency types which Joda money does not support.  
+   * If cache exists, update nowishCache when an API request has been done,
+   * else just return the forex rate
    * @parameter currency - The desired currency we want to look up from the API
    * @returns live exchange rate obtained from API
    */
   def getCurrencyValue(currency: CurrencyUnit): BigDecimal= {
     val key = (config.baseCurrency, currency) 
     val node = getJsonNodeFromAPI(latest)
-    if (!nowishCache.isEmpty) {
-      nowishCache.get.get(key) match {
-        // Cache hit
-        case Some(value) => {
-          val (_, rate) = value
-          rate
-        }
-        // Cache miss
-        case None => {
-          val currencyNameIterator = node.getFieldNames
-          while (currencyNameIterator.hasNext) {  
-            val currencyName = currencyNameIterator.next
-            try {
-              val keyPair   = (config.baseCurrency, CurrencyUnit.getInstance(currencyName))
-              val valuePair = (DateTime.now, node.findValue(currencyName).getDecimalValue)                                                                       
-              nowishCache.get.put(keyPair, valuePair)
-            } catch {
-              case (e: IllegalCurrencyException) => // Do nothing
-            }
-          }
-        }
+    nowishCache match {
+      case Some(cache) => {
+            val currencyNameIterator = node.getFieldNames
+            while (currencyNameIterator.hasNext) {  
+              val currencyName = currencyNameIterator.next
+              try {
+                val keyPair   = (config.baseCurrency, CurrencyUnit.getInstance(currencyName))
+                val valuePair = (DateTime.now, node.findValue(currencyName).getDecimalValue)                                                                       
+                cache.put(keyPair, valuePair)
+              } catch {
+                case (e: IllegalCurrencyException) => // drop the illegal currencies
+              }
+            } 
       }
+      case None => // do nothing   
     }
     node.findValue(currency.toString).getDecimalValue
   }
@@ -120,8 +114,9 @@ class OerClient(config: ForexConfig, oerConfig: OerClientConfig) extends ForexCl
   /**
    * Gets historical forex rate for the given currency and date
    * return error message if the date is invalid 
-   * update eodCache if an API request has to be done,
    * silently drop the currency types which Joda money does not support
+   * if cache exists, update the eodCache when an API request has been done,
+   * else just return the look up result
    * @parameter currency - The desired currency we want to look up from the API
    * @parameter date - The specific date we want to look up on
    * @returns live exchange rate obtained from API if available, or error message if else
@@ -137,25 +132,20 @@ class OerClient(config: ForexConfig, oerConfig: OerClientConfig) extends ForexCl
       val historicalLink = buildHistoricalLink(date)
       val key = (config.baseCurrency, currency, date) 
       val node = getJsonNodeFromAPI(historicalLink)
-      
-      if (!eodCache.isEmpty) {
-        eodCache.get.get(key) match {
-          // Cache hit
-          case Some(rate) => Right(rate)
-          // Cache miss
-          case None => {
-            val currencyNameIterator = node.getFieldNames 
-            while (currencyNameIterator.hasNext) {  
-              val currencyName = currencyNameIterator.next
-              try {
-                val keySet = (config.baseCurrency, CurrencyUnit.getInstance(currencyName), date)
-                eodCache.get.put(keySet, node.findValue(currencyName).getDecimalValue)  
-              } catch {
-                case (e: IllegalCurrencyException) => {}
-              }                                                         
-            }
+      eodCache match {
+        case Some(cache) => {
+          val currencyNameIterator = node.getFieldNames 
+          while (currencyNameIterator.hasNext) {  
+            val currencyName = currencyNameIterator.next
+            try {
+              val keySet = (config.baseCurrency, CurrencyUnit.getInstance(currencyName), date)
+              cache.put(keySet, node.findValue(currencyName).getDecimalValue)  
+            } catch {
+              case (e: IllegalCurrencyException) => // drop the illegal currencies
+            }                                                         
           }
         }
+        case None => // do nothing
       }
       Right(node.findValue(currency.toString).getDecimalValue)
     }
