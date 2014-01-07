@@ -37,9 +37,9 @@ class SpiedCacheSpecification extends Specification with Mockito{
   */
   spiedFx.rate(CurrencyUnit.CAD).to(CurrencyUnit.GBP).nowish
 
-  there was one(spiedNowishCache).get(((CurrencyUnit.CAD), (CurrencyUnit.GBP)))          
+  there was one(spiedNowishCache).get(("CAD", "GBP"))          
   
-  spiedNowishCache must haveKey(((CurrencyUnit.CAD), (CurrencyUnit.GBP)))
+  spiedNowishCache must haveKey(("CAD", "GBP"))
 
 
   /**
@@ -51,7 +51,7 @@ class SpiedCacheSpecification extends Specification with Mockito{
   
   spiedFx.rate(CurrencyUnit.CAD).to(CurrencyUnit.GBP).eod(date)
 
-  there was one(spiedEodCache).get(((CurrencyUnit.CAD), (CurrencyUnit.GBP), date)) 
+  there was one(spiedEodCache).get(("CAD", "GBP", date)) 
 
-  spiedEodCache must haveKey(((CurrencyUnit.CAD), (CurrencyUnit.GBP), date)) 
+  spiedEodCache must haveKey(("CAD", "GBP", date)) 
 }

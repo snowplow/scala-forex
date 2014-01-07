@@ -66,7 +66,7 @@ case class Forex(config: ForexConfig, oerConfig: OerClientConfig,
   * @returns ForexLookupTo object which is the part of the fluent interface
   */
   def rate: ForexLookupTo = {
-    ForexLookupTo(1, CurrencyUnit.getInstance(config.baseCurrency), this)
+    ForexLookupTo(1, config.baseCurrency, this)
   }
 
   /**
@@ -76,18 +76,13 @@ case class Forex(config: ForexConfig, oerConfig: OerClientConfig,
   * @returns ForexLookupTo object which is the part of the fluent interface
   */
   def rate(currency: CurrencyUnit): ForexLookupTo = {
-    ForexLookupTo(1, currency, this)
+    rate(currency.getCode)
   }
 
   // wrapper method for rate(CurrencyUnit)
   // if the string is invalid, getInstance will throw IllegalCurrencyException
-  def rate(currency: String): Either[String,ForexLookupTo] = {
-    try {
-      val currInstance = CurrencyUnit.getInstance(currency)
-      Right(rate(currInstance))
-    } catch {
-      case (e: IllegalCurrencyException) => Left(e.getMessage)
-    }   
+  def rate(currency: String): ForexLookupTo = {
+    ForexLookupTo(1, currency, this)
   }
 
   /**
@@ -106,21 +101,15 @@ case class Forex(config: ForexConfig, oerConfig: OerClientConfig,
    * currency conversion fluent interface.
    */
   def convert(amount: Int): ForexLookupTo = {
-    ForexLookupTo(amount, CurrencyUnit.getInstance(config.baseCurrency), this)
+    ForexLookupTo(amount, config.baseCurrency, this)
   }
   
   def convert(amount: Int, currency: CurrencyUnit): ForexLookupTo = {
-    ForexLookupTo(amount, currency, this)
+    convert(amount, currency.getCode)
   }
   // wrapper method for convert(Int, CurrencyUnit)
-  // if the string is invalid, getInstance will throw IllegalCurrencyException
-  def convert(amount: Int, currency: String): Either[String, ForexLookupTo] = {      
-    try {
-      val currInstance = CurrencyUnit.getInstance(currency)
-      Right(convert(amount, currInstance))
-    } catch {
-      case (e: IllegalCurrencyException) => Left(e.getMessage)
-    }
+  def convert(amount: Int, currency: String): ForexLookupTo = {     
+    ForexLookupTo(amount, currency, this)
   }
 }
 
@@ -134,45 +123,40 @@ case class Forex(config: ForexConfig, oerConfig: OerClientConfig,
  * the argument will be passed to ForexLookUpWhen class 
  * @pvalue fromCurr - the source currency, the argument will be passed to ForexLookUpWhen class  
  */
-case class ForexLookupTo(conversionAmount: Int, fromCurr: CurrencyUnit, fx: Forex) {
+case class ForexLookupTo(conversionAmount: Int, fromCurr: String, fx: Forex) {
   /**
    * this method sets the target currency to the desired one
    * @param currency - Target currency
    * @return ForexLookupWhen object which is part of the fluent interface
    */
   def to(toCurr: CurrencyUnit): ForexLookupWhen = {
-    ForexLookupWhen(conversionAmount, fromCurr, toCurr, fx)
+    to(toCurr.getCode)
   }
   // wrapper method for to(CurrencyUnit)
-  // if the string is invalid, getInstance will throw IllegalCurrencyException
-  def to(toCurr: String): Either[String, ForexLookupWhen] = {
-    try {
-      val currInstance = CurrencyUnit.getInstance(toCurr)
-      Right(to(currInstance))
-    } catch {
-      case (e: IllegalCurrencyException) => Left(e.getMessage)
-    }
+  def to(toCurr: String): ForexLookupWhen = {
+    ForexLookupWhen(conversionAmount, fromCurr, toCurr, fx)
   }
 }
 
 /**
 * ForexLookupWhen is the end of the fluent interface,
 * methods in this class are the final stage of currency lookup and conversion
-* and return error mesage as string if an exception is caught 
-* or Money if an exchange rate is found 
-* if MalFormedURLException is caught, then the user must entered wrong app Id, which the API cannot recognise
 * @pvalue fx - Forex object 
 * @pvalue conversionAmount - The amount of money to be converted, it is set to 1 unit for look up operation
 * @pvalue fromCurr - The source currency
 * @pvalue toCurr   - The target currency
 */
-case class ForexLookupWhen(conversionAmount: Int, fromCurr: CurrencyUnit, toCurr: CurrencyUnit, fx: Forex) {
+case class ForexLookupWhen(conversionAmount: Int, fromCurr: String, toCurr: String, fx: Forex) {
+  // convert conversionAmt units of money 
   val conversionAmt = new BigDecimal(conversionAmount)                      
-  // money in a given amount 
-  val moneyInSourceCurrency = BigMoney.of(fromCurr, conversionAmt)
+  // convert from currency and to currency in string representation to CurrencyUnit representation                
+  val fromCurrencyUnit = convertToCurrencyUnit(fromCurr) 
+  val toCurrencyUnit   = convertToCurrencyUnit(toCurr)
+  // money in a given amount
+  val moneyInSourceCurrency = BigMoney.of(fromCurrencyUnit.right.get, conversionAmt) 
 
   /**
-  * perform live currency look up or conversion, no caching needed
+  * Perform live currency look up or conversion, no caching needed
   * @returns Money representation in target currency or OerErr object if API request failed
   */
   def now: Either[OerErr, Money] =  {
@@ -180,18 +164,20 @@ case class ForexLookupWhen(conversionAmount: Int, fromCurr: CurrencyUnit, toCurr
     val from = fx.client.getLiveCurrencyValue(fromCurr)
     val to   = fx.client.getLiveCurrencyValue(toCurr)
     if (from.isRight && to.isRight) {
+    // API request succeeds
       val baseOverFrom = from.right.get
       val baseOverTo = to.right.get
       val rate = getForexRate(baseOverFrom, baseOverTo)
       // if from currency is not base currency then we need to add the fromCurrency->toCurrency pair into cache 
       // because getLiveCurrencyValue method only adds baseCurrency->toCurrency into cache
-      if (!fx.client.nowishCache.isEmpty && fromCurr != CurrencyUnit.getInstance(fx.config.baseCurrency)) {
+      if (!fx.client.nowishCache.isEmpty && fromCurr != fx.config.baseCurrency) {
         val Some(cache) = fx.client.nowishCache
         cache.put((fromCurr,toCurr), (timeStamp, rate))
       }
-      Right(moneyInSourceCurrency.convertedTo(toCurr, rate).toMoney(RoundingMode.HALF_EVEN))
+      returnMoneyOrJodaError(rate)
     } else {
-      Left(from.left.get)
+    // API request fails
+      returnApiError(from.left.get)
     }
   }
   
@@ -210,8 +196,8 @@ case class ForexLookupWhen(conversionAmount: Int, fromCurr: CurrencyUnit, toCurr
             case Some(tpl) => {
               val (timeStamp, exchangeRate) = tpl
               if (nowishTime.isBefore(timeStamp) || nowishTime.equals(timeStamp)) {
-                 // the timestamp in the cache is within the allowed range 
-                Right(moneyInSourceCurrency.convertedTo(toCurr, exchangeRate).toMoney(RoundingMode.HALF_EVEN))
+                // the timestamp in the cache is within the allowed range  
+                returnMoneyOrJodaError(exchangeRate)
               } else {
                 now
               }
@@ -222,8 +208,7 @@ case class ForexLookupWhen(conversionAmount: Int, fromCurr: CurrencyUnit, toCurr
                 // to:from found in LRU
                 case Some(tpl) => { 
                   val (time, rate) = tpl
-                  val inverseRate = new BigDecimal(1).divide(rate, fx.commonScale, RoundingMode.HALF_EVEN)
-                  Right(moneyInSourceCurrency.convertedTo(toCurr, inverseRate).toMoney(RoundingMode.HALF_EVEN))
+                  returnMoneyOrJodaError(new BigDecimal(1).divide(rate, fx.commonScale, RoundingMode.HALF_EVEN))
                 }
                 // Neither direction found in LRU
                 case None => {
@@ -258,16 +243,15 @@ case class ForexLookupWhen(conversionAmount: Int, fromCurr: CurrencyUnit, toCurr
     fx.client.eodCache match {
       case Some(cache) => {
         cache.get((fromCurr, toCurr, eodDate)) match {
-          // from->to is found in the cache  
+          // from->to is found in the cache 
           case Some(rate) => 
-            Right(moneyInSourceCurrency.convertedTo(toCurr, rate).toMoney(RoundingMode.HALF_EVEN))          
+            returnMoneyOrJodaError(rate)
           // from->to not found in the cache
           case None => 
             cache.get((toCurr, fromCurr, eodDate)) match {                  
               // to->from found in the cache
               case Some(exchangeRate) =>                                              
-                val rate = new BigDecimal(1).divide(exchangeRate, fx.commonScale, RoundingMode.HALF_EVEN)
-                Right(moneyInSourceCurrency.convertedTo(toCurr, rate).toMoney(RoundingMode.HALF_EVEN))
+                returnMoneyOrJodaError(new BigDecimal(1).divide(exchangeRate, fx.commonScale, RoundingMode.HALF_EVEN))
               // neither from->to nor to->from found in the cache
               case None =>
                 getHistoricalRate(eodDate)         
@@ -279,11 +263,11 @@ case class ForexLookupWhen(conversionAmount: Int, fromCurr: CurrencyUnit, toCurr
   }
 
   /**
-  * gets historical forex rate between two currencies on a given date,
+  * Gets historical forex rate between two currencies on a given date,
   * baseOverFrom and baseOverTo have the same date so either they both return Left or both return Right 
   * @returns Money in target currency representation or error message if the date given is invalid 
   */
-  private def getHistoricalRate(date: DateTime): Either[OerErr, Money] = {
+  private def getHistoricalRate(date: DateTime): Either[OerErr, Money] = { 
     val from = fx.client.getHistoricalCurrencyValue(fromCurr, date)
     val to   = fx.client.getHistoricalCurrencyValue(toCurr, date)
     if (from.isRight && to.isRight) {
@@ -292,18 +276,18 @@ case class ForexLookupWhen(conversionAmount: Int, fromCurr: CurrencyUnit, toCurr
       val rate = getForexRate(baseOverFrom, baseOverTo)
       // if from currency is not base currency then we need to add the fromCurrency->toCurrency pair into cache 
       // because getHistoricalCurrencyValue method only adds baseCurrency->toCurrency into cache
-      if (!fx.client.eodCache.isEmpty && fromCurr != CurrencyUnit.getInstance(fx.config.baseCurrency)) {
+      if (!fx.client.eodCache.isEmpty && fromCurr != fx.config.baseCurrency) {
         val Some(cache) = fx.client.eodCache
         cache.put((fromCurr,toCurr, date), rate)
       }
-      Right(moneyInSourceCurrency.convertedTo(toCurr, rate).toMoney(RoundingMode.HALF_EVEN))
+      returnMoneyOrJodaError(rate)
     } else {
-      Left(from.left.get)
+      returnApiError(from.left.get)
     }
   }
 
   /** 
-  * gets the forex rate between source currency and target currency
+  * Gets the forex rate between source currency and target currency
   * @returns ratio of from:to as BigDecimal
   */
   private def getForexRate(baseOverFrom: BigDecimal, baseOverTo: BigDecimal): BigDecimal = {
@@ -314,6 +298,62 @@ case class ForexLookupWhen(conversionAmount: Int, fromCurr: CurrencyUnit, toCurr
       baseOverTo
     }
   }
+  
+  /**
+  * Converts a currency type in String representation to CurrencyUnit representation 
+  * @param currencyInStringRepresentation - the currency to be converted
+  * @returns currencyUnit representation of the currency, or OerErr if Joda money does not support the currency
+  */
+  private def convertToCurrencyUnit(currencyInStringRepresentation: String) : Either[OerErr, CurrencyUnit] = {
+    try {
+      Right(CurrencyUnit.getInstance(currencyInStringRepresentation))
+    } catch {
+      case (e: IllegalCurrencyException) => 
+        val errMessage = "Currency" + fromCurr + "is not supported by Joda money"
+        println(errMessage)
+        Left(OerErr(errMessage))
+    }
+  }
 
+  /**
+  * This method is called when the forex rate has been found in the API
+  * @param rate - The forex rate between source and target currency
+  * @returns Money representation in target currency if both currencies are supported by Joda Money
+  * or OerErr with an error message containing the forex rate between the two currencies 
+  * if either of the currency is not supported by Joda Money
+  */
+  private def returnMoneyOrJodaError(rate: BigDecimal) : Either[OerErr, Money] = {
+    if (fromCurrencyUnit.isRight && toCurrencyUnit.isRight) {
+      Right(moneyInSourceCurrency.convertedTo(toCurrencyUnit.right.get, rate).toMoney(RoundingMode.HALF_EVEN))
+    } else {
+      var errMessage = "Currency " + fromCurr + " and "+ toCurr + " can be found from the API " + 
+                       "and " + fromCurr + ":" + toCurr + " = " + rate + " however" 
+      if (fromCurrencyUnit.isLeft) {
+        errMessage += fromCurrencyUnit.left.get.getMessage
+      }
+      if (toCurrencyUnit.isLeft) {
+        errMessage += toCurrencyUnit.left.get.getMessage
+      }
+      Left(OerErr(errMessage))
+    } 
+  }
+
+  /**
+  * This method is called if API requests fail
+  * @param errObject - The OerErr object which contains the failure information obtained from API
+  * @returns a Left of OerErr object which states the failure information 
+  * and illegal currency info if there is any illegal currency
+  */
+  private def returnApiError(errObject : OerErr) : Either[OerErr, Money] = {
+    var errMsg = "" 
+    if (fromCurrencyUnit.isLeft) {
+      errMsg += fromCurrencyUnit.left.get.getMessage
+    } 
+    if (toCurrencyUnit.isLeft) {
+      errMsg += toCurrencyUnit.left.get.getMessage
+    }
+    errMsg += errObject.getMessage
+    Left(OerErr(errMsg))
+  }
 }
 

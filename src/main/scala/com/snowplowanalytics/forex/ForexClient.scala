@@ -15,7 +15,6 @@ package com.snowplowanalytics.forex
 // Java
 import java.math.BigDecimal
 // joda
-import org.joda.money.CurrencyUnit
 import org.joda.time._
 // OpenExchangeRate client
 import oerclient._
@@ -67,7 +66,7 @@ abstract class ForexClient(config: ForexConfig, spiedNowishCache: NowishCacheTyp
    *            Desired currency
    * @return Latest value of exchange rate or OerErr object
    */
-   def getLiveCurrencyValue(currency: CurrencyUnit): Either[OerErr, BigDecimal]
+   def getLiveCurrencyValue(currency: String): Either[OerErr, BigDecimal]
 
   /**
    * Get a historical exchange rate from a given currency and date
@@ -78,5 +77,5 @@ abstract class ForexClient(config: ForexConfig, spiedNowishCache: NowishCacheTyp
    *            Date of desired rate
    * @return Value of exchange rate on desired date or OerErr object
    */
-   def getHistoricalCurrencyValue(currency: CurrencyUnit, date: DateTime): Either[OerErr, BigDecimal]
+   def getHistoricalCurrencyValue(currency: String, date: DateTime): Either[OerErr, BigDecimal]
 }

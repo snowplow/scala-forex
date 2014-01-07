@@ -11,8 +11,6 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.forex
-// joda
-import org.joda.money.CurrencyUnit
 
 /**
  * User defined type for getNearestDay flag

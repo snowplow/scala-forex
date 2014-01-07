@@ -28,7 +28,6 @@ import org.codehaus.jackson.JsonNode
 import org.codehaus.jackson.map.ObjectMapper
 
 // Joda 
-import org.joda.money._
 import org.joda.time._
 
 
@@ -83,8 +82,8 @@ class OerClient(config: ForexConfig,
    * @parameter currency - The desired currency we want to look up from the API
    * @returns live exchange rate obtained from API, else OerErr object
    */
-  def getLiveCurrencyValue(currency: CurrencyUnit): Either[OerErr, BigDecimal]= {
-    val key = (CurrencyUnit.getInstance(config.baseCurrency), currency)     
+  def getLiveCurrencyValue(currency: String): Either[OerErr, BigDecimal]= {
+    val key = (config.baseCurrency, currency)     
     getJsonNodeFromApi(latest) match {
       case Left(oerErr) => Left(oerErr)
       case Right(node)  => {
@@ -93,18 +92,18 @@ class OerClient(config: ForexConfig,
                 val currencyNameIterator = node.getFieldNames
                 while (currencyNameIterator.hasNext) {  
                   val currencyName = currencyNameIterator.next
-                  try {
-                    val keyPair   = (CurrencyUnit.getInstance(config.baseCurrency), CurrencyUnit.getInstance(currencyName))
+                  // try {
+                    val keyPair   = (config.baseCurrency, currencyName)
                     val valuePair = (DateTime.now, node.findValue(currencyName).getDecimalValue)                                                                    
                     cache.put(keyPair, valuePair)
-                  } catch {
-                    case (e: IllegalCurrencyException) => // drop the illegal currencies
-                  }
+                  // } catch {
+                  //   case (e: IllegalCurrencyException) => // drop the illegal currencies
+                  // }
                 } 
           }
           case None => // do nothing   
         }
-        Right(node.findValue(currency.toString).getDecimalValue)
+        Right(node.findValue(currency).getDecimalValue)
       }
     }
   }
@@ -132,7 +131,7 @@ class OerClient(config: ForexConfig,
    * @parameter date - The specific date we want to look up on
    * @returns live exchange rate obtained from API if available, else OerErr object 
    */
-  def getHistoricalCurrencyValue(currency: CurrencyUnit, date: DateTime): Either[OerErr, BigDecimal] = {
+  def getHistoricalCurrencyValue(currency: String, date: DateTime): Either[OerErr, BigDecimal] = {
     
     /**
     * return error message if the date given is not supported by OER
@@ -141,7 +140,7 @@ class OerClient(config: ForexConfig,
       Left(OerErr("Exchange rate unavailable on the date [%s]".format(date)))
     } else {
       val historicalLink = buildHistoricalLink(date)
-      val key = (CurrencyUnit.getInstance(config.baseCurrency), currency, date) 
+      val key = (config.baseCurrency, currency, date) 
       getJsonNodeFromApi(historicalLink) match {
         case Left(oerErr) => Left(oerErr)
         case Right(node)  => {
@@ -150,17 +149,17 @@ class OerClient(config: ForexConfig,
             val currencyNameIterator = node.getFieldNames 
             while (currencyNameIterator.hasNext) {  
               val currencyName = currencyNameIterator.next
-              try {
-                val keySet = (CurrencyUnit.getInstance(config.baseCurrency), CurrencyUnit.getInstance(currencyName), date)
+              // try {
+                val keySet = (config.baseCurrency, currencyName, date)
                 cache.put(keySet, node.findValue(currencyName).getDecimalValue)  
-              } catch {
-                case (e: IllegalCurrencyException) => // drop the illegal currencies
-              }                                                         
+              // } catch {
+              //   case (e: IllegalCurrencyException) => // drop the illegal currencies
+              // }                                                         
             }
           }
           case None => // do nothing
           }
-          Right(node.findValue(currency.toString).getDecimalValue)
+          Right(node.findValue(currency).getDecimalValue)
         }
       }
     }

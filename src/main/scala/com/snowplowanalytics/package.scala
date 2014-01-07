@@ -16,7 +16,6 @@ package com.snowplowanalytics
 import java.math.BigDecimal
 // Joda 
 import org.joda.time._
-import org.joda.money.CurrencyUnit
 // LRUCache
 import com.twitter.util.LruMap
 
@@ -24,9 +23,9 @@ package object forex {
   /**
    * The key and value for each cache entry.
    */
-  type NowishCacheKey       = Tuple2[CurrencyUnit, CurrencyUnit] // source currency , target currency 
+  type NowishCacheKey       = Tuple2[String, String] // source currency , target currency 
   type NowishCacheValue     = Tuple2[DateTime, BigDecimal] // timestamp, exchange rate 
-  type EodCacheKey          = Tuple3[CurrencyUnit, CurrencyUnit, DateTime] // source currency, target currency, timestamp
+  type EodCacheKey          = Tuple3[String, String, DateTime] // source currency, target currency, timestamp
   type EodCacheValue        = BigDecimal // exchange rate
   type NowishCacheType      = Option[LruMap[NowishCacheKey, NowishCacheValue]]
   type EodCacheType         = Option[LruMap[EodCacheKey, EodCacheValue]]
