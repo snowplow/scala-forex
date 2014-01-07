@@ -35,7 +35,10 @@ import org.joda.time._
 
 /**
  * Implements Json for Open Exchange Rates(http://openexchangerates.org)
- * @param apiKey - The API key to Open Exchange Rates
+ * @pvalue config - a configurator for Forex object
+ * @pvalue oerConfig - a configurator for OER Client object 
+ * @pvalue spiedNowish - spy for nowishCache
+ * @pvalue spiedEod - spy for eodCache
  */
 class OerClient(config: ForexConfig, 
                   oerConfig: OerClientConfig,

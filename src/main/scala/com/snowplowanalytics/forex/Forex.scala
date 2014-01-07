@@ -29,7 +29,8 @@ import com.snowplowanalytics.forex.oerclient._
 
 
 /**
-* companion object to get Forex object
+* Companion object to get Forex object
+* Either pass in spied caches to spy on the Forex object or get the normal version of Forex object
 */
 object Forex {
   def getSpiedForex(config: ForexConfig, oerconfig: OerClientConfig, 
