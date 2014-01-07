@@ -16,7 +16,6 @@
 package com.snowplowanalytics.forex
 
 // Java
-import java.math.BigDecimal
 import java.math.RoundingMode
 // Specs2
 import org.specs2.mutable.Specification
@@ -30,7 +29,6 @@ import org.joda.money._
 class ForexNowishSpecification extends Specification { 
   val fx  = TestHelper.fx 
   val fxWithBaseGBP = TestHelper.fxWithBaseGBP  
-  val fxWithoutCache = TestHelper.fxWithoutCache
   /**
   * CAD -> GBP with base currency USD 
   */
@@ -41,19 +39,6 @@ class ForexNowishSpecification extends Specification {
   "CAD to GBP with USD as base currency returning near-live rate [%s]".format(gbpmoney) should {
      "be smaller than 1 pound" in {
          gbpmoney.isLessThan(Money.of(CurrencyUnit.GBP, 1))
-     }
-  }
-
-  /**
-  * CAD -> GBP with base currency USD but without caching 
-  */
-  val cadOverGbpNowishWithoutCaching = fxWithoutCache.rate(CurrencyUnit.getInstance("CAD")).to(CurrencyUnit.GBP).nowish
- 
-  val gbpmoneyWithoutCaching = cadOverGbpNowishWithoutCaching.right.get
-  
-  "CAD to GBP with USD as base currency but without caching returning near-live rate [%s]".format(gbpmoneyWithoutCaching) should {
-     "be smaller than 1 pound" in {
-         gbpmoneyWithoutCaching.isLessThan(Money.of(CurrencyUnit.GBP, 1))
      }
   }
 

@@ -12,16 +12,23 @@
  */
 package com.snowplowanalytics.forex
 
+// Joda money
 import org.joda.money._
+// OpenExchangeRate client
+import oerclient._
+// LRUCache
+import com.twitter.util.LruMap
+
 /**
  * make all tests share one forex object
  */
-object TestHelper {
+object TestHelper{
   val key = sys.env("OER_KEY") // Warning: this will give nasty errors if env var not exported
+  val config = ForexConfig()
   val oerConfig = OerClientConfig(key, false) // with default base currency USD
-  val fx = Forex(ForexConfig(), oerConfig) // forex object with USD as base currency
+  val fx = Forex.getForex(config, oerConfig) // Forex object with USD as base currency
   val forexConfig = ForexConfig(nowishCacheSize = 0, eodCacheSize = 0)
-  val fxWithoutCache = Forex(forexConfig, oerConfig) // forex object with caches disabled 
+  val fxWithoutCache = Forex.getForex(forexConfig, oerConfig) // Forex object with caches disabled 
   val confWithBaseGBP = OerClientConfig(key, true) // set base currency to GBP
-  val fxWithBaseGBP = Forex(ForexConfig(baseCurrency = "GBP"), confWithBaseGBP) // forex object with GBP as base currency
+  val fxWithBaseGBP = Forex.getForex(ForexConfig(baseCurrency = "GBP"), confWithBaseGBP) // Forex object with GBP as base currency
 }

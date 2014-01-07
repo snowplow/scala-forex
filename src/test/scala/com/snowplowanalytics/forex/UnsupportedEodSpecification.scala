@@ -13,9 +13,6 @@
  
 package com.snowplowanalytics.forex
 
-// Java
-import java.math.BigDecimal
-import java.math.RoundingMode
 // Specs2
 import org.specs2.mutable.Specification
 // Joda 

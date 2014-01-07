@@ -34,11 +34,16 @@ import org.joda.time._
 // LRUCache
 import com.twitter.util.LruMap
 
+
 /**
  * Implements Json for Open Exchange Rates(http://openexchangerates.org)
  * @param apiKey - The API key to Open Exchange Rates
  */
-class OerClient(config: ForexConfig, oerConfig: OerClientConfig) extends ForexClient(config) {
+class OerClient(config: ForexConfig, 
+                  oerConfig: OerClientConfig,
+                    spiedNowish: Option[LruMap[NowishCacheKey, NowishCacheValue]] = None,
+                      spiedEod: Option[LruMap[EodCacheKey, EodCacheValue]]  = None
+                        ) extends ForexClient(config, spiedNowish, spiedEod) {
 
   private val oerUrl = "http://openexchangerates.org/api/"
 
@@ -89,7 +94,7 @@ class OerClient(config: ForexConfig, oerConfig: OerClientConfig) extends ForexCl
                   val currencyName = currencyNameIterator.next
                   try {
                     val keyPair   = (CurrencyUnit.getInstance(config.baseCurrency), CurrencyUnit.getInstance(currencyName))
-                    val valuePair = (DateTime.now, node.findValue(currencyName).getDecimalValue)                                                                       
+                    val valuePair = (DateTime.now, node.findValue(currencyName).getDecimalValue)                                                                    
                     cache.put(keyPair, valuePair)
                   } catch {
                     case (e: IllegalCurrencyException) => // drop the illegal currencies
@@ -193,5 +198,4 @@ class OerClient(config: ForexConfig, oerConfig: OerClientConfig) extends ForexCl
       case _ => throw new ClassCastException
     }
   }
-
 }

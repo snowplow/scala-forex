@@ -26,16 +26,38 @@ import org.joda.money._
 import scala.collection.JavaConversions._
 // OerClient
 import com.snowplowanalytics.forex.oerclient._
+// LRUCache
+import com.twitter.util.LruMap
+
+/**
+* companion object to get Forex object
+*/
+object Forex {
+  def getSpiedForex(config: ForexConfig, 
+                      oerconfig: OerClientConfig, 
+                        spiedNowishCache: Option[LruMap[NowishCacheKey, NowishCacheValue]], 
+                          spiedEodCache: Option[LruMap[EodCacheKey, EodCacheValue]]): Forex = {
+    new Forex(config, oerconfig, spiedNowish = spiedNowishCache, spiedEod = spiedEodCache)
+  }
+
+  def getForex(config: ForexConfig, oerconfig: OerClientConfig): Forex = {
+    new Forex(config, oerconfig)
+  }
+}
 
 /**
  * Starts building the fluent interface for currency look-up and conversion,
  * Forex class has methods rate and convert which return ForexLookupTo object
  * which will be passed to the method to in class ForexLookupTo
  * @pvalue config - a configurator for Forex object
+ * @pvalue oerConfig - a configurator for OER Client object 
+ * @pvalue spiedNowish - spy for nowishCache
+ * @pvalue spiedEod - spy for eodCache
  */
-
-case class Forex(config: ForexConfig, oerConfig: OerClientConfig) {
-  val client = ForexClient.getOerClient(config, oerConfig)
+case class Forex(config: ForexConfig, oerConfig: OerClientConfig, 
+                  spiedNowish: Option[LruMap[NowishCacheKey, NowishCacheValue]] = None,
+                    spiedEod: Option[LruMap[EodCacheKey, EodCacheValue]]  = None) {
+  val client = ForexClient.getOerClient(config, oerConfig, nowish = spiedNowish, eod = spiedEod)
   // preserve 10 digits after decimal point of a number when performing division 
   val maxScale         = 10 
   // usually the number of digits of a currency value has only 6 digits 
@@ -157,12 +179,19 @@ case class ForexLookupWhen(conversionAmount: Int, fromCurr: CurrencyUnit, toCurr
   * @returns Money representation in target currency or OerErr object if API request failed
   */
   def now: Either[OerErr, Money] =  {
+    val timeStamp = DateTime.now
     val from = fx.client.getLiveCurrencyValue(fromCurr)
     val to   = fx.client.getLiveCurrencyValue(toCurr)
     if (from.isRight && to.isRight) {
       val baseOverFrom = from.right.get
       val baseOverTo = to.right.get
       val rate = getForexRate(baseOverFrom, baseOverTo)
+      // if from currency is not base currency then we need to add the fromCurrency->toCurrency pair into cache 
+      // because getLiveCurrencyValue method only adds baseCurrency->toCurrency into cache
+      if (!fx.client.nowishCache.isEmpty && fromCurr != CurrencyUnit.getInstance(fx.config.baseCurrency)) {
+        val Some(cache) = fx.client.nowishCache
+        cache.put((fromCurr,toCurr), (timeStamp, rate))
+      }
       Right(moneyInSourceCurrency.convertedTo(toCurr, rate).toMoney(RoundingMode.HALF_EVEN))
     } else {
       Left(from.left.get)
@@ -264,6 +293,12 @@ case class ForexLookupWhen(conversionAmount: Int, fromCurr: CurrencyUnit, toCurr
       val baseOverFrom = from.right.get
       val baseOverTo = to.right.get
       val rate = getForexRate(baseOverFrom, baseOverTo)
+      // if from currency is not base currency then we need to add the fromCurrency->toCurrency pair into cache 
+      // because getHistoricalCurrencyValue method only adds baseCurrency->toCurrency into cache
+      if (!fx.client.eodCache.isEmpty && fromCurr != CurrencyUnit.getInstance(fx.config.baseCurrency)) {
+        val Some(cache) = fx.client.eodCache
+        cache.put((fromCurr,toCurr, date), rate)
+      }
       Right(moneyInSourceCurrency.convertedTo(toCurr, rate).toMoney(RoundingMode.HALF_EVEN))
     } else {
       Left(from.left.get)

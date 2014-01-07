@@ -15,8 +15,6 @@ package oerclient
 
 // Java
 import java.math.BigDecimal
-// Scala
-// import scala.collection.JavaConversions._
 // Specs2
 import org.specs2.mutable.Specification
 // Joda 
@@ -27,6 +25,7 @@ import org.joda.money._
 */
 class OerClientSpecification extends Specification { 
   val fx  = TestHelper.fx
+
   "live currency value for USD" should { 
     "always equal to 1" in {
       fx.client.getLiveCurrencyValue(CurrencyUnit.USD).right.get must_== (new BigDecimal(1))

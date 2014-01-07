@@ -13,15 +13,12 @@
  
 package com.snowplowanalytics.forex
 
-// Java
-import java.math.BigDecimal
-import java.math.RoundingMode
 // Specs2
 import org.specs2.mutable.Specification
 // Joda time
 import org.joda.money._
-// Oer Client
-import oerclient._
+// OerErr 
+import oerclient.OerErr
 
 /**
 *  testing for unsupported currencies in joda money, e.g. bitcoin(BTC)
