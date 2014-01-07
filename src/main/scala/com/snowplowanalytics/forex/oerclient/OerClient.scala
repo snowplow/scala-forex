@@ -31,8 +31,6 @@ import org.codehaus.jackson.map.ObjectMapper
 import org.joda.money._
 import org.joda.time._
 
-// LRUCache
-import com.twitter.util.LruMap
 
 
 /**
@@ -41,8 +39,8 @@ import com.twitter.util.LruMap
  */
 class OerClient(config: ForexConfig, 
                   oerConfig: OerClientConfig,
-                    spiedNowish: Option[LruMap[NowishCacheKey, NowishCacheValue]] = None,
-                      spiedEod: Option[LruMap[EodCacheKey, EodCacheValue]]  = None
+                    spiedNowish: NowishCacheType = None,
+                      spiedEod: EodCacheType  = None
                         ) extends ForexClient(config, spiedNowish, spiedEod) {
 
   private val oerUrl = "http://openexchangerates.org/api/"

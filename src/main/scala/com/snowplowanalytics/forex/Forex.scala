@@ -26,18 +26,15 @@ import org.joda.money._
 import scala.collection.JavaConversions._
 // OerClient
 import com.snowplowanalytics.forex.oerclient._
-// LRUCache
-import com.twitter.util.LruMap
+
 
 /**
 * companion object to get Forex object
 */
 object Forex {
-  def getSpiedForex(config: ForexConfig, 
-                      oerconfig: OerClientConfig, 
-                        spiedNowishCache: Option[LruMap[NowishCacheKey, NowishCacheValue]], 
-                          spiedEodCache: Option[LruMap[EodCacheKey, EodCacheValue]]): Forex = {
-    new Forex(config, oerconfig, spiedNowish = spiedNowishCache, spiedEod = spiedEodCache)
+  def getSpiedForex(config: ForexConfig, oerconfig: OerClientConfig, 
+                      spiedNowishCache: NowishCacheType, spiedEodCache: EodCacheType): Forex = {
+    new Forex(config, oerconfig, nowishCache = spiedNowishCache, eodCache = spiedEodCache)
   }
 
   def getForex(config: ForexConfig, oerconfig: OerClientConfig): Forex = {
@@ -51,13 +48,12 @@ object Forex {
  * which will be passed to the method to in class ForexLookupTo
  * @pvalue config - a configurator for Forex object
  * @pvalue oerConfig - a configurator for OER Client object 
- * @pvalue spiedNowish - spy for nowishCache
- * @pvalue spiedEod - spy for eodCache
+ * @pvalue nowishCache - spy for nowishCache
+ * @pvalue eodCache - spy for eodCache
  */
 case class Forex(config: ForexConfig, oerConfig: OerClientConfig, 
-                  spiedNowish: Option[LruMap[NowishCacheKey, NowishCacheValue]] = None,
-                    spiedEod: Option[LruMap[EodCacheKey, EodCacheValue]]  = None) {
-  val client = ForexClient.getOerClient(config, oerConfig, nowish = spiedNowish, eod = spiedEod)
+                  nowishCache: NowishCacheType = None, eodCache: EodCacheType  = None) {
+  val client = ForexClient.getOerClient(config, oerConfig, nowish = nowishCache, eod = eodCache)
   // preserve 10 digits after decimal point of a number when performing division 
   val maxScale         = 10 
   // usually the number of digits of a currency value has only 6 digits 

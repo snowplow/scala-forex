@@ -30,18 +30,14 @@ object ForexClient {
    * Generate and get a spied OER Forex client
    * @return an Forex client
    */
-  def getOerClient(config: ForexConfig, 
-                    oerConfig: OerClientConfig,
-                      nowish: Option[LruMap[NowishCacheKey, NowishCacheValue]] = None,
-                        eod: Option[LruMap[EodCacheKey, EodCacheValue]] = None
-                          ): ForexClient = {
+  def getOerClient(config: ForexConfig, oerConfig: OerClientConfig,
+                    nowish: NowishCacheType = None, eod: EodCacheType = None): ForexClient = {
     new OerClient(config, oerConfig, spiedNowish = nowish, spiedEod = eod)
   }
 }
 
-abstract class ForexClient(config: ForexConfig,
-                             spiedNowishCache: Option[LruMap[NowishCacheKey, NowishCacheValue]] = None, 
-                              spiedEodCache: Option[LruMap[EodCacheKey, EodCacheValue]]  = None) {
+abstract class ForexClient(config: ForexConfig, spiedNowishCache: NowishCacheType = None,
+                           spiedEodCache: EodCacheType  = None) {
   // LRU cache for nowish request, with tuple of source currency and target currency as the key
   // and tuple of time and exchange rate as the value 
   val nowishCache =

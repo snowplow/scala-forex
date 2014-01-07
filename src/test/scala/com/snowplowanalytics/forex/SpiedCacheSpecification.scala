@@ -54,5 +54,4 @@ class SpiedCacheSpecification extends Specification with Mockito{
   there was one(spiedEodCache).get(((CurrencyUnit.CAD), (CurrencyUnit.GBP), date)) 
 
   spiedEodCache must haveKey(((CurrencyUnit.CAD), (CurrencyUnit.GBP), date)) 
-
 }

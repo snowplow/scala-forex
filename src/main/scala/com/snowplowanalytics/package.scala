@@ -17,6 +17,8 @@ import java.math.BigDecimal
 // Joda 
 import org.joda.time._
 import org.joda.money.CurrencyUnit
+// LRUCache
+import com.twitter.util.LruMap
 
 package object forex {
   /**
@@ -26,4 +28,6 @@ package object forex {
   type NowishCacheValue     = Tuple2[DateTime, BigDecimal] // timestamp, exchange rate 
   type EodCacheKey          = Tuple3[CurrencyUnit, CurrencyUnit, DateTime] // source currency, target currency, timestamp
   type EodCacheValue        = BigDecimal // exchange rate
+  type NowishCacheType      = Option[LruMap[NowishCacheKey, NowishCacheValue]]
+  type EodCacheType         = Option[LruMap[EodCacheKey, EodCacheValue]]
 }
