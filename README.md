@@ -68,7 +68,7 @@ The OER Scala Client supports two types of usage:
 Both usage types support live, near-live or historical (end-of-day) exchange rates.
 
 #### IMPORTANT:
-Run _"export OER_KEY=>>insert your app ID here<<"_ in terminal before you do any queries, this is for setting the environment variable which is your unique app ID.
+Run "export OER_KEY=>>insert your app ID here<<" in terminal before you do any queries, this is for setting the environment variable which is your unique app ID.
 Use the following command to get the ID. 
 ```scala
 val appId = sys.env("OER_KEY") 
