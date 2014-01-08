@@ -83,6 +83,7 @@ class OerClient(config: ForexConfig,
    * @returns live exchange rate obtained from API, else OerResponseError object
    */
   def getLiveCurrencyValue(currency: String): Either[OerResponseError, BigDecimal]= {
+
     val key = (config.baseCurrency, currency)     
     getJsonNodeFromApi(latest) match {
       case Left(oerResponseError) => Left(oerResponseError)
