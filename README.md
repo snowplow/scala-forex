@@ -24,7 +24,7 @@ ForexConfig contains only general configuration options:
 
 'nowishCacheSize' is the size configuration for near-live(nowish) lookup cache, it can be disabled by setting its value to 0.
 
-'nowishSecs' is the time configuration for near-live lookup. The exchange rate will be returned if its time stamp is within the range from [now - nowishSecs] to [now + nowishSecs].
+'nowishSecs' is the time configuration for near-live lookup. The exchange rate will be returned if its time stamp is less than or equal to 'nowishSecs' old.
 
 'eodCacheSize' is the size configuration for end-of-day(eod) lookup cache, it can be disabled by setting its value to 0.
 
