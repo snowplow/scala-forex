@@ -22,15 +22,15 @@ There are three types of accounts, note that Enterprise and Unlimited allow user
 
 ForexConfig contains only general configurations:
 
-1. #######'nowishCacheSize' ###### is the size configuration for near-live(nowish) lookup cache, it can be disabled by setting its value to 0.
+1. _'nowishCacheSize'_  is the size configuration for near-live(nowish) lookup cache, it can be disabled by setting its value to 0.
 
-2. ######'nowishSecs' ###### is the time configuration for near-live lookup. Nowish call will use the exchange rate stored in nowish cache if its time stamp is less than or equal to 'nowishSecs' old.
+2. _'nowishSecs'_  is the time configuration for near-live lookup. Nowish call will use the exchange rate stored in nowish cache if its time stamp is less than or equal to 'nowishSecs' old.
 
-3. ######'eodCacheSize' ###### is the size configuration for end-of-day(eod) lookup cache, it can be disabled by setting its value to 0.
+3. _'eodCacheSize'_  is the size configuration for end-of-day(eod) lookup cache, it can be disabled by setting its value to 0.
 
-4. ######'getNearestDay' ###### is the rounding configuration for latest prior eod(at) lookup. The lookup will be performed on the next day if the rounding mode is set to EodRoundUp, and on the previous day if EodRoundDown.
+4. _'getNearestDay'_ is the rounding configuration for latest prior eod(at) lookup. The lookup will be performed on the next day if the rounding mode is set to EodRoundUp, and on the previous day if EodRoundDown.
 
-5. ######'baseCurrency'###### can be configured if the user is using Unlimited or Enterprise account. If it is set to other currencies other than USD, the configurableBase value in OerClient has to be set to true accordingly.    
+5. _'baseCurrency'_ can be configured if the user is using Unlimited or Enterprise account. If it is set to other currencies other than USD, the configurableBase value in OerClient has to be set to true accordingly.    
 
 All configurations in ForexConfig are set to recommended values, but users are free to set them to desired values. 
 
@@ -47,9 +47,9 @@ case class ForexConfig(
 
 OerClientConfig has congurations specific to the OER API:
 
-1. ######'appId' ###### is the unique key for the user's account,
+1. _'appId'_ is the unique key for the user's account,
 
-2. ######'configurableBase'###### is a boolean value indicating if the base currency can be configured. The baseCurrency value in ForexConfig can be changed if the boolean value is set to true. Note that only Enterprise and Unlimited users are allowed to set the value to true.
+2. _'configurableBase'_ is a boolean value indicating if the base currency can be configured. The baseCurrency value in ForexConfig can be changed if the boolean value is set to true. Note that only Enterprise and Unlimited users are allowed to set the value to true.
 
 ```scala
 case class OerClientConfig extends ForexClientConfig(
