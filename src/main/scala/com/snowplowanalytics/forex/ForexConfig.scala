@@ -40,11 +40,3 @@ case class ForexConfig(
   baseCurrency: String   = "USD" 
 ) 
 
-/**
- * OER-specific configuration
- */
-case class OerClientConfig(
-  appId: String,              // register an account on https://openexchangerates.org to obtain your unique key
-  configurableBase: Boolean  // boolean flag to identify the type of user,
-                              // i.e. if the user is entitled to configure the base currency
-)  
