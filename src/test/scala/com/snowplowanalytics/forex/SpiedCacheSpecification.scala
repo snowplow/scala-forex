@@ -23,18 +23,19 @@ import com.twitter.util.LruMap
 // Java
 import java.lang.Thread
 import java.math.BigDecimal
+
 /**
-* Testing cache behaviours
-*/
+ * Testing cache behaviours
+ */
 class SpiedCacheSpecification extends Specification with Mockito{
   val spiedNowishCache = spy(new LruMap[NowishCacheKey, NowishCacheValue](TestHelper.config.nowishCacheSize)) 
   val spiedEodCache    = spy(new LruMap[EodCacheKey, EodCacheValue](TestHelper.config.eodCacheSize))
   val spiedFx = Forex.getForex(TestHelper.config, TestHelper.oerConfig, Some(spiedNowishCache), Some(spiedEodCache)) 
   val spiedFxWith5NowishSecs = Forex.getForex(TestHelper.fxConfigWith5NowishSecs, TestHelper.oerConfig, Some(spiedNowishCache), Some(spiedEodCache)) 
 
- /**
-  * nowish cache with 5-sec memory
-  */
+  /**
+   * nowish cache with 5-sec memory
+   */
   // call nowish, update the cache with key("CAD","GBP") and corresponding value
   spiedFxWith5NowishSecs.rate("CAD").to("GBP").nowish
   // get the value from the first HTPP request
@@ -51,10 +52,10 @@ class SpiedCacheSpecification extends Specification with Mockito{
   spiedNowishCache must haveValue(valueFromFirstHttpRequest).not
 
   /**
-  * CAD -> GBP with base currency USD on 13-03-2011
-  * The eod lookup will call get method on eod cache
-  * after the call, the key will be stored in the cache 
-  */
+   * CAD -> GBP with base currency USD on 13-03-2011
+   * The eod lookup will call get method on eod cache
+   * after the call, the key will be stored in the cache 
+   */
   val date = new DateTime(2011, 3, 13, 0, 0)
   
   spiedFx.rate("CAD").to("GBP").eod(date)

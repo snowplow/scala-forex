@@ -18,11 +18,12 @@ package oerclient
  */
 case class OerClientConfig(
   /**
-   * register an account on https://openexchangerates.org to obtain your unique key
+   * Register an account on https://openexchangerates.org to obtain your unique key
    */
   appId: String,              
   
-  /** boolean flag to identify the type of user,
+  /** 
+   * Boolean flag to identify the type of user,
    * i.e. if the user is entitled to configure the base currency
    */
   configurableBase: Boolean 

@@ -31,7 +31,7 @@ class ForexEodSpecification extends Specification with DataTables {
   override def is = 
     "end-of-date lookup tests: forex rate between two currencies for a specific date is always the same" ! e1
   
-  // table values obtained from OER API
+  // Table values obtained from OER API
   def e1 = 
     "SOURCE CURRENCY"   || "TARGET CURRENCY"   | "DATE"        | "EXPECTED OUTPUT"  |
     "USD"               !! "GBP"               ! "2011-03-13"  ! "0.62"             |

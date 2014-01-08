@@ -23,7 +23,7 @@ import org.specs2.mutable.Specification
 import org.joda.money._
 
 /**
-* testing method for getting the approximate exchange rate
+* Testing method for getting the approximate exchange rate
 */
 class ForexNowishSpecification extends Specification { 
   val fx  = TestHelper.fx 

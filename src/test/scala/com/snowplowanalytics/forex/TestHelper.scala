@@ -18,7 +18,7 @@ import oerclient._
 import com.twitter.util.LruMap
 
 /**
- * make all tests share one forex object
+ * All tests can have access to the same Forex object
  */
 object TestHelper{
   val key = sys.env("OER_KEY") // Warning: this will give nasty errors if env var not exported

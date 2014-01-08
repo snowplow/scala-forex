@@ -19,11 +19,9 @@ import java.net.URL
 import java.net.URLConnection
 import java.net.HttpURLConnection
 import java.util.Calendar
-
 // Json
 import org.codehaus.jackson.JsonNode
 import org.codehaus.jackson.map.ObjectMapper
-
 // Joda 
 import org.joda.time._
 
@@ -69,8 +67,8 @@ class OerClient(
   private val mapper = new ObjectMapper()
 
   /**
-  * The earliest date OER service is availble
-  */
+   * The earliest date OER service is availble
+   */
   private val oerDataFrom = new DateTime(1999,1,1,0,0)
 
   /**
@@ -134,8 +132,8 @@ class OerClient(
    */
   def getHistoricalCurrencyValue(currency: String, date: DateTime): Either[OerResponseError, BigDecimal] = {
     
-  /**
-    * return OerResponseError if the date given is not supported by OER
+   /**
+    * Return OerResponseError if the date given is not supported by OER
     */
     if (date.isBefore(oerDataFrom) || date.isAfter(DateTime.now)) {
       Left(OerResponseError("Exchange rate unavailable on the date [%s] ".format(date), ResourcesNotAvailable))

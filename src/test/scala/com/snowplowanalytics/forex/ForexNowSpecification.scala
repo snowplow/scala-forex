@@ -22,14 +22,14 @@ import org.specs2.mutable.Specification
 import org.joda.money._
 
 /**
-* testing method for getting the live exchange rate
+* Testing method for getting the live exchange rate
 */
 class ForexNowSpecification extends Specification { 
   val fx  = TestHelper.fx 
   val fxWithBaseGBP = TestHelper.fxWithBaseGBP
   
   /**
-  * trade 10000 USD to JPY at live exchange rate
+  * Trade 10000 USD to JPY at live exchange rate
   */
   val tradeInYenNow = fx.convert(10000).to(CurrencyUnit.JPY).now
 

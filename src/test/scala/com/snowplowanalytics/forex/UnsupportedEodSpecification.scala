@@ -19,28 +19,28 @@ import org.specs2.mutable.Specification
 import org.joda.time._
 
 /**
-*  testing for exceptions caused by invalid dates
-*/
+ *  Testing for exceptions caused by invalid dates
+ */
 class UnsupportedEodSpecification extends Specification { 
   val fx  = TestHelper.fx 
   
   /**
-  * 1900 is earlier than 1990 which is the earliest available date for looking up exchange rates  
-  */
+   * 1900 is earlier than 1990 which is the earliest available date for looking up exchange rates  
+   */
   val rateIn1900 = fx.rate.to("GBP").eod(new DateTime(1900, 3, 13, 0, 0))
   
-  "an end-of-date lookup in 1900" should {
+  "An end-of-date lookup in 1900" should {
     "throw an exception" in {
       rateIn1900.isLeft
     }
   }
 
  /**
- * 2020 is in the future so it won't be available either
- */
+  * 2020 is in the future so it won't be available either
+  */
   val rateIn2020 = fx.rate.to("GBP").eod(new DateTime(2020, 3, 13, 0, 0))
   
-  "an end-of-date lookup in 2020" should {
+  "An end-of-date lookup in 2020" should {
     "throw an exception" in {
       rateIn2020.isLeft
     }

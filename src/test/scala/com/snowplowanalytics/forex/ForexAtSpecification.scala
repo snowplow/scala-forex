@@ -19,7 +19,7 @@ import org.specs2.mutable.Specification
 import org.joda.time._
 
 /**
- * testing method for getting the latest end-of-day rate 
+ * Testing method for getting the latest end-of-day rate 
  * prior to the datetime or the day after according to the user's setting 
  */
 class ForexAtSpecification extends Specification { 
