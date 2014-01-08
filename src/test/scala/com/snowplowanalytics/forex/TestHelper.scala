@@ -22,7 +22,8 @@ import com.twitter.util.LruMap
  */
 object TestHelper{
   val key = sys.env("OER_KEY") // Warning: this will give nasty errors if env var not exported
-  val config = ForexConfig()
+  val config = ForexConfig()   // ForexConfig object with default values
+  val fxConfigWith5NowishSecs = ForexConfig(nowishSecs = 5) // ForexConfig object with 5 nowishSecs 
   val oerConfig = OerClientConfig(key, false) // with default base currency USD
   val fx = Forex.getForex(config, oerConfig) // Forex object with USD as base currency
   val forexConfig = ForexConfig(nowishCacheSize = 0, eodCacheSize = 0)

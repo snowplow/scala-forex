@@ -20,7 +20,9 @@ import org.specs2.mock.Mockito
 import org.joda.time._
 // LRUCache
 import com.twitter.util.LruMap
-
+// Java
+import java.lang.Thread
+import java.math.BigDecimal
 /**
 * Testing cache behaviours
 */
@@ -28,18 +30,25 @@ class SpiedCacheSpecification extends Specification with Mockito{
   val spiedNowishCache = spy(new LruMap[NowishCacheKey, NowishCacheValue](TestHelper.config.nowishCacheSize)) 
   val spiedEodCache    = spy(new LruMap[EodCacheKey, EodCacheValue](TestHelper.config.eodCacheSize))
   val spiedFx = Forex.getSpiedForex(TestHelper.config, TestHelper.oerConfig, Some(spiedNowishCache), Some(spiedEodCache)) 
-  
-  /**
-  * CAD -> GBP with base currency USD
-  * The nowish lookup will call get method on nowish cache 
-  * after the call, the key will be stored in the cache 
+  val spiedFxWith5NowishSecs = Forex.getSpiedForex(TestHelper.fxConfigWith5NowishSecs, TestHelper.oerConfig, Some(spiedNowishCache), Some(spiedEodCache)) 
+
+ /**
+  * nowish cache with 5-sec memory
   */
-  spiedFx.rate("CAD").to("GBP").nowish
-
-  there was one(spiedNowishCache).get(("CAD", "GBP"))          
-  
-  spiedNowishCache must haveKey(("CAD", "GBP"))
-
+  // call nowish, update the cache with key("CAD","GBP") and corresponding value
+  spiedFxWith5NowishSecs.rate("CAD").to("GBP").nowish
+  // get the value from the first HTPP request
+  val valueFromFirstHttpRequest = spiedNowishCache.get(("CAD", "GBP")).get
+  // call nowish within 5 secs will get the value from the cache which is the same as valueFromFirstHttpRequest
+  spiedFxWith5NowishSecs.rate("CAD").to("GBP").nowish
+  // nowish will get the value from cache
+  spiedNowishCache must haveValue(valueFromFirstHttpRequest)
+  // pause for 6 secs
+  Thread.sleep(6000)
+  // nowish will get the value over HTTP request, which will replace the previous value in the cache
+  spiedFxWith5NowishSecs.rate("CAD").to("GBP").nowish
+  // value will be different from previous value
+  spiedNowishCache must haveValue(valueFromFirstHttpRequest).not
 
   /**
   * CAD -> GBP with base currency USD on 13-03-2011
@@ -53,4 +62,5 @@ class SpiedCacheSpecification extends Specification with Mockito{
   there was one(spiedEodCache).get(("CAD", "GBP", date)) 
 
   spiedEodCache must haveKey(("CAD", "GBP", date)) 
+
 }
