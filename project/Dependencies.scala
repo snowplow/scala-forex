@@ -33,6 +33,8 @@ object Dependencies {
     val collUtilOld = "5.3.10"
     val collUtil    = "6.3.4"
     val scalaUtil   = "0.1.0"
+    val mockito     = "1.9.5"
+
     // Scala (test only)
     val specs2Old   = "1.12.4.1"
     val specs2      = "2.3.7"
@@ -49,6 +51,7 @@ object Dependencies {
     val collUtilOld = "com.twitter"                %  "util-collection"   % V.collUtilOld
     val collUtil    = "com.twitter"                %% "util-collection"   % V.collUtil
     val scalaUtil   = "com.snowplowanalytics"      %  "scala-util"        % V.scalaUtil
+    val mockito     = "org.mockito"                %  "mockito-all"       % V.mockito     
 
     // Scala (test only)
     val specs2Old   = "org.specs2"                 %% "specs2"            % V.specs2Old    % "test"

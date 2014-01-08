@@ -14,15 +14,11 @@
  
 package com.snowplowanalytics.forex
 
-// Java
-import java.math.BigDecimal
-import java.math.RoundingMode
 // Specs2
 import org.specs2.mutable.Specification
 import org.specs2.matcher.DataTables
 // Joda 
 import org.joda.time._
-import org.joda.money._
 
 /**
 * Testing method for getting the end-of-date exchange rate
@@ -44,9 +40,7 @@ class ForexEodSpecification extends Specification with DataTables {
     "GBP"               !! "USD"               ! "2011-03-13"  ! "1.60"             |
     "GBP"               !! "SGD"               ! "2008-03-13"  ! "2.80"             |> {
       (fromCurr, toCurr, date, exp) =>
-        fx.rate(CurrencyUnit.getInstance(fromCurr))
-          .to(CurrencyUnit.getInstance(toCurr))
-          .eod(DateTime.parse(date)).right.get.getAmount.toString must_== exp  
+        fx.rate(fromCurr).to(toCurr).eod(DateTime.parse(date)).right.get.getAmount.toString must_== exp  
     }
 
 

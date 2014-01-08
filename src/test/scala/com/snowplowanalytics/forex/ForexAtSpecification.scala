@@ -13,14 +13,10 @@
  
 package com.snowplowanalytics.forex
 
-// Java
-import java.math.BigDecimal
-import java.math.RoundingMode
 // Specs2
 import org.specs2.mutable.Specification
 // Joda 
 import org.joda.time._
-import org.joda.money._
 
 /**
 * testing method for getting the latest end-of-day rate 
@@ -29,13 +25,12 @@ import org.joda.money._
 class ForexAtSpecification extends Specification { 
   val fx  = TestHelper.fx 
   val fxWithBaseGBP = TestHelper.fxWithBaseGBP
-  val fxWithoutCache = TestHelper.fxWithoutCache
   /**
-  * GBP->CAD with USD as baseCurrency and with caching available
+  * GBP->CAD with USD as baseCurrency 
   */
   val tradeDate = new DateTime(2011, 3, 13, 11, 39, 27, 567, DateTimeZone.forID("America/New_York"))
  
-  val gbpToCadWithBaseUsd = fx.rate(CurrencyUnit.GBP).to(CurrencyUnit.CAD).at(tradeDate)
+  val gbpToCadWithBaseUsd = fx.rate("GBP").to("CAD").at(tradeDate)
 
   val cadMoney = gbpToCadWithBaseUsd.right.get
 
@@ -44,24 +39,11 @@ class ForexAtSpecification extends Specification {
         cadMoney.isPositive
     }
   }
-  
-  /**
-  * GBP->CAD with USD as baseCurrency but without caching 
-  */
-  val gbpToCadWithoutCaching = fxWithoutCache.rate(CurrencyUnit.GBP).to(CurrencyUnit.CAD).at(tradeDate)
-
-  val cadMoneyWithoutCaching = gbpToCadWithoutCaching.right.get
-
-  "GBP to CAD without caching and with USD as base currency returning latest eod rate [%s]".format(cadMoneyWithoutCaching) should {
-    "be > 0" in {
-        cadMoneyWithoutCaching.isPositive
-    }
-  }
 
   /**
   * GBP-> CAD with GBP as base currency
   */
-  val gbpToCadWithBaseGbp = fxWithBaseGBP.rate.to(CurrencyUnit.CAD).at(tradeDate)
+  val gbpToCadWithBaseGbp = fxWithBaseGBP.rate.to("CAD").at(tradeDate)
   
   val cadMoneyWithBaseGbp = gbpToCadWithBaseGbp.right.get
 
@@ -74,7 +56,7 @@ class ForexAtSpecification extends Specification {
   /**
   * CNY -> GBP with USD as base currency
   */
-  val cnyOverGbpHistorical = fx.rate(CurrencyUnit.getInstance("CNY")).to(CurrencyUnit.GBP).at(tradeDate)
+  val cnyOverGbpHistorical = fx.rate("CNY").to("GBP").at(tradeDate)
 
   val cnyTogbpmoney = cnyOverGbpHistorical.right.get
 

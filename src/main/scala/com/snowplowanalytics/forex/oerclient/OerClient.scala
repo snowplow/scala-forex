@@ -28,17 +28,22 @@ import org.codehaus.jackson.JsonNode
 import org.codehaus.jackson.map.ObjectMapper
 
 // Joda 
-import org.joda.money._
 import org.joda.time._
 
-// LRUCache
-import com.twitter.util.LruMap
+
 
 /**
  * Implements Json for Open Exchange Rates(http://openexchangerates.org)
- * @param apiKey - The API key to Open Exchange Rates
+ * @pvalue config - a configurator for Forex object
+ * @pvalue oerConfig - a configurator for OER Client object 
+ * @pvalue spiedNowish - spy for nowishCache
+ * @pvalue spiedEod - spy for eodCache
  */
-class OerClient(config: ForexConfig, oerConfig: OerClientConfig) extends ForexClient(config) {
+class OerClient(config: ForexConfig, 
+                  oerConfig: OerClientConfig,
+                    spiedNowish: NowishCacheType = None,
+                      spiedEod: EodCacheType  = None
+                        ) extends ForexClient(config, spiedNowish, spiedEod) {
 
   private val oerUrl = "http://openexchangerates.org/api/"
 
@@ -75,30 +80,31 @@ class OerClient(config: ForexConfig, oerConfig: OerClientConfig) extends ForexCl
    * If cache exists, update nowishCache when an API request has been done,
    * else just return the forex rate
    * @parameter currency - The desired currency we want to look up from the API
-   * @returns live exchange rate obtained from API, else OerErr object
+   * @returns live exchange rate obtained from API, else OerResponseError object
    */
-  def getLiveCurrencyValue(currency: CurrencyUnit): Either[OerErr, BigDecimal]= {
-    val key = (CurrencyUnit.getInstance(config.baseCurrency), currency)     
+  def getLiveCurrencyValue(currency: String): Either[OerResponseError, BigDecimal]= {
+    val key = (config.baseCurrency, currency)     
     getJsonNodeFromApi(latest) match {
-      case Left(oerErr) => Left(oerErr)
+      case Left(oerResponseError) => Left(oerResponseError)
       case Right(node)  => {
         nowishCache match {
           case Some(cache) => {
                 val currencyNameIterator = node.getFieldNames
                 while (currencyNameIterator.hasNext) {  
                   val currencyName = currencyNameIterator.next
-                  try {
-                    val keyPair   = (CurrencyUnit.getInstance(config.baseCurrency), CurrencyUnit.getInstance(currencyName))
-                    val valuePair = (DateTime.now, node.findValue(currencyName).getDecimalValue)                                                                       
+                    val keyPair   = (config.baseCurrency, currencyName)
+                    val valuePair = (DateTime.now, node.findValue(currencyName).getDecimalValue)                                                                    
                     cache.put(keyPair, valuePair)
-                  } catch {
-                    case (e: IllegalCurrencyException) => // drop the illegal currencies
-                  }
                 } 
           }
           case None => // do nothing   
         }
-        Right(node.findValue(currency.toString).getDecimalValue)
+        val currencyNode = node.findValue(currency)
+        if (currencyNode == null) {
+          Left(OerResponseError("Currency not found in the API, invalid currency ", IllegalCurrency))
+        } else {
+          Right(currencyNode.getDecimalValue)
+        }
       }
     }
   }
@@ -124,37 +130,38 @@ class OerClient(config: ForexConfig, oerConfig: OerClientConfig) extends ForexCl
    * else just return the look up result
    * @parameter currency - The desired currency we want to look up from the API
    * @parameter date - The specific date we want to look up on
-   * @returns live exchange rate obtained from API if available, else OerErr object 
+   * @returns live exchange rate obtained from API if available, else OerResponseError object 
    */
-  def getHistoricalCurrencyValue(currency: CurrencyUnit, date: DateTime): Either[OerErr, BigDecimal] = {
+  def getHistoricalCurrencyValue(currency: String, date: DateTime): Either[OerResponseError, BigDecimal] = {
     
     /**
     * return error message if the date given is not supported by OER
     */
     if (date.isBefore(oerDataFrom) || date.isAfter(DateTime.now)) {
-      Left(OerErr("Exchange rate unavailable on the date [%s]".format(date)))
+      Left(OerResponseError("Exchange rate unavailable on the date [%s] ".format(date), ResourcesNotAvailable))
     } else {
       val historicalLink = buildHistoricalLink(date)
-      val key = (CurrencyUnit.getInstance(config.baseCurrency), currency, date) 
+      val key = (config.baseCurrency, currency, date) 
       getJsonNodeFromApi(historicalLink) match {
-        case Left(oerErr) => Left(oerErr)
+        case Left(oerResponseError) => Left(oerResponseError)
         case Right(node)  => {
           eodCache match {
           case Some(cache) => {
             val currencyNameIterator = node.getFieldNames 
             while (currencyNameIterator.hasNext) {  
               val currencyName = currencyNameIterator.next
-              try {
-                val keySet = (CurrencyUnit.getInstance(config.baseCurrency), CurrencyUnit.getInstance(currencyName), date)
-                cache.put(keySet, node.findValue(currencyName).getDecimalValue)  
-              } catch {
-                case (e: IllegalCurrencyException) => // drop the illegal currencies
-              }                                                         
+              val keySet = (config.baseCurrency, currencyName, date)
+              cache.put(keySet, node.findValue(currencyName).getDecimalValue)                                                        
             }
           }
           case None => // do nothing
           }
-          Right(node.findValue(currency.toString).getDecimalValue)
+          val currencyNode = node.findValue(currency)
+          if (currencyNode == null) {
+            Left(OerResponseError("Currency not found in the API, invalid currency ", IllegalCurrency))
+          } else {
+            Right(currencyNode.getDecimalValue)
+          }
         }
       }
     }
@@ -165,9 +172,9 @@ class OerClient(config: ForexConfig, oerConfig: OerClientConfig) extends ForexCl
    a list of currency and rate pair.
    * @parameter downloadPath - The URI link for the API request
    * @returns JSON node which contains currency information obtained from API
-  *  or OerErr object which carries the error message returned by the API
+  *  or OerResponseError object which carries the error message returned by the API
    */  
-  private def getJsonNodeFromApi(downloadPath: String): Either[OerErr, JsonNode] = {
+  private def getJsonNodeFromApi(downloadPath: String): Either[OerResponseError, JsonNode] = {
     val url  = new URL(oerUrl + downloadPath)
     val conn = url.openConnection
     conn match {
@@ -179,7 +186,7 @@ class OerClient(config: ForexConfig, oerConfig: OerClientConfig) extends ForexCl
           while (root.hasNext) {
            resNode = root.next
           }
-          return Left(OerErr(resNode.getTextValue))
+          return Left(OerResponseError(resNode.getTextValue, InvalidAppId))
         } else {
           val inputStream = httpUrlConn.getInputStream
           val root = mapper.readTree(inputStream).getElements
@@ -193,5 +200,4 @@ class OerClient(config: ForexConfig, oerConfig: OerClientConfig) extends ForexCl
       case _ => throw new ClassCastException
     }
   }
-
 }

@@ -15,25 +15,23 @@ package oerclient
 
 // Java
 import java.math.BigDecimal
-// Scala
-// import scala.collection.JavaConversions._
 // Specs2
 import org.specs2.mutable.Specification
 // Joda 
 import org.joda.time._
-import org.joda.money._
 /**
 * Testing methods for Open exchange rate client 
 */
 class OerClientSpecification extends Specification { 
   val fx  = TestHelper.fx
+
   "live currency value for USD" should { 
     "always equal to 1" in {
-      fx.client.getLiveCurrencyValue(CurrencyUnit.USD).right.get must_== (new BigDecimal(1))
+      fx.client.getLiveCurrencyValue("USD").right.get must_== (new BigDecimal(1))
     }
   }
 
-  val gbpLiveRate =  fx.client.getLiveCurrencyValue(CurrencyUnit.GBP)
+  val gbpLiveRate =  fx.client.getLiveCurrencyValue("GBP")
   "live currency value for GBP [%s]".format(gbpLiveRate.right.get) should {
     "be less than 1" in {
       gbpLiveRate.right.get must be < (new BigDecimal(1))
@@ -43,7 +41,7 @@ class OerClientSpecification extends Specification {
   val date = DateTime.parse("2008-01-01T01:01:01.123+0900")
   "historical currency value for USD on 01/01/2008" should {
     "always equal to 1 as well" in {
-      fx.client.getHistoricalCurrencyValue(CurrencyUnit.USD, date) must_== Right((new BigDecimal(1)))
+      fx.client.getHistoricalCurrencyValue("USD", date) must_== Right((new BigDecimal(1)))
     }
   }
 }

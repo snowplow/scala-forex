@@ -15,12 +15,10 @@
 package com.snowplowanalytics.forex
 
 // Java
-import java.math.BigDecimal
 import java.math.RoundingMode
 // Specs2
 import org.specs2.mutable.Specification
 // Joda 
-import org.joda.time._
 import org.joda.money._
 
 /**
@@ -46,7 +44,7 @@ class ForexNowSpecification extends Specification {
   /**
   * GBP -> SGD with USD as base currency
   */
-  val gbpToSgdWithBaseUsd = fx.rate(CurrencyUnit.GBP).to(CurrencyUnit.getInstance("SGD")).now
+  val gbpToSgdWithBaseUsd = fx.rate(CurrencyUnit.GBP).to("SGD").now
 
   val sgdMoneyWithBaseUsd = gbpToSgdWithBaseUsd.right.get 
   
@@ -59,7 +57,7 @@ class ForexNowSpecification extends Specification {
   /**
   * GBP -> SGD with GBP as base currency
   */
-  val gbpToSgdWithBaseGbp = fxWithBaseGBP.rate.to(CurrencyUnit.getInstance("SGD")).now
+  val gbpToSgdWithBaseGbp = fxWithBaseGBP.rate.to("SGD").now
   
   val sgdMoneyWithBaseGbp = gbpToSgdWithBaseUsd.right.get 
   

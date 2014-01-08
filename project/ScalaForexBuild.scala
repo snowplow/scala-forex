@@ -32,7 +32,8 @@ object ScalaForexBuild extends Build {
         Libraries.jodaConvert,
         Libraries.jodaMoney,
         Libraries.jackson,
-        Libraries.scalaUtil
+        Libraries.scalaUtil,
+        Libraries.mockito
       )
     ).settings(
       libraryDependencies <++= Dependencies.onVersion(

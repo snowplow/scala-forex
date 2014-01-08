@@ -14,6 +14,7 @@ package com.snowplowanalytics.forex
 package oerclient
 
 /**
+* OER error states from the Http requests
 * @pvalue errorMessage - error message from OER API
 */
 case class OerErr(errorMessage: String) {
