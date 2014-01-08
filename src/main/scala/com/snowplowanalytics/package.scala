@@ -27,6 +27,6 @@ package object forex {
   type NowishCacheValue     = Tuple2[DateTime, BigDecimal] // timestamp, exchange rate 
   type EodCacheKey          = Tuple3[String, String, DateTime] // source currency, target currency, timestamp
   type EodCacheValue        = BigDecimal // exchange rate
-  type NowishCacheType      = Option[LruMap[NowishCacheKey, NowishCacheValue]]
-  type EodCacheType         = Option[LruMap[EodCacheKey, EodCacheValue]]
+  type NowishCache          = Option[LruMap[NowishCacheKey, NowishCacheValue]]
+  type EodCache             = Option[LruMap[EodCacheKey, EodCacheValue]]
 }

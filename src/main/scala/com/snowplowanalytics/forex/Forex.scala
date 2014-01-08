@@ -31,7 +31,7 @@ import com.snowplowanalytics.forex.oerclient._
 */
 object Forex {
   def getSpiedForex(config: ForexConfig, oerconfig: OerClientConfig, 
-                      spiedNowishCache: NowishCacheType, spiedEodCache: EodCacheType): Forex = {
+                      spiedNowishCache: NowishCache, spiedEodCache: EodCache): Forex = {
     new Forex(config, oerconfig, nowishCache = spiedNowishCache, eodCache = spiedEodCache)
   }
 
@@ -50,7 +50,7 @@ object Forex {
  * @pvalue eodCache - spy for eodCache
  */
 case class Forex(config: ForexConfig, oerConfig: OerClientConfig, 
-                  nowishCache: NowishCacheType = None, eodCache: EodCacheType  = None) {
+                  nowishCache: NowishCache = None, eodCache: EodCache  = None) {
   val client = ForexClient.getOerClient(config, oerConfig, nowish = nowishCache, eod = eodCache)
   // preserve 10 digits after decimal point of a number when performing division 
   val maxScale         = 10 

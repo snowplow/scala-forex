@@ -14,10 +14,7 @@ package com.snowplowanalytics.forex
 package oerclient
 
 // Java
-import java.io.FileNotFoundException
-import java.io.IOException
 import java.math.BigDecimal
-import java.net.MalformedURLException
 import java.net.URL
 import java.net.URLConnection
 import java.net.HttpURLConnection
@@ -36,14 +33,14 @@ import org.joda.time._
  * Implements Json for Open Exchange Rates(http://openexchangerates.org)
  * @pvalue config - a configurator for Forex object
  * @pvalue oerConfig - a configurator for OER Client object 
- * @pvalue spiedNowish - spy for nowishCache
- * @pvalue spiedEod - spy for eodCache
+ * @pvalue nowishCache - spy for nowishCache
+ * @pvalue eodCache - spy for eodCache
  */
 class OerClient(config: ForexConfig, 
                   oerConfig: OerClientConfig,
-                    spiedNowish: NowishCacheType = None,
-                      spiedEod: EodCacheType  = None
-                        ) extends ForexClient(config, spiedNowish, spiedEod) {
+                    nowishCache: NowishCache = None,
+                      eodCache: EodCache  = None
+                        ) extends ForexClient(config, nowishCache, eodCache) {
 
   private val oerUrl = "http://openexchangerates.org/api/"
 

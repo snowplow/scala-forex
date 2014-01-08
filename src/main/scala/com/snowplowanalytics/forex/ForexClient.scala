@@ -30,18 +30,18 @@ object ForexClient {
    * @return an Forex client
    */
   def getOerClient(config: ForexConfig, oerConfig: OerClientConfig,
-                    nowish: NowishCacheType = None, eod: EodCacheType = None): ForexClient = {
-    new OerClient(config, oerConfig, spiedNowish = nowish, spiedEod = eod)
+                    nowish: NowishCache= None, eod: EodCache = None): ForexClient = {
+    new OerClient(config, oerConfig, nowishCache = nowish, eodCache = eod)
   }
 }
 
-abstract class ForexClient(config: ForexConfig, spiedNowishCache: NowishCacheType = None,
-                           spiedEodCache: EodCacheType  = None) {
+abstract class ForexClient(config: ForexConfig, nowishCacheFx: NowishCache = None,
+                           eodCacheFx: EodCache  = None) {
   // LRU cache for nowish request, with tuple of source currency and target currency as the key
   // and tuple of time and exchange rate as the value 
   val nowishCache =
-    if (spiedNowishCache.isDefined) {
-      spiedNowishCache 
+    if (nowishCacheFx.isDefined) {
+      nowishCacheFx 
     } else if (config.nowishCacheSize > 0) {
         Some(new LruMap[NowishCacheKey, NowishCacheValue](config.nowishCacheSize))
       } else {
@@ -51,8 +51,8 @@ abstract class ForexClient(config: ForexConfig, spiedNowishCache: NowishCacheTyp
   // LRU cache for historical request, with triple of source currency, target currency and time as the key 
   // and exchange rate as the value
   val eodCache = 
-    if (spiedEodCache.isDefined) {
-      spiedEodCache 
+    if (eodCacheFx.isDefined) {
+      eodCacheFx 
     } else if (config.eodCacheSize > 0) {
         Some(new LruMap[EodCacheKey, EodCacheValue](config.eodCacheSize))
       } else {
