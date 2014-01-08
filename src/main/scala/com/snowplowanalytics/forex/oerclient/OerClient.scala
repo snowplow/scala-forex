@@ -27,21 +27,23 @@ import org.codehaus.jackson.map.ObjectMapper
 // Joda 
 import org.joda.time._
 
-
-
 /**
  * Implements Json for Open Exchange Rates(http://openexchangerates.org)
  * @pvalue config - a configurator for Forex object
  * @pvalue oerConfig - a configurator for OER Client object 
- * @pvalue nowishCache - spy for nowishCache
- * @pvalue eodCache - spy for eodCache
+ * @pvalue nowishCache - user defined nowishCache
+ * @pvalue eodCache - user defined eodCache
  */
-class OerClient(config: ForexConfig, 
-                  oerConfig: OerClientConfig,
-                    nowishCache: NowishCache = None,
-                      eodCache: EodCache  = None
-                        ) extends ForexClient(config, nowishCache, eodCache) {
+class OerClient(
+  config: ForexConfig, 
+  oerConfig: OerClientConfig,
+  nowishCache: MaybeNowishCache = None,
+  eodCache: MaybeEodCache  = None
+  ) extends ForexClient(config, nowishCache, eodCache) {
 
+  /**
+   * Base URL to OER API
+   */
   private val oerUrl = "http://openexchangerates.org/api/"
 
   /**
@@ -108,11 +110,11 @@ class OerClient(config: ForexConfig,
   }
 
   /**
-  * build the historical link for the URI according to the date
-  * @parameter date - The historical date for the currency look up, 
-  * which should be the same as date argument in the getHistoricalCurrencyValue method below
-  * @returns the link in string format   
-  */
+   * Build the historical link for the URI according to the date
+   * @parameter date - The historical date for the currency look up, 
+   * which should be the same as date argument in the getHistoricalCurrencyValue method below
+   * @returns the link in string format   
+   */
   private def buildHistoricalLink(date: DateTime) : String = {
     val dateCal = date.toGregorianCalendar
     val day     = dateCal.get(Calendar.DAY_OF_MONTH)
@@ -132,8 +134,8 @@ class OerClient(config: ForexConfig,
    */
   def getHistoricalCurrencyValue(currency: String, date: DateTime): Either[OerResponseError, BigDecimal] = {
     
-    /**
-    * return error message if the date given is not supported by OER
+  /**
+    * return OerResponseError if the date given is not supported by OER
     */
     if (date.isBefore(oerDataFrom) || date.isAfter(DateTime.now)) {
       Left(OerResponseError("Exchange rate unavailable on the date [%s] ".format(date), ResourcesNotAvailable))
@@ -167,10 +169,10 @@ class OerClient(config: ForexConfig,
 
   /**
    * Helper method which returns the node containing
-   a list of currency and rate pair.
+   * a list of currency and rate pair.
    * @parameter downloadPath - The URI link for the API request
    * @returns JSON node which contains currency information obtained from API
-  *  or OerResponseError object which carries the error message returned by the API
+   * or OerResponseError object which carries the error message returned by the API
    */  
   private def getJsonNodeFromApi(downloadPath: String): Either[OerResponseError, JsonNode] = {
     val url  = new URL(oerUrl + downloadPath)

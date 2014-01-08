@@ -29,8 +29,8 @@ import java.math.BigDecimal
 class SpiedCacheSpecification extends Specification with Mockito{
   val spiedNowishCache = spy(new LruMap[NowishCacheKey, NowishCacheValue](TestHelper.config.nowishCacheSize)) 
   val spiedEodCache    = spy(new LruMap[EodCacheKey, EodCacheValue](TestHelper.config.eodCacheSize))
-  val spiedFx = Forex.getSpiedForex(TestHelper.config, TestHelper.oerConfig, Some(spiedNowishCache), Some(spiedEodCache)) 
-  val spiedFxWith5NowishSecs = Forex.getSpiedForex(TestHelper.fxConfigWith5NowishSecs, TestHelper.oerConfig, Some(spiedNowishCache), Some(spiedEodCache)) 
+  val spiedFx = Forex.getForex(TestHelper.config, TestHelper.oerConfig, Some(spiedNowishCache), Some(spiedEodCache)) 
+  val spiedFxWith5NowishSecs = Forex.getForex(TestHelper.fxConfigWith5NowishSecs, TestHelper.oerConfig, Some(spiedNowishCache), Some(spiedEodCache)) 
 
  /**
   * nowish cache with 5-sec memory

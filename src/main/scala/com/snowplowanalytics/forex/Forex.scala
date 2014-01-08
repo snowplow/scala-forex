@@ -30,13 +30,20 @@ import com.snowplowanalytics.forex.oerclient._
 * Either pass in spied caches to spy on the Forex object or get the normal version of Forex object
 */
 object Forex {
-  def getSpiedForex(config: ForexConfig, oerconfig: OerClientConfig, 
-                      spiedNowishCache: NowishCache, spiedEodCache: EodCache): Forex = {
-    new Forex(config, oerconfig, nowishCache = spiedNowishCache, eodCache = spiedEodCache)
-  }
 
-  def getForex(config: ForexConfig, oerconfig: OerClientConfig): Forex = {
-    new Forex(config, oerconfig)
+  /**
+   * Getter for Forex object 
+   */
+  def getForex(config: ForexConfig, clientConfig: ForexClientConfig): Forex =
+    new Forex(config, clientConfig)
+
+  /**
+   * Getter for Forex object with specified caches
+   */
+  def getForex(config: ForexConfig, clientConfig: ForexClientConfig, 
+    nowish: MaybeNowishCache, eod: MaybeEodCache): Forex = {
+
+    new Forex(config, clientConfig, nowishCache = nowish, eodCache = eod)
   }
 }
 
@@ -49,9 +56,11 @@ object Forex {
  * @pvalue nowishCache - spy for nowishCache
  * @pvalue eodCache - spy for eodCache
  */
-case class Forex(config: ForexConfig, oerConfig: OerClientConfig, 
-                  nowishCache: NowishCache = None, eodCache: EodCache  = None) {
-  val client = ForexClient.getOerClient(config, oerConfig, nowish = nowishCache, eod = eodCache)
+case class Forex(config: ForexConfig, clientConfig: ForexClientConfig, 
+                  nowishCache: MaybeNowishCache = None, eodCache: MaybeEodCache  = None) {
+
+  // For now, we are hard-wired to the OER Client library
+  val client = ForexClient.getOerClient(config, clientConfig, nowish = nowishCache, eod = eodCache)
   // preserve 10 digits after decimal point of a number when performing division 
   val maxScale         = 10 
   // usually the number of digits of a currency value has only 6 digits 
@@ -165,8 +174,8 @@ case class ForexLookupWhen(conversionAmount: Int, fromCurr: String, toCurr: Stri
       val rate = getForexRate(baseOverFrom, baseOverTo)
       // if from currency is not base currency then we need to add the fromCurrency->toCurrency pair into cache 
       // because getLiveCurrencyValue method only adds baseCurrency->toCurrency into cache
-      if (!fx.client.nowishCache.isEmpty && fromCurr != fx.config.baseCurrency) {
-        val Some(cache) = fx.client.nowishCache
+      if (!fx.client.caches.nowish.isEmpty && fromCurr != fx.config.baseCurrency) {
+        val Some(cache) = fx.client.caches.nowish
         cache.put((fromCurr,toCurr), (timeStamp, rate))
       }
       returnMoneyOrJodaError(rate)
@@ -183,7 +192,7 @@ case class ForexLookupWhen(conversionAmount: Int, fromCurr: String, toCurr: Stri
   * or equal to "nowishSecs" old. Otherwise a new lookup is performed.
   */
   def nowish: Either[OerResponseError, Money] = {
-    fx.client.nowishCache match {
+    fx.client.caches.nowish match {
       case Some(cache) => {
           val nowishTime = DateTime.now.minusSeconds(fx.config.nowishSecs)
           cache.get((fromCurr, toCurr)) match {
@@ -235,7 +244,7 @@ case class ForexLookupWhen(conversionAmount: Int, fromCurr: String, toCurr: Stri
   * gets the end-of-day rate for the specified day
   */
   def eod(eodDate: DateTime): Either[OerResponseError, Money] = { 
-    fx.client.eodCache match {
+    fx.client.caches.eod match {
       case Some(cache) => {
         cache.get((fromCurr, toCurr, eodDate)) match {
           // from->to is found in the cache 
@@ -271,8 +280,8 @@ case class ForexLookupWhen(conversionAmount: Int, fromCurr: String, toCurr: Stri
       val rate = getForexRate(baseOverFrom, baseOverTo)
       // if from currency is not base currency then we need to add the fromCurrency->toCurrency pair into cache 
       // because getHistoricalCurrencyValue method only adds baseCurrency->toCurrency into cache
-      if (!fx.client.eodCache.isEmpty && fromCurr != fx.config.baseCurrency) {
-        val Some(cache) = fx.client.eodCache
+      if (!fx.client.caches.eod.isEmpty && fromCurr != fx.config.baseCurrency) {
+        val Some(cache) = fx.client.caches.eod
         cache.put((fromCurr,toCurr, date), rate)
       }
       returnMoneyOrJodaError(rate)
@@ -325,10 +334,10 @@ case class ForexLookupWhen(conversionAmount: Int, fromCurr: String, toCurr: Stri
       var errMessage = "Currency [" + fromCurr + "] and ["+ toCurr + "] can be found from the API " + 
                        "and the forex rate is [" + fromCurr + "]:[" + toCurr + "] = " + rate + ". However, " 
       if (fromCurrencyUnit.isLeft) {
-        errMessage += fromCurrencyUnit.left.get.getMessage
+        errMessage += fromCurrencyUnit.left.get.errorMessage
       }
       if (toCurrencyUnit.isLeft) {
-        errMessage += toCurrencyUnit.left.get.getMessage
+        errMessage += toCurrencyUnit.left.get.errorMessage
       }
       println(errMessage)
       Left(OerResponseError(errMessage, IllegalCurrency))
@@ -344,14 +353,13 @@ case class ForexLookupWhen(conversionAmount: Int, fromCurr: String, toCurr: Stri
   private def returnApiError(errObject : OerResponseError): Either[OerResponseError, Money] = {
     var errMsg = "" 
     if (fromCurrencyUnit.isLeft) {
-      errMsg += fromCurrencyUnit.left.get.getMessage
+      errMsg += fromCurrencyUnit.left.get.errorMessage
     } 
     if (toCurrencyUnit.isLeft) {
-      errMsg += toCurrencyUnit.left.get.getMessage
+      errMsg += toCurrencyUnit.left.get.errorMessage
     }
-    errMsg += errObject.getMessage
+    errMsg += errObject.errorMessage
     println(errMsg)
     Left(OerResponseError(errMsg, OtherErrors))
   }
 }
-

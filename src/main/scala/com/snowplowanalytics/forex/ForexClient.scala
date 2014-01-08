@@ -22,42 +22,51 @@ import oerclient._
 import com.twitter.util.LruMap
 
 /**
- * companion object for ForexClient trait
+ * Companion object for ForexClient class
+ * This object has getters for different Forex Clients, 
+ * but for now there is only one getter since we are only using OER client
  */
 object ForexClient {
   /**
-   * Generate and get a spied OER Forex client
-   * @return an Forex client
+   * Getter for Oer client with specified caches
+   * @param oerConfig - This has to be of type OerClientConfig if the user is calling this method
    */
-  def getOerClient(config: ForexConfig, oerConfig: OerClientConfig,
-                    nowish: NowishCache= None, eod: EodCache = None): ForexClient = {
-    new OerClient(config, oerConfig, nowishCache = nowish, eodCache = eod)
+  def getOerClient(config: ForexConfig, oerConfig: ForexClientConfig,
+                    nowish: MaybeNowishCache= None, eod: MaybeEodCache = None): ForexClient = {
+    new OerClient(config, oerConfig.asInstanceOf[OerClientConfig], nowishCache = nowish, eodCache = eod)
   }
 }
 
-abstract class ForexClient(config: ForexConfig, nowishCacheFx: NowishCache = None,
-                           eodCacheFx: EodCache  = None) {
-  // LRU cache for nowish request, with tuple of source currency and target currency as the key
-  // and tuple of time and exchange rate as the value 
-  val nowishCache =
-    if (nowishCacheFx.isDefined) {
-      nowishCacheFx 
-    } else if (config.nowishCacheSize > 0) {
+abstract class ForexClient(
+  config: ForexConfig,
+  nowishCache: MaybeNowishCache = None,
+  eodCache: MaybeEodCache  = None) {
+
+  // Assemble our caches
+  object caches {
+
+    // LRU cache for nowish request, with (source currency, target currency) as the key
+    // and (date time, exchange rate) as the value 
+    val nowish =
+      if (nowishCache.isDefined) {
+        nowishCache
+      } else if (config.nowishCacheSize > 0) {
         Some(new LruMap[NowishCacheKey, NowishCacheValue](config.nowishCacheSize))
       } else {
         None
       }
-    
-  // LRU cache for historical request, with triple of source currency, target currency and time as the key 
-  // and exchange rate as the value
-  val eodCache = 
-    if (eodCacheFx.isDefined) {
-      eodCacheFx 
-    } else if (config.eodCacheSize > 0) {
+      
+    // LRU cache for historical request, with (source currency, target currency, date time) as the key 
+    // and exchange rate as the value
+    val eod = 
+      if (eodCache.isDefined) {
+        eodCache 
+      } else if (config.eodCacheSize > 0) {
         Some(new LruMap[EodCacheKey, EodCacheValue](config.eodCacheSize))
       } else {
         None
       }
+  }
     
   /**
    * Get the latest exchange rate from a given currency

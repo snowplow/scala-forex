@@ -19,9 +19,10 @@ import java.math.BigDecimal
 import org.specs2.mutable.Specification
 // Joda 
 import org.joda.time._
+
 /**
-* Testing methods for Open exchange rate client 
-*/
+ * Testing methods for Open exchange rate client 
+ */
 class OerClientSpecification extends Specification { 
   val fx  = TestHelper.fx
 

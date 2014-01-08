@@ -19,15 +19,15 @@ import org.specs2.mutable.Specification
 import org.joda.time._
 
 /**
-* testing method for getting the latest end-of-day rate 
-* prior to the datetime or the day after according to the user's setting 
-*/
+ * testing method for getting the latest end-of-day rate 
+ * prior to the datetime or the day after according to the user's setting 
+ */
 class ForexAtSpecification extends Specification { 
   val fx  = TestHelper.fx 
   val fxWithBaseGBP = TestHelper.fxWithBaseGBP
   /**
-  * GBP->CAD with USD as baseCurrency 
-  */
+   * GBP->CAD with USD as baseCurrency 
+   */
   val tradeDate = new DateTime(2011, 3, 13, 11, 39, 27, 567, DateTimeZone.forID("America/New_York"))
  
   val gbpToCadWithBaseUsd = fx.rate("GBP").to("CAD").at(tradeDate)
@@ -41,8 +41,8 @@ class ForexAtSpecification extends Specification {
   }
 
   /**
-  * GBP-> CAD with GBP as base currency
-  */
+   * GBP-> CAD with GBP as base currency
+   */
   val gbpToCadWithBaseGbp = fxWithBaseGBP.rate.to("CAD").at(tradeDate)
   
   val cadMoneyWithBaseGbp = gbpToCadWithBaseGbp.right.get
@@ -54,8 +54,8 @@ class ForexAtSpecification extends Specification {
   }
 
   /**
-  * CNY -> GBP with USD as base currency
-  */
+   * CNY -> GBP with USD as base currency
+   */
   val cnyOverGbpHistorical = fx.rate("CNY").to("GBP").at(tradeDate)
 
   val cnyTogbpmoney = cnyOverGbpHistorical.right.get

@@ -11,19 +11,8 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.forex
-package oerclient
 
 /**
- * OER-specific configuration
+ *
  */
-case class OerClientConfig(
-  /**
-   * register an account on https://openexchangerates.org to obtain your unique key
-   */
-  appId: String,              
-  
-  /** boolean flag to identify the type of user,
-   * i.e. if the user is entitled to configure the base currency
-   */
-  configurableBase: Boolean 
-) extends ForexClientConfig
+trait ForexClientConfig
