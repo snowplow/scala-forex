@@ -16,23 +16,23 @@ Forex Client for foreign exchange is built on top of [Joda-Money] [joda-money] a
 
 First [sign up] [oer-signup] to Open Exchange Rates to get your App ID for API access.
 
-There are three types of accounts, note that Enterprise and Unlimited allow users to configure the base currency, but OER Client will automatically convert between currencies.
+There are three types of accounts, note that Enterprise and Unlimited allow users to configure the base currency, but the Forex library will automatically convert between currencies.
 
 ## Configure Forex Client 
 
-ForexConfig contains only general configuration options:
+ForexConfig contains only general configurations:
 
-'nowishCacheSize' is the size configuration for near-live(nowish) lookup cache, it can be disabled by setting its value to 0.
+1. #######'nowishCacheSize' ###### is the size configuration for near-live(nowish) lookup cache, it can be disabled by setting its value to 0.
 
-'nowishSecs' is the time configuration for near-live lookup. The exchange rate will be returned if its time stamp is less than or equal to 'nowishSecs' old.
+2. ######'nowishSecs' ###### is the time configuration for near-live lookup. Nowish call will use the exchange rate stored in nowish cache if its time stamp is less than or equal to 'nowishSecs' old.
 
-'eodCacheSize' is the size configuration for end-of-day(eod) lookup cache, it can be disabled by setting its value to 0.
+3. ######'eodCacheSize' ###### is the size configuration for end-of-day(eod) lookup cache, it can be disabled by setting its value to 0.
 
-'getNearestDay' is the rounding configuration for latest prior eod(at) lookup. The lookup will be performed on the next day if the rounding mode is set to EodRoundUp, and on the previous day if EodRoundDown.
+4. ######'getNearestDay' ###### is the rounding configuration for latest prior eod(at) lookup. The lookup will be performed on the next day if the rounding mode is set to EodRoundUp, and on the previous day if EodRoundDown.
 
-'baseCurrency' can only be set to other currencies other than USD if the user has Unlimited or Enterprise account, if it is set to other currencies the configurableBase value in OerClient has to be set to true accordingly.    
+5. ######'baseCurrency'###### can be configured if the user is using Unlimited or Enterprise account. If it is set to other currencies other than USD, the configurableBase value in OerClient has to be set to true accordingly.    
 
-All configurations in Forex Client are set to recommended values, but users are free to set them to desired values. 
+All configurations in ForexConfig are set to recommended values, but users are free to set them to desired values. 
 
 Explanation for the default values see Section 3 : Usage notes.
 ```scala
@@ -47,12 +47,12 @@ case class ForexConfig(
 
 OerClientConfig has congurations specific to the OER API:
 
-'appId' is the unique key for the user's account,
+1. ######'appId' ###### is the unique key for the user's account,
 
-'configurableBase' is a boolean value indicating if the base currency can be configured. The baseCurrency value in ForexConfig can be changed if the boolean value is set to true. Note that only Enterprise and Unlimited users are allowed to set the value to true.
+2. ######'configurableBase'###### is a boolean value indicating if the base currency can be configured. The baseCurrency value in ForexConfig can be changed if the boolean value is set to true. Note that only Enterprise and Unlimited users are allowed to set the value to true.
 
 ```scala
-case class OerClientConfig(
+case class OerClientConfig extends ForexClientConfig(
   appId: String,            
   configurableBase: Boolean  
 )  
@@ -68,8 +68,8 @@ The OER Scala Client supports two types of usage:
 Both usage types support live, near-live or historical (end-of-day) exchange rates.
 
 #### IMPORTANT:
-run "export OER_KEY=>>insert your app id here<<" in terminal before you do any queries, this is for setting the environment variable which is your unique app id.
-Use the following command to get the id. 
+Run _"export OER_KEY=>>insert your app ID here<<"_ in terminal before you do any queries, this is for setting the environment variable which is your unique app ID.
+Use the following command to get the ID. 
 ```scala
 val appId = sys.env("OER_KEY") 
 ```
@@ -79,18 +79,18 @@ val appId = sys.env("OER_KEY")
 
 #### Live rate
 
-Lookup a live rate _(no cacheing available)_:
+Lookup a live rate from USD to JPY _(no cacheing available)_:
 
 ```scala
 import com.snowplowanalytics.forex.Forex
 
 val fx = Forex(ForexConfig(), OerClientConfig(appId, false))
-val usd2jpy = fx.rate().to("JPY").now // if argument for rate() is not specified, it will be set to base currency by default
+val usd2jpy = fx.rate().to("JPY").now              
 ```
 
 ### Near-live rate
 
-Lookup a near-live rate _(cacheing available)_:
+Lookup a near-live rate from JPY to GBP _(cacheing available)_:
 
 ```scala
 import com.snowplowanalytics.forex.Forex
@@ -99,22 +99,46 @@ val fx = Forex(ForexConfig(), OerClientConfig(appId, false))
 val jpy2gbp = fx.rate("JPY").to("GBP").nowish 
 ```
 
+### Near-live rate without cache (Note that this will be a live rate lookup if cache is not available)
+
+Lookup a live rate from JPY to GBP: 
+
+```scala
+import com.snowplowanalytics.forex.Forex
+  
+val fx = Forex(ForexConfig(nowishCacheSize = 0), OerClientConfig(appId, false))
+val jpy2gbp = fx.rate("JPY").to("GBP").nowish 
+```
+
 ### Latest-prior EOD rate
 
-Lookup the latest EOD (end-of-date) rate prior to your event _(cacheing available)_:
+Lookup the latest EOD (end-of-date) rate from USD to JPY prior to your event _(cacheing available)_:
 
 ```scala
 import com.snowplowanalytics.forex.Forex
 import org.joda.time.DateTime
 
-val fx = Forex(ForexConfig(eodCacheSize = 0, getNearestDay = EodRoundUp), OerClientConfig(appId, false)) // disable cache 
+val fx = Forex(ForexConfig(), OerClientConfig(appId, false)) // round down to previous day by default
 val tradeDate = DateTime(2011, 3, 13, 11, 39, 27, 567, DateTimeZone.forID("America/New_York"))
-val usd2yen = fx.rate().to("JPY").at(tradeDate) // always get the exchange rate on the next day
+val usd2yen = fx.rate().to("JPY").at(tradeDate) 
+```
+
+### Latest-post EOD rate 
+
+Lookup the latest EOD (end-of-date) rate from USD to JPY post to your event _(cacheing available)_:
+
+```scala
+import com.snowplowanalytics.forex.Forex
+import org.joda.time.DateTime
+
+val fx = Forex(ForexConfig(getNearestDay = EodRoundUp), OerClientConfig(appId, false)) 
+val tradeDate = DateTime(2011, 3, 13, 11, 39, 27, 567, DateTimeZone.forID("America/New_York"))
+val usd2yen = fx.rate().to("JPY").at(tradeDate) 
 ```
 
 ### Specific EOD rate
 
-Lookup the EOD rate for a specific date _(cacheing available)_:
+Lookup the EOD rate for a specific date from GBP to JPY (note that GBP is set to be the base currency) _(cacheing available)_:
 
 ```scala
 import com.snowplowanalytics.forex.Forex
@@ -125,6 +149,21 @@ val eodDate = DateTime(2011, 3, 13, 0, 0)
 val gbp2jpy = fx.rate.to("JPY").eod(eodDate) 
 ```
 
+### Specific EOD rate without cache
+
+Lookup the EOD rate for a specific date from GBP to JPY (note that GBP is set to be the base currency),
+this lookup will be done via HTTP request: 
+
+```scala
+import com.snowplowanalytics.forex.Forex
+import org.joda.time.DateTime
+
+val fx = Forex(ForexConfig(eodCacheSize = 0, baseCurrency="GBP"), OerClientConfig(appId, true))
+val eodDate = DateTime(2011, 3, 13, 0, 0)
+val gbp2jpy = fx.rate.to("JPY").eod(eodDate) 
+```
+
+
 ### 2. Currency conversion
 
 #### Live rate
@@ -134,19 +173,33 @@ Conversion using the live exchange rate _(no cacheing available)_:
 ```scala
 import com.snowplowanalytics.forex.Forex
 
+// 9.99 USD => EUR
 val fx = Forex(ForexConfig(), OerClientConfig(appId, false))
-val priceInEuros = fx.convert(9.99).to("EUR").now // => convert 9.99 units in base currency to EURO
+val priceInEuros = fx.convert(9.99).to("EUR").now 
 ```
 
 #### Near-live rate
 
-Conversion using a near-live exchange rate _(cacheing available)_:
+Conversion using a near-live exchange rate with 500 seconds nowishSecs _(cacheing available)_:
 
 ```scala
 import com.snowplowanalytics.forex.Forex
 
+// 9.99 GBP => EUR 
 val fx = Forex(ForexConfig(nowishSecs = 500), OerClientConfig(appId, false))
-val priceInEuros = fx.convert(9.99, "GBP").to("EUR").nowish // => convert 9.99 pounds to EURO according to the rates within 															// the last 500 secs or the next 500 secs
+val priceInEuros = fx.convert(9.99, "GBP").to("EUR").nowish
+```
+
+#### Near-live rate without cache(Note that this will be a live rate conversion if cache is not available)
+
+Conversion using a live exchange rate with 500 seconds nowishSecs,
+this conversion will be done via HTTP request: 
+```scala
+import com.snowplowanalytics.forex.Forex
+
+// 9.99 GBP => EUR
+val fx = Forex(ForexConfig(nowishSecs = 500), OerClientConfig(appId, false))
+val priceInEuros = fx.convert(9.99, "GBP").to("EUR").nowish
 ```
 
 #### Latest-prior EOD rate
@@ -157,50 +210,81 @@ Conversion using the latest EOD (end-of-date) rate prior to your event _(cachein
 import com.snowplowanalytics.forex.Forex
 import org.joda.time.DateTime
 
+// 10000 GBP => JPY at 00:00 on 13/03/2011 
 val fx = Forex(ForexConfig(), OerClientConfig(appId, false))
 val tradeDate = DateTime(2011, 3, 13, 11, 39, 27, 567, DateTimeZone.forID("America/New_York"))
-val tradeInYen = fx.convert(10000, "GBP").to("JPY").at(tradeDate) // => convert 10000 pounds to JPY according to the eod rate  																	 // on the day prior to the trade date
+val tradeInYen = fx.convert(10000, "GBP").to("JPY").at(tradeDate)                   
 ```
 
-#### Specific EOD rate
+### Latest-post EOD rate 
 
-Conversion using the EOD rate for a specific date _(cacheing available)_:
+Lookup the latest EOD (end-of-date) rate post to your event _(cacheing available)_:
 
 ```scala
 import com.snowplowanalytics.forex.Forex
 import org.joda.time.DateTime
 
+// 10000 GBP => JPY at 00:00 on 14/03/2011
+val fx = Forex(ForexConfig(getNearestDay = EodRoundUp), OerClientConfig(appId, false)) 
+val tradeDate = DateTime(2011, 3, 13, 11, 39, 27, 567, DateTimeZone.forID("America/New_York"))
+val usd2yen = fx.convert(10000, "GBP").to("JPY").at(tradeDate) 
+```
+
+#### Specific EOD rate
+
+Conversion using the EOD rate for a specific date with GBP as base currency _(cacheing available)_:
+
+```scala
+import com.snowplowanalytics.forex.Forex
+import org.joda.time.DateTime
+
+// 10000 GBP => JPY on 13/03/2011
 val fx = Forex(ForexConfig(baseCurrency="GBP"), OerClientConfig(appId, true))
 val eodDate = DateTime(2011, 3, 13, 0, 0)
-val tradeInYen = fx.convert(10000).to("JPY").eod(eodDate) // => convert 10000 GBP to JPY 
-														  // according to the eod rate on the eodDate
+val tradeInYen = fx.convert(10000).to("JPY").eod(eodDate)
 ```
+
+#### Specific EOD rate without cache
+
+Conversion using the EOD rate for a specific date with GBP as base currency,
+this conversion will be done via HTTP request: 
+
+```scala
+import com.snowplowanalytics.forex.Forex
+import org.joda.time.DateTime
+
+// 10000 GBP => JPY on 13/03/2011
+val fx = Forex(ForexConfig(eodCacheSize = 0, baseCurrency="GBP"), OerClientConfig(appId, true))
+val eodDate = DateTime(2011, 3, 13, 0, 0)
+val tradeInYen = fx.convert(10000).to("JPY").eod(eodDate)
+```
+
 
 ### 3. Usage notes
 
 #### LRU cache
 
-The `lruCache` value determines the maximum number of values to keep in the LRU cache, which the Client will check prior to making an API lookup. To disable the LRU cache, set its size to zero, i.e. `lruCache = 0`.
+The _`lruCache`_ value determines the maximum number of values to keep in the LRU cache, which the Client will check prior to making an API lookup. To disable the LRU cache, set its size to zero, i.e. `lruCache = 0`.
 
 #### From currency selection
 
-A default "from currency" can be specified for all operations, using the `baseCurrency` argument to the `ForexConfig` object.
+A default _"from currency"_ can be specified for all operations, using the _`baseCurrency`_ argument to the _`ForexConfig`_ object.
 
-If this is not specified, all calls to `rate()` or `convert()` **must** specify the `fromCurrency` argument.
+If this is not specified, all calls to _`rate()`_ or _`convert()`_ **must** specify the _`fromCurrency`_ argument.
 
 #### Constructor defaults
 
-If not specified, the `eodCache` defaults to 60,000 entries. This is equivalent to around one year's worth of EOD currency rates for 165 currencies (165 * 365 = 60,225).
+If not specified, the _`eodCache`_ defaults to 60,000 entries. This is equivalent to around one year's worth of EOD currency rates for 165 currencies (165 * 365 = 60,225).
 
 nowishCache = (165 * 164 / 2) = 13530 <- recommended size
 
 eodCache = (165 * 164 / 2) * 30 = 405900 assuming 1 month <- suggested size
 
-If not specified, the `nowishSecs` defaults to 300 seconds (5 minutes).
+If not specified, the _`nowishSecs`_ defaults to 300 seconds (5 minutes).
 
-The 'getNearestDay' argurment is set to EodRoundDown by default to get the date prior to the specified date.
+The _'getNearestDay'_ argurment is set to EodRoundDown by default to get the date prior to the specified date.
 
-The 'homeCurrency' is set to USD by default, only Unlimited or Enterprise users can set it to other currencies.
+The _'homeCurrency'_ is set to USD by default, only Unlimited or Enterprise users can set it to other currencies.
 
 
 ## Implementation details
@@ -211,15 +295,15 @@ The end of today is 00:00 on the next day
 
 ### Exchange rate lookup
 
-When `.now` is specified, the **live** exchange rate available from Open Exchange Rates is used.
+When _`.now`_ is specified, the **live** exchange rate available from Open Exchange Rates is used.
 
-When `.nowish` is specified, a **cached** version of the **live** exchange rate is used, if the timestamp of that exchange rate is less than or equal to `nowishSecs` (see above) old. Otherwise a new lookup is performed.
+When _`.nowish`_ is specified, a **cached** version of the **live** exchange rate is used, if the timestamp of that exchange rate is less than or equal to `nowishSecs` (see above) old. Otherwise a new lookup is performed.
 
-When `.at(...)` is specified, the **latest end-of-day rate prior** to the datetime is used by default. Users can configure so that the rate on that specific date is used.
+When _`.at(...)`_ is specified, the **latest end-of-day rate prior** to the datetime is used by default. Users can configure so that the rate on that specific date is used.
   
 * What do we do if the EOD is not yet available? e.g. at 00:00:01?
 
-When `.eod(...)` is specified, the end-of-day rate for the **specified day** is used. Any hour/minute/second/etc portion of the datetime is ignored.
+When _`.eod(...)`_ is specified, the end-of-day rate for the **specified day** is used. Any hour/minute/second/etc portion of the datetime is ignored.
 
 ### LRU cache
 
