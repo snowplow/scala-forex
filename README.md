@@ -79,45 +79,50 @@ val appId = sys.env("OER_KEY")
 
 #### Live rate
 
-Lookup a live rate from USD to JPY _(no cacheing available)_:
+Lookup a live rate _(no cacheing available)_:
 
 ```scala
 import com.snowplowanalytics.forex.Forex
 
+// USD => JPY
 val fx = Forex(ForexConfig(), OerClientConfig(appId, false))
 val usd2jpy = fx.rate().to("JPY").now              
 ```
 
 ### Near-live rate
 
-Lookup a near-live rate from JPY to GBP _(cacheing available)_:
+Lookup a near-live rate _(cacheing available)_:
 
 ```scala
 import com.snowplowanalytics.forex.Forex
 
+// JPY => GBP
 val fx = Forex(ForexConfig(), OerClientConfig(appId, false))
 val jpy2gbp = fx.rate("JPY").to("GBP").nowish 
 ```
 
-### Near-live rate without cache (Note that this will be a live rate lookup if cache is not available)
+### Near-live rate without cache
 
-Lookup a live rate from JPY to GBP: 
+Note that this will be a live rate lookup if cache is not available.
+Lookup a live rate  
 
 ```scala
 import com.snowplowanalytics.forex.Forex
-  
+
+// JPY => GBP
 val fx = Forex(ForexConfig(nowishCacheSize = 0), OerClientConfig(appId, false))
 val jpy2gbp = fx.rate("JPY").to("GBP").nowish 
 ```
 
 ### Latest-prior EOD rate
 
-Lookup the latest EOD (end-of-date) rate from USD to JPY prior to your event _(cacheing available)_:
+Lookup the latest EOD (end-of-date) rate prior to your event _(cacheing available)_:
 
 ```scala
 import com.snowplowanalytics.forex.Forex
 import org.joda.time.DateTime
 
+// USD => JPY at the end of 12/03/2011 
 val fx = Forex(ForexConfig(), OerClientConfig(appId, false)) // round down to previous day by default
 val tradeDate = DateTime(2011, 3, 13, 11, 39, 27, 567, DateTimeZone.forID("America/New_York"))
 val usd2yen = fx.rate().to("JPY").at(tradeDate) 
@@ -125,12 +130,13 @@ val usd2yen = fx.rate().to("JPY").at(tradeDate)
 
 ### Latest-post EOD rate 
 
-Lookup the latest EOD (end-of-date) rate from USD to JPY post to your event _(cacheing available)_:
+Lookup the latest EOD (end-of-date) rate post to your event _(cacheing available)_:
 
 ```scala
 import com.snowplowanalytics.forex.Forex
 import org.joda.time.DateTime
 
+// USD => JPY at the end of 13/03/2011 
 val fx = Forex(ForexConfig(getNearestDay = EodRoundUp), OerClientConfig(appId, false)) 
 val tradeDate = DateTime(2011, 3, 13, 11, 39, 27, 567, DateTimeZone.forID("America/New_York"))
 val usd2yen = fx.rate().to("JPY").at(tradeDate) 
@@ -138,12 +144,14 @@ val usd2yen = fx.rate().to("JPY").at(tradeDate)
 
 ### Specific EOD rate
 
-Lookup the EOD rate for a specific date from GBP to JPY (note that GBP is set to be the base currency) _(cacheing available)_:
+Lookup the EOD rate for a specific date _(cacheing available)_,
+note that GBP is set to be the base currency:
 
 ```scala
 import com.snowplowanalytics.forex.Forex
 import org.joda.time.DateTime
 
+// GBP => JPY at the end of 13/03/2011
 val fx = Forex(ForexConfig(baseCurrency="GBP"), OerClientConfig(appId, true))
 val eodDate = DateTime(2011, 3, 13, 0, 0)
 val gbp2jpy = fx.rate.to("JPY").eod(eodDate) 
@@ -151,13 +159,15 @@ val gbp2jpy = fx.rate.to("JPY").eod(eodDate)
 
 ### Specific EOD rate without cache
 
-Lookup the EOD rate for a specific date from GBP to JPY (note that GBP is set to be the base currency),
+Lookup the EOD rate for a specific date,
+note that GBP is set to be the base currency,
 this lookup will be done via HTTP request: 
 
 ```scala
 import com.snowplowanalytics.forex.Forex
 import org.joda.time.DateTime
 
+// GBP => JPY at the end of 13/03/2011
 val fx = Forex(ForexConfig(eodCacheSize = 0, baseCurrency="GBP"), OerClientConfig(appId, true))
 val eodDate = DateTime(2011, 3, 13, 0, 0)
 val gbp2jpy = fx.rate.to("JPY").eod(eodDate) 
@@ -190,8 +200,9 @@ val fx = Forex(ForexConfig(nowishSecs = 500), OerClientConfig(appId, false))
 val priceInEuros = fx.convert(9.99, "GBP").to("EUR").nowish
 ```
 
-#### Near-live rate without cache(Note that this will be a live rate conversion if cache is not available)
+#### Near-live rate without cache
 
+Note that this will be a live rate conversion if cache is not available.
 Conversion using a live exchange rate with 500 seconds nowishSecs,
 this conversion will be done via HTTP request: 
 ```scala
@@ -210,7 +221,7 @@ Conversion using the latest EOD (end-of-date) rate prior to your event _(cachein
 import com.snowplowanalytics.forex.Forex
 import org.joda.time.DateTime
 
-// 10000 GBP => JPY at 00:00 on 13/03/2011 
+// 10000 GBP => JPY at the end of 12/03/2011 
 val fx = Forex(ForexConfig(), OerClientConfig(appId, false))
 val tradeDate = DateTime(2011, 3, 13, 11, 39, 27, 567, DateTimeZone.forID("America/New_York"))
 val tradeInYen = fx.convert(10000, "GBP").to("JPY").at(tradeDate)                   
@@ -224,7 +235,7 @@ Lookup the latest EOD (end-of-date) rate post to your event _(cacheing available
 import com.snowplowanalytics.forex.Forex
 import org.joda.time.DateTime
 
-// 10000 GBP => JPY at 00:00 on 14/03/2011
+// 10000 GBP => JPY at the end of 13/03/2011
 val fx = Forex(ForexConfig(getNearestDay = EodRoundUp), OerClientConfig(appId, false)) 
 val tradeDate = DateTime(2011, 3, 13, 11, 39, 27, 567, DateTimeZone.forID("America/New_York"))
 val usd2yen = fx.convert(10000, "GBP").to("JPY").at(tradeDate) 
@@ -232,13 +243,14 @@ val usd2yen = fx.convert(10000, "GBP").to("JPY").at(tradeDate)
 
 #### Specific EOD rate
 
-Conversion using the EOD rate for a specific date with GBP as base currency _(cacheing available)_:
+Conversion using the EOD rate for a specific date _(cacheing available)_,
+note that GBP is set to the base currency:
 
 ```scala
 import com.snowplowanalytics.forex.Forex
 import org.joda.time.DateTime
 
-// 10000 GBP => JPY on 13/03/2011
+// 10000 GBP => JPY at the end of 13/03/2011
 val fx = Forex(ForexConfig(baseCurrency="GBP"), OerClientConfig(appId, true))
 val eodDate = DateTime(2011, 3, 13, 0, 0)
 val tradeInYen = fx.convert(10000).to("JPY").eod(eodDate)
@@ -246,14 +258,15 @@ val tradeInYen = fx.convert(10000).to("JPY").eod(eodDate)
 
 #### Specific EOD rate without cache
 
-Conversion using the EOD rate for a specific date with GBP as base currency,
+Conversion using the EOD rate for a specific date,
+note that GBP is set to the base currency,
 this conversion will be done via HTTP request: 
 
 ```scala
 import com.snowplowanalytics.forex.Forex
 import org.joda.time.DateTime
 
-// 10000 GBP => JPY on 13/03/2011
+// 10000 GBP => JPY at the end of 13/03/2011
 val fx = Forex(ForexConfig(eodCacheSize = 0, baseCurrency="GBP"), OerClientConfig(appId, true))
 val eodDate = DateTime(2011, 3, 13, 0, 0)
 val tradeInYen = fx.convert(10000).to("JPY").eod(eodDate)
