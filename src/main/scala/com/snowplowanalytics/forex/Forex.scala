@@ -27,10 +27,8 @@ import com.snowplowanalytics.forex.oerclient._
 
 /**
  * Companion object to get Forex object
- * Either pass in spied caches to spy on the Forex object or get the normal version of Forex object
  */
 object Forex {
-
   /**
    * Getter for Forex object 
    */
@@ -38,7 +36,7 @@ object Forex {
     new Forex(config, clientConfig)
 
   /**
-   * Getter for Forex object with specified caches
+   * Getter for Forex object with user defined caches
    */
   def getForex(config: ForexConfig, clientConfig: ForexClientConfig, 
     nowish: MaybeNowishCache, eod: MaybeEodCache): Forex = {
@@ -49,12 +47,14 @@ object Forex {
 
 /**
  * Starts building the fluent interface for currency look-up and conversion,
- * Forex class has methods rate and convert which return ForexLookupTo object
- * which will be passed to the method to in class ForexLookupTo
- * @pvalue config - a configurator for Forex object
- * @pvalue oerConfig - a configurator for OER Client object 
- * @pvalue nowishCache - spy for nowishCache
- * @pvalue eodCache - spy for eodCache
+ * Forex class has methods rate and convert, which set the source currency to 
+ * the currency we are interested in. 
+ * They return ForexLookupTo object which is then passed to methods 
+ * in ForexLookupTo class in the fluent interface. 
+ * @param config - a configurator for Forex object
+ * @param clientConfig - a configurator for Forex Client object 
+ * @param nowishCache - user defined nowishCache
+ * @param eodCache - user defined eodCache
  */
 case class Forex(config: ForexConfig, clientConfig: ForexClientConfig, 
                   nowishCache: MaybeNowishCache = None, eodCache: MaybeEodCache  = None) {
@@ -66,44 +66,41 @@ case class Forex(config: ForexConfig, clientConfig: ForexClientConfig,
   // Usually the currency rate has 6 decimal places 
   val commonScale      = 6 
 
- /**
-  * Starts building a fluent interafce, 
-  * performs currency look up from base currency 
-  * @returns ForexLookupTo object which is the part of the fluent interface
-  */
+  /**
+   * Starts building a fluent interface, 
+   * performs currency look up from *source* currency.
+   * (The target currency will be supplied
+   * to the ForexLookupTo later). 
+   * If not specified, it is set to base currency by default.
+   * @param currency(optional) - source currency
+   * @return ForexLookupTo object which is the part of the fluent interface
+   */
   def rate: ForexLookupTo = {
     ForexLookupTo(1, config.baseCurrency, this)
   }
 
- /**
-  * Starts building a fluent interface, 
-  * performs currency look up from the desired currency
-  * @param currency - CurrencyUnit type
-  * @returns ForexLookupTo object which is the part of the fluent interface
-  */
-  def rate(currency: CurrencyUnit): ForexLookupTo = {
-    rate(currency.getCode)
-  }
-
-  // wrapper method for rate(CurrencyUnit)
-  // if the string is invalid, getInstance will throw IllegalCurrencyException
   def rate(currency: String): ForexLookupTo = {
     ForexLookupTo(1, currency, this)
+  }
+
+  /*
+   * Wrapper for rate(currency: String)
+   */ 
+  def rate(currency: CurrencyUnit): ForexLookupTo = {
+    rate(currency.getCode)
   }
 
   /**
    * Starts building a currency conversion from
    * the supplied currency, for the supplied
-   * amount. Returns a ForexLookupTo to finish
-   * the conversion.
-   *
+   * amount.
    * @param amount - The amount of currency to
    * convert
    * @param currency - The *source* currency(optional).
    * (The target currency will be supplied
    * to the ForexLookupTo later). If not specified, 
    * it is set to be base currency by default
-   * @returns a ForexLookupTo, part of the
+   * @return a ForexLookupTo, part of the
    * currency conversion fluent interface.
    */
   def convert(amount: Int): ForexLookupTo = {
@@ -121,59 +118,63 @@ case class Forex(config: ForexConfig, clientConfig: ForexClientConfig,
 
 
 /**
- * ForexLookupTo is part of the fluent interface,
- * it only has method to which returns ForexLookupWhen object 
- * which will then be passed to ForexLookupWhen class
- * @pvalue fx - Forex object which was configured ealier 
- * @pvalue conversionAmount - the amount of money to be converted, it is set to 1 unit for look up operation, 
- * the argument will be passed to ForexLookUpWhen class 
- * @pvalue fromCurr - the source currency, the argument will be passed to ForexLookUpWhen class  
+ * ForexLookupTo is the second part of the fluent interface,
+ * which passes parameters taken from Forex class to the next stage in the fluent interface
+ * and sets the target currency for the lookup/conversion.
+ * Method in this class returns ForexLookupWhen object which will be passed to the next stage 
+ * in the fluent interface. 
+ * @param fx - Forex object which was configured ealier 
+ * @param conversionAmount - the amount of money to be converted, 
+ * it is set to 1 unit for look up operation.
+ * @param fromCurr - the source currency  
  */
 case class ForexLookupTo(conversionAmount: Int, fromCurr: String, fx: Forex) {
   /**
-   * This method sets the target currency to the desired one
+   * Continue building the  target currency to the desired one
    * @param currency - Target currency
-   * @return ForexLookupWhen object which is part of the fluent interface
-   */
-  def to(toCurr: CurrencyUnit): ForexLookupWhen = {
-    to(toCurr.getCode)
-  }
-  // Wrapper method for to(CurrencyUnit)
+   * @return ForexLookupWhen object which is final part of the fluent interface
+   */  
   def to(toCurr: String): ForexLookupWhen = {
     ForexLookupWhen(conversionAmount, fromCurr, toCurr, fx)
+  }
+
+  // Wrapper for to(toCurr: String)
+  def to(toCurr: CurrencyUnit): ForexLookupWhen = {
+    to(toCurr.getCode)
   }
 }
  
 /**
- * ForexLookupWhen is the end of the fluent interface,
- * methods in this class are the final stage of currency lookup and conversion
- * @pvalue fx - Forex object 
- * @pvalue conversionAmount - The amount of money to be converted, it is set to 1 unit for look up operation
- * @pvalue fromCurr - The source currency
- * @pvalue toCurr   - The target currency
+ * ForexLookupWhen is the final part of the fluent interface,
+ * methods in this class are the final stage of currency lookup/conversion
+ * @param conversionAmount - The amount of money to be converted, it is set to 1 for lookup operation
+ * @param fromCurr - The source currency
+ * @param toCurr   - The target currency
+ * @param fx       - Forex object 
  */
 case class ForexLookupWhen(conversionAmount: Int, fromCurr: String, toCurr: String, fx: Forex) {
-  // convert conversionAmt units of money 
+  // convert `conversionAmt` into BigDecimal representation for its later usage in BigMoney
   val conversionAmt = new BigDecimal(conversionAmount)                      
-  // convert from currency and to currency in string representation to CurrencyUnit representation                
+  // convert `fromCurr` and `toCurr` in string representations to CurrencyUnit representations                
   val fromCurrencyUnit = convertToCurrencyUnit(fromCurr) 
   val toCurrencyUnit   = convertToCurrencyUnit(toCurr)
 
- /**
-  * Perform live currency look up or conversion, no caching needed
-  * @returns Money representation in target currency or OerResponseError object if API request failed
-  */
+  /**
+   * Performs live currency lookup/conversion, no caching available
+   * @return Money representation in target currency or OerResponseError object if API request failed
+   */
   def now: Either[OerResponseError, Money] =  {
     val timeStamp = DateTime.now
     val from = fx.client.getLiveCurrencyValue(fromCurr)
     val to   = fx.client.getLiveCurrencyValue(toCurr)
     if (from.isRight && to.isRight) {
-    // API request succeeds
+      // API request succeeds
       val baseOverFrom = from.right.get
       val baseOverTo = to.right.get
       val rate = getForexRate(baseOverFrom, baseOverTo)
-      // If from currency is not base currency then we need to add the fromCurrency->toCurrency pair into cache 
-      // because getLiveCurrencyValue method only adds baseCurrency->toCurrency into cache
+      // Note that if `fromCurr` is not the same as the base currency, 
+      // then we need to add the <fromCurr, toCurr> pair into the cache in particular,
+      // because only <baseCurrency, toCurr> were added earlier
       if (!fx.client.caches.nowish.isEmpty && fromCurr != fx.config.baseCurrency) {
         val Some(cache) = fx.client.caches.nowish
         cache.put((fromCurr,toCurr), (timeStamp, rate))
@@ -186,11 +187,13 @@ case class ForexLookupWhen(conversionAmount: Int, fromCurr: String, toCurr: Stri
   }
   
   
- /**
-  * A cached version of the live exchange rate is used if cache exists, 
-  * if the timestamp of that exchange rate is less than 
-  * or equal to "nowishSecs" old. Otherwise a new lookup is performed.
-  */
+  /**
+   * Performs near-live currency lookup/conversion.
+   * A cached version of the live exchange rate is used 
+   * if a cache exists and the timestamp of that exchange rate is less than or equal to "nowishSecs" old. 
+   * Otherwise a new lookup is performed.
+   * @return Money representation in target currency or OerResponseError object if API request failed
+   */
   def nowish: Either[OerResponseError, Money] = {
     fx.client.caches.nowish match {
       case Some(cache) => {
@@ -227,10 +230,10 @@ case class ForexLookupWhen(conversionAmount: Int, fromCurr: String, toCurr: Stri
     }
   }
 
- /**
-  * Gets the latest end-of-day rate prior to the datetime by default or
-  * on the closer day if the getNearestDay flag is true
-  */
+  /**
+   * Gets the latest end-of-day rate prior to the event or post to the event
+   * @return Money representation in target currency or OerResponseError object if API request failed
+   */
   def at(tradeDate: DateTime): Either[OerResponseError, Money] = {
     val latestEod = if (fx.config.getNearestDay == EodRoundUp) {
       tradeDate.withTimeAtStartOfDay.plusDays(1)
@@ -240,9 +243,10 @@ case class ForexLookupWhen(conversionAmount: Int, fromCurr: String, toCurr: Stri
     eod(latestEod)   
   }
 
- /**
-  * Gets the end-of-day rate for the specified day
-  */
+  /**
+   * Gets the end-of-day rate for the specified date
+   * @return Money representation in target currency or OerResponseError object if API request failed
+   */
   def eod(eodDate: DateTime): Either[OerResponseError, Money] = { 
     fx.client.caches.eod match {
       case Some(cache) => {
@@ -266,34 +270,33 @@ case class ForexLookupWhen(conversionAmount: Int, fromCurr: String, toCurr: Stri
     }
   }
 
- /**
-  * Gets historical forex rate between two currencies on a given date,
-  * baseOverFrom and baseOverTo have the same date so either they both return Left or both return Right 
-  * @returns Money in target currency representation or error message if the date given is invalid 
-  */
+  /**
+   * Helper method to get the historical forex rate between two currencies on a given date,
+   * @return Money in target currency representation or error message if the date given is invalid 
+   */
   private def getHistoricalRate(date: DateTime): Either[OerResponseError, Money] = { 
     val from = fx.client.getHistoricalCurrencyValue(fromCurr, date)
     val to   = fx.client.getHistoricalCurrencyValue(toCurr, date)
     if (from.isRight && to.isRight) {
+      // API request succeeds
       val baseOverFrom = from.right.get
       val baseOverTo = to.right.get
       val rate = getForexRate(baseOverFrom, baseOverTo)
-      // if from currency is not base currency then we need to add the fromCurrency->toCurrency pair into cache 
-      // because getHistoricalCurrencyValue method only adds baseCurrency->toCurrency into cache
+      // Note that if `fromCurr` is not the same as the base currency, 
+      // then we need to add the <fromCurr, toCurr> pair into the cache in particular,
+      // because only <baseCurrency, toCurr> were added earlier
       if (!fx.client.caches.eod.isEmpty && fromCurr != fx.config.baseCurrency) {
         val Some(cache) = fx.client.caches.eod
         cache.put((fromCurr,toCurr, date), rate)
       }
       returnMoneyOrJodaError(rate)
     } else {
+      // API request fails
       returnApiError(from.left.get)
     }
   }
 
- /** 
-  * Gets the forex rate between source currency and target currency
-  * @returns ratio of from:to as BigDecimal
-  */
+  /** Helper method to get the ratio of from:to in BigDecimal type */
   private def getForexRate(baseOverFrom: BigDecimal, baseOverTo: BigDecimal): BigDecimal = {
     if (fromCurr != CurrencyUnit.getInstance(fx.config.baseCurrency)) {
       val fromOverBase = new BigDecimal(1).divide(baseOverFrom, fx.commonScale, RoundingMode.HALF_EVEN)
@@ -304,10 +307,10 @@ case class ForexLookupWhen(conversionAmount: Int, fromCurr: String, toCurr: Stri
   }
   
   /**
-  * Converts a currency type in String representation to CurrencyUnit representation 
-  * @param currencyInStringRepresentation - the currency to be converted
-  * @returns currencyUnit representation of the currency, or OerResponseError if Joda money does not support the currency
-  */
+   * Helper method to convert a currency type in String representation to CurrencyUnit representation 
+   * @param currencyInStringRepresentation - the currency to be converted
+   * @return CurrencyUnit representation of the currency, or OerResponseError if Joda money does not support the currency
+   */
   private def convertToCurrencyUnit(currencyInStringRepresentation: String) : Either[OerResponseError, CurrencyUnit] = {
     try {
       Right(CurrencyUnit.getInstance(currencyInStringRepresentation))
@@ -318,13 +321,13 @@ case class ForexLookupWhen(conversionAmount: Int, fromCurr: String, toCurr: Stri
     }
   }
 
- /**
-  * This method is called when the forex rate has been found in the API
-  * @param rate - The forex rate between source and target currency
-  * @returns Money representation in target currency if both currencies are supported by Joda Money
-  * or OerResponseError with an error message containing the forex rate between the two currencies 
-  * if either of the currency is not supported by Joda Money
-  */
+  /**
+   * This method is called when the forex rate has been found in the API
+   * @param rate - The forex rate between source and target currency
+   * @return Money representation in target currency if both currencies are supported by Joda Money
+   * or OerResponseError with an error message containing the forex rate between the two currencies 
+   * if either of the currency is not supported by Joda Money
+   */
   private def returnMoneyOrJodaError(rate: BigDecimal): Either[OerResponseError, Money] = {
     if (fromCurrencyUnit.isRight && toCurrencyUnit.isRight) {
       // Money in a given amount
@@ -344,12 +347,12 @@ case class ForexLookupWhen(conversionAmount: Int, fromCurr: String, toCurr: Stri
     } 
   }
 
- /**
-  * This method is called if API requests fail
-  * @param errObject - The OerResponseError object which contains the failure information obtained from API
-  * @returns a Left of OerResponseError object which states the failure information 
-  * and illegal currency info if there is any illegal currency
-  */
+  /**
+   * This method is called if API requests fail
+   * @param errObject - The OerResponseError object which contains the failure information returned from API
+   * @return OerResponseError object which states the failure information 
+   * and also illegal currency info if there is any illegal currency
+   */
   private def returnApiError(errObject : OerResponseError): Either[OerResponseError, Money] = {
     var errMsg = "" 
     if (fromCurrencyUnit.isLeft) {

@@ -27,10 +27,10 @@ import org.joda.time._
 
 /**
  * Implements Json for Open Exchange Rates(http://openexchangerates.org)
- * @pvalue config - a configurator for Forex object
- * @pvalue oerConfig - a configurator for OER Client object 
- * @pvalue nowishCache - user defined nowishCache
- * @pvalue eodCache - user defined eodCache
+ * @param config - a configurator for Forex object
+ * @param oerConfig - a configurator for OER Client object 
+ * @param nowishCache - user defined nowishCache
+ * @param eodCache - user defined eodCache
  */
 class OerClient(
   config: ForexConfig, 
@@ -76,8 +76,8 @@ class OerClient(
    * silently drop the currency types which Joda money does not support.  
    * If cache exists, update nowishCache when an API request has been done,
    * else just return the forex rate
-   * @parameter currency - The desired currency we want to look up from the API
-   * @returns live exchange rate obtained from API, else OerResponseError object
+   * @param currency - The desired currency we want to look up from the API
+   * @return live exchange rate obtained from API, else OerResponseError object
    */
   def getLiveCurrencyValue(currency: String): Either[OerResponseError, BigDecimal]= {
 
@@ -109,9 +109,9 @@ class OerClient(
 
   /**
    * Build the historical link for the URI according to the date
-   * @parameter date - The historical date for the currency look up, 
+   * @param date - The historical date for the currency look up, 
    * which should be the same as date argument in the getHistoricalCurrencyValue method below
-   * @returns the link in string format   
+   * @return the link in string format   
    */
   private def buildHistoricalLink(date: DateTime) : String = {
     val dateCal = date.toGregorianCalendar
@@ -126,9 +126,9 @@ class OerClient(
    * silently drop the currency types which Joda money does not support
    * if cache exists, update the eodCache when an API request has been done,
    * else just return the look up result
-   * @parameter currency - The desired currency we want to look up from the API
-   * @parameter date - The specific date we want to look up on
-   * @returns live exchange rate obtained from API if available, else OerResponseError object 
+   * @param currency - The desired currency we want to look up from the API
+   * @param date - The specific date we want to look up on
+   * @return live exchange rate obtained from API if available, else OerResponseError object 
    */
   def getHistoricalCurrencyValue(currency: String, date: DateTime): Either[OerResponseError, BigDecimal] = {
     
@@ -168,8 +168,8 @@ class OerClient(
   /**
    * Helper method which returns the node containing
    * a list of currency and rate pair.
-   * @parameter downloadPath - The URI link for the API request
-   * @returns JSON node which contains currency information obtained from API
+   * @param downloadPath - The URI link for the API request
+   * @return JSON node which contains currency information obtained from API
    * or OerResponseError object which carries the error message returned by the API
    */  
   private def getJsonNodeFromApi(downloadPath: String): Either[OerResponseError, JsonNode] = {

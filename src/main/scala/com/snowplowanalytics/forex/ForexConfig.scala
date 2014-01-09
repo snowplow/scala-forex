@@ -22,13 +22,13 @@ object EodRoundUp extends EodRounding
 /**
  * Configure class for Forex object
  *
- * @pvalue appId - Key for the api
- * @pvalue configurableBase - Flag for showing if the base currency is configurable 
- * @pvalue nowishCacheSize -  Cache for nowish look up
- * @pvalue nowishSecs - Time range for nowish look up
- * @pvalue historicalCacheSize -  Cache for historical lookup
- * @pvalue getNearestDay - Flag for deciding whether to get the exchange rate on closer day or previous day
- * @pvalue baseCurrency  - Base currency is set to be USD by default if configurableBase flag is false, otherwise it is user-defined 
+ * @param appId - Key for the api
+ * @param configurableBase - Flag for showing if the base currency is configurable 
+ * @param nowishCacheSize -  Cache for nowish look up
+ * @param nowishSecs - Time range for nowish look up
+ * @param historicalCacheSize -  Cache for historical lookup
+ * @param getNearestDay - Flag for deciding whether to get the exchange rate on closer day or previous day
+ * @param baseCurrency  - Base currency is set to be USD by default if configurableBase flag is false, otherwise it is user-defined 
  */
 case class ForexConfig(
   /** 
