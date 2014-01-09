@@ -39,12 +39,18 @@ case class ForexConfig(
 
 To go through each in turn:
 
-1. `nowishCacheSize`  is the size configuration for near-live(nowish) lookup cache, it can be disabled by setting its value to 0.
-2. `nowishSecs`  is the time configuration for near-live lookup. Nowish call will use the exchange rate stored in nowish cache if its time stamp is less than or equal to `nowishSecs` old.
-3. `eodCacheSize`  is the size configuration for end-of-day(eod) lookup cache, it can be disabled by setting its value to 0.
-4. `getNearestDay` is the rounding configuration for latest prior eod(at) lookup. The lookup will be performed on the next day if the rounding mode is set to EodRoundUp, and on the previous day if EodRoundDown.
-5. `baseCurrency` can be configured if the user is using Unlimited or Enterprise account. If it is set to other currencies other than USD, the configurableBase value in OerClient has to be set to true accordingly.   
-For an explanation for the default values please see section **XX Usage notes** below.
+1. `nowishCacheSize` is the size configuration for near-live(nowish) lookup cache, it can be disabled by setting its value to 0. The key to nowish cache is a currency pair so the size of the cache equals to the number of pairs of currencies available.
+
+2. `nowishSecs` is the time configuration for near-live lookup. Nowish call will use the exchange rates stored in nowish cache if its time stamp is less than or equal to `nowishSecs` old.
+
+3. `eodCacheSize` is the size configuration for end-of-day(eod) lookup cache, it can be disabled by setting its value to 0. The key to eod cache is a tuple of currency pair and time stamp, so the size of eod cache equals to the number of currency pairs times the days which the cache will remember the data for.
+
+4. `getNearestDay` is the rounding configuration for latest eod(at) lookup. The lookup will be performed on the next day if the rounding mode is set to EodRoundUp, and on the previous day if EodRoundDown.
+
+5. `baseCurrency` can be configured if the user is using Unlimited or Enterprise account. If it is set to other currencies other than USD, the configurableBase value in OerClientConfig object has to be set to true accordingly.   
+
+
+For an explanation for the default values please see section **4.4 Explanation of defaults** below.
 
 #### 2.2.2 OerClientConfig
 
@@ -291,20 +297,6 @@ The `lruCache` value determines the maximum number of values to keep in the LRU 
 A default _"from currency"_ can be specified for all operations, using the `baseCurrency` argument to the `ForexConfig` object.
 If not specified, `baseCurrency` is set to USD by default.
 
-#### 3.3.3 Constructor defaults
-
-If not specified, the `eodCache` defaults to 60,000 entries. This is equivalent to around one year's worth of EOD currency rates for 165 currencies (165 * 365 = 60,225).
-
-nowishCache = (165 * 164 / 2) = 13530 <- recommended size
-
-eodCache = (165 * 164 / 2) * 30 = 405900 assuming 1 month <- suggested size
-
-If not specified, the `nowishSecs` defaults to 300 seconds (5 minutes).
-
-The `getNearestDay` argurment is set to EodRoundDown by default to get the date prior to the specified date.
-
-The `homeCurrency` is set to USD by default, only Unlimited or Enterprise users can set it to other currencies.
-
 
 ## 4. Implementation details
 
@@ -327,6 +319,31 @@ When `.eod(...)` is specified, the end-of-day rate for the **specified day** is 
 We recommend trying different LRU cache sizes to see what works best for you.
 
 Please note that the LRU cache implementation is **not** thread-safe ([see this note] [twitter-lru-cache]). Switch it off if you are working with threads.
+
+### 4.4 Explanation of defaults
+
+#### 4.4.1 `nowishCache` = (165 * 164 / 2) = 13530 
+
+There are 165 currencies provided by the OER API, hence 165 * 164 pairs of currency combinations.
+The key in nowish cache is a tuple of source currency and target currency, and the nowish cache was implemented in a way such that a lookup from CurrencyA to CurrencyB or from CurrencyB to CurrencyA will use the same exchange rate, so we don't need to store both in the caches. Hence there are (165 * 164 / 2) pairs of currencies for nowish cache.
+
+#### 4.4.2 `eodCache` = (165 * 164 / 2) * 30 = 405900
+
+Assume the eod cache stores the rates to each pair of currencies for 1 month(i.e. 30 days).
+There are 165 * 164 / 2 pairs of currencies, hence (165 * 164 / 2) * 30 entries.
+
+#### 4.4.3 `nowishSecs` = 300
+
+Assume nowish cache stores data for 5 mins.
+
+#### 4.4.4 `getNearestDay` = EodRoundDown
+
+By convention, we are always interested in the exchange rates prior to the query date, hence EodRoundDown.
+
+#### 4.4.5 `baseCurrency` = USD
+
+Only Unlimited or Enterprise users can set the base currency to other currencies.
+
 
 
 ## 5. Copyright and license
