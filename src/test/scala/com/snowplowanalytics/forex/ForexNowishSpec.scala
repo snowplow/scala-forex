@@ -25,7 +25,7 @@ import org.joda.money._
 /**
 * Testing method for getting the approximate exchange rate
 */
-class ForexNowishSpecification extends Specification { 
+class ForexNowishSpec extends Specification { 
   val fx  = TestHelper.fx 
   val fxWithBaseGBP = TestHelper.fxWithBaseGBP  
   /**

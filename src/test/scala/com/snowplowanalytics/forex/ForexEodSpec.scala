@@ -25,7 +25,7 @@ import org.joda.time._
 * since historical forex rate is fixed, the actual look up result should be 
 * the same as the value in the table
 */
-class ForexEodSpecification extends Specification with DataTables { 
+class ForexEodSpec extends Specification with DataTables { 
   val fx  = TestHelper.fx 
 
   override def is = 

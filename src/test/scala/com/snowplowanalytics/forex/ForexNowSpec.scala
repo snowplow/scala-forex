@@ -24,7 +24,7 @@ import org.joda.money._
 /**
 * Testing method for getting the live exchange rate
 */
-class ForexNowSpecification extends Specification { 
+class ForexNowSpec extends Specification { 
   val fx  = TestHelper.fx 
   val fxWithBaseGBP = TestHelper.fxWithBaseGBP
   

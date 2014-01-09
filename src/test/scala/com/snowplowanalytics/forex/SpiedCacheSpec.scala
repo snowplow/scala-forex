@@ -27,7 +27,7 @@ import java.math.BigDecimal
 /**
  * Testing cache behaviours
  */
-class SpiedCacheSpecification extends Specification with Mockito{
+class SpiedCacheSpec extends Specification with Mockito{
   val spiedNowishCache = spy(new LruMap[NowishCacheKey, NowishCacheValue](TestHelper.config.nowishCacheSize)) 
   val spiedEodCache    = spy(new LruMap[EodCacheKey, EodCacheValue](TestHelper.config.eodCacheSize))
   val spiedFx = Forex.getForex(TestHelper.config, TestHelper.oerConfig, Some(spiedNowishCache), Some(spiedEodCache)) 

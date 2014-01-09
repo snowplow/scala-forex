@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright (c) 2013-2014 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
@@ -10,40 +10,39 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
+ 
 package com.snowplowanalytics.forex
-package oerclient
 
-// Java
-import java.math.BigDecimal
 // Specs2
 import org.specs2.mutable.Specification
 // Joda 
 import org.joda.time._
 
 /**
- * Testing methods for Open exchange rate client 
+ *  Testing for exceptions caused by invalid dates
  */
-class OerClientSpecification extends Specification { 
-  val fx  = TestHelper.fx
-
-  "live currency value for USD" should { 
-    "always equal to 1" in {
-      fx.client.getLiveCurrencyValue("USD").right.get must_== (new BigDecimal(1))
+class UnsupportedEodSpec extends Specification { 
+  val fx  = TestHelper.fx 
+  
+  /**
+   * 1900 is earlier than 1990 which is the earliest available date for looking up exchange rates  
+   */
+  val rateIn1900 = fx.rate.to("GBP").eod(new DateTime(1900, 3, 13, 0, 0))
+  
+  "An end-of-date lookup in 1900" should {
+    "throw an exception" in {
+      rateIn1900.isLeft
     }
   }
 
-  val gbpLiveRate =  fx.client.getLiveCurrencyValue("GBP")
-  "live currency value for GBP [%s]".format(gbpLiveRate.right.get) should {
-    "be less than 1" in {
-      gbpLiveRate.right.get must be < (new BigDecimal(1))
-    }
-  }
-
-  val date = DateTime.parse("2008-01-01T01:01:01.123+0900")
-  "historical currency value for USD on 01/01/2008" should {
-    "always equal to 1 as well" in {
-      fx.client.getHistoricalCurrencyValue("USD", date) must_== Right((new BigDecimal(1)))
+ /**
+  * 2020 is in the future so it won't be available either
+  */
+  val rateIn2020 = fx.rate.to("GBP").eod(new DateTime(2020, 3, 13, 0, 0))
+  
+  "An end-of-date lookup in 2020" should {
+    "throw an exception" in {
+      rateIn2020.isLeft
     }
   }
 }
-

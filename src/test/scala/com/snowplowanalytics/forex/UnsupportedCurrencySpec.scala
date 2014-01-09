@@ -15,34 +15,19 @@ package com.snowplowanalytics.forex
 
 // Specs2
 import org.specs2.mutable.Specification
-// Joda 
-import org.joda.time._
 
-/**
- *  Testing for exceptions caused by invalid dates
+/** 
+ *  Testing for unsupported currencies in joda money, e.g. bitcoin(BTC)
  */
-class UnsupportedEodSpecification extends Specification { 
+class UnsupportedCurrencySpec extends Specification { 
   val fx  = TestHelper.fx 
   
-  /**
-   * 1900 is earlier than 1990 which is the earliest available date for looking up exchange rates  
-   */
-  val rateIn1900 = fx.rate.to("GBP").eod(new DateTime(1900, 3, 13, 0, 0))
-  
-  "An end-of-date lookup in 1900" should {
-    "throw an exception" in {
-      rateIn1900.isLeft
+  "Joda money" should {
+    Seq("BTC", "RRU", "EEK") foreach { currency =>
+      (" not support currency: " + currency) >> {
+          fx.rate(currency).to("GBP").now.isLeft    
+      } 
     }
   }
-
- /**
-  * 2020 is in the future so it won't be available either
-  */
-  val rateIn2020 = fx.rate.to("GBP").eod(new DateTime(2020, 3, 13, 0, 0))
   
-  "An end-of-date lookup in 2020" should {
-    "throw an exception" in {
-      rateIn2020.isLeft
-    }
-  }
 }

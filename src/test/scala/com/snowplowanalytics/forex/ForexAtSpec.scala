@@ -22,7 +22,7 @@ import org.joda.time._
  * Testing method for getting the latest end-of-day rate 
  * prior to the datetime or the day after according to the user's setting 
  */
-class ForexAtSpecification extends Specification { 
+class ForexAtSpec extends Specification { 
   val fx  = TestHelper.fx 
   val fxWithBaseGBP = TestHelper.fxWithBaseGBP
   /**
