@@ -10,8 +10,6 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
- 
- 
 package com.snowplowanalytics.forex
 
 // Specs2
@@ -42,8 +40,5 @@ class ForexEodSpec extends Specification with DataTables {
       (fromCurr, toCurr, date, exp) =>
         fx.rate(fromCurr).to(toCurr).eod(DateTime.parse(date)).right.get.getAmount.toString must_== exp  
     }
-
-
-
 }
 
