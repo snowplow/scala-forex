@@ -122,7 +122,7 @@ val jpy2gbp = fx.rate("JPY").to("GBP").nowish
 
 #### 3.1.3 Near-live rate without cache
 
-Lookup a near-live rate (may or may not use cache):
+Lookup a near-live rate (_uses cache selectively_):
 
 ```scala
 // JPY => GBP
