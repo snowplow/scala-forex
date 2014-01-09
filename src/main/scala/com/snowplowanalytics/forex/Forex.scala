@@ -94,8 +94,7 @@ case class Forex(config: ForexConfig, clientConfig: ForexClientConfig,
    * Starts building a currency conversion from
    * the supplied currency, for the supplied
    * amount.
-   * @param amount - The amount of currency to
-   * convert
+   * @param amount - The amount of currency to be converted
    * @param currency - The *source* currency(optional).
    * (The target currency will be supplied
    * to the ForexLookupTo later). If not specified, 
@@ -103,15 +102,15 @@ case class Forex(config: ForexConfig, clientConfig: ForexClientConfig,
    * @return a ForexLookupTo, part of the
    * currency conversion fluent interface.
    */
-  def convert(amount: Int): ForexLookupTo = {
+  def convert(amount: Double): ForexLookupTo = {
     ForexLookupTo(amount, config.baseCurrency, this)
   }
   
-  def convert(amount: Int, currency: CurrencyUnit): ForexLookupTo = {
+  def convert(amount: Double, currency: CurrencyUnit): ForexLookupTo = {
     convert(amount, currency.getCode)
   }
   // Wrapper method for convert(Int, CurrencyUnit)
-  def convert(amount: Int, currency: String): ForexLookupTo = {     
+  def convert(amount: Double, currency: String): ForexLookupTo = {     
     ForexLookupTo(amount, currency, this)
   }
 }
@@ -128,7 +127,7 @@ case class Forex(config: ForexConfig, clientConfig: ForexClientConfig,
  * it is set to 1 unit for look up operation.
  * @param fromCurr - the source currency  
  */
-case class ForexLookupTo(conversionAmount: Int, fromCurr: String, fx: Forex) {
+case class ForexLookupTo(conversionAmount: Double, fromCurr: String, fx: Forex) {
   /**
    * Continue building the  target currency to the desired one
    * @param currency - Target currency
@@ -152,7 +151,7 @@ case class ForexLookupTo(conversionAmount: Int, fromCurr: String, fx: Forex) {
  * @param toCurr   - The target currency
  * @param fx       - Forex object 
  */
-case class ForexLookupWhen(conversionAmount: Int, fromCurr: String, toCurr: String, fx: Forex) {
+case class ForexLookupWhen(conversionAmount: Double, fromCurr: String, toCurr: String, fx: Forex) {
   // convert `conversionAmt` into BigDecimal representation for its later usage in BigMoney
   val conversionAmt = new BigDecimal(conversionAmount)                      
   // convert `fromCurr` and `toCurr` in string representations to CurrencyUnit representations                
