@@ -159,8 +159,7 @@ val usd2yen = fx.rate.to("JPY").at(tradeDate)   // => Right(JPY 82)
 
 #### 3.1.6 Specific EOD rate
 
-Lookup the EOD rate for a specific date _(cacheing available)_,
-note that GBP is set to be the base currency:
+Lookup the EOD rate for a specific date _(cacheing available)_:
 
 ```scala
 import org.joda.time.DateTime
@@ -274,7 +273,6 @@ val eodDate = new DateTime(2011, 3, 13, 0, 0)
 val tradeInYen = fx.convert(10000).to("JPY").eod(eodDate)
 ```
 
-
 ### 3.3 Usage notes
 
 #### 3.3.1 LRU cache
@@ -300,7 +298,6 @@ The `getNearestDay` argurment is set to EodRoundDown by default to get the date 
 
 The `homeCurrency` is set to USD by default, only Unlimited or Enterprise users can set it to other currencies.
 
-
 ## 4. Implementation details
 
 ### 4.1 End-of-day definition
@@ -322,7 +319,6 @@ When `.eod(...)` is specified, the end-of-day rate for the **specified day** is 
 We recommend trying different LRU cache sizes to see what works best for you.
 
 Please note that the LRU cache implementation is **not** thread-safe ([see this note] [twitter-lru-cache]). Switch it off if you are working with threads.
-
 
 ## 5. Copyright and license
 
