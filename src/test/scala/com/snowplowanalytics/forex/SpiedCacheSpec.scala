@@ -11,15 +11,20 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.forex
+
 // Specs2
 import org.specs2.mutable.Specification
+
 // Mockito
 import org.specs2.matcher._
 import org.specs2.mock.Mockito
+
 // Joda 
 import org.joda.time._
+
 // LRUCache
 import com.twitter.util.LruMap
+
 // Java
 import java.lang.Thread
 import java.math.BigDecimal
