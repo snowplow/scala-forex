@@ -309,13 +309,13 @@ The `homeCurrency` is set to USD by default, only Unlimited or Enterprise users 
 
 ### End-of-day definition
 
-The end of today is 00:00 on the next day
+The end of today is 00:00 on the next day.
 
 ### Exchange rate lookup
 
 When `.now` is specified, the **live** exchange rate available from Open Exchange Rates is used.
 
-When `.nowish` is specified, a **cached** version of the **live** exchange rate is used, if the timestamp of that exchange rate is less than or equal to `nowishSecs` (see above) old. Otherwise a new lookup is performed.
+When `.nowish` is specified, a **cached** version of the **live** exchange rate is used, if the timestamp of that exchange rate is less than or equal to `nowishSecs` (see above) ago. Otherwise a new lookup is performed.
 
 When `.at(...)` is specified, the **latest end-of-day rate prior** to the datetime is used by default. Users can configure so that the rate on that specific date is used.
   
