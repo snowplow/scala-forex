@@ -41,4 +41,3 @@ class ForexEodSpec extends Specification with DataTables {
         fx.rate(fromCurr).to(toCurr).eod(DateTime.parse(date)).right.get.getAmount.toString must_== exp  
     }
 }
-
