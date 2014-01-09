@@ -1,40 +1,32 @@
 # Scala Forex [![Build Status](https://travis-ci.org/snowplow/scala-forex.png)](https://travis-ci.org/snowplow/scala-forex)
 
-**PRE-RELEASE.**
+## 1. Introduction
 
-## Introduction
-
-Forex Client is a high-performance Scala library for performing currency conversions.
+Scala Forex is a high-performance Scala library for performing exchange rate lookups and currency conversions, using [Joda-Money] [joda-money] and [Joda-Time] [joda-time].
 
 It includes a configurable LRU (Least Recently Used) cache to minimize calls to the API; this makes the library usable in high-volume environments such as Hadoop and Storm.
 
-Currently Forex Client uses the [Open Exchange Rates API] [oer-api] to perform currency lookups.
+Currently Scala Forex uses the [Open Exchange Rates API] [oer-api] to perform currency lookups.
 
-Forex Client for foreign exchange is built on top of [Joda-Money] [joda-money] and [Joda-Time] [joda-time].
+## 2. Setup
 
-## Installation
+### 2.1 OER Sign Up
 
 First [sign up] [oer-signup] to Open Exchange Rates to get your App ID for API access.
 
-There are three types of accounts, note that Enterprise and Unlimited allow users to configure the base currency, but the Forex library will automatically convert between currencies.
+There are three types of accounts - note that Enterprise and Unlimited accounts let you configure your base currency. For Developer-level accounts, Scala Forex will automatically convert between currencies.
 
-## Configure Forex Client 
+### 2.2 Configuration
 
-ForexConfig contains only general configurations:
+Scala Forex is configured via two case classes:
 
-1. `nowishCacheSize`  is the size configuration for near-live(nowish) lookup cache, it can be disabled by setting its value to 0.
+1. `ForexConfig` contains general configuration
+2. `OerClientConfig` contains Open Exchange Rates-specific configuration
 
-2. `nowishSecs`  is the time configuration for near-live lookup. Nowish call will use the exchange rate stored in nowish cache if its time stamp is less than or equal to `nowishSecs` old.
+#### 2.2.1 ForexConfig
 
-3. `eodCacheSize`  is the size configuration for end-of-day(eod) lookup cache, it can be disabled by setting its value to 0.
+Case class with defaults:
 
-4. `getNearestDay` is the rounding configuration for latest prior eod(at) lookup. The lookup will be performed on the next day if the rounding mode is set to EodRoundUp, and on the previous day if EodRoundDown.
-
-5. `baseCurrency` can be configured if the user is using Unlimited or Enterprise account. If it is set to other currencies other than USD, the configurableBase value in OerClient has to be set to true accordingly.    
-
-All configurations in ForexConfig are set to recommended values, but users are free to set them to desired values. 
-
-Explanation for the default values see Section 3 : Usage notes.
 ```scala
 case class ForexConfig(
   nowishCacheSize: Int         = 13530, 
@@ -45,81 +37,104 @@ case class ForexConfig(
 ) 
 ``` 
 
-OerClientConfig has congurations specific to the OER API:
+To go through each in turn:
 
-1. `appId` is the unique key for the user's account,
+1. `nowishCacheSize`  is the size configuration for near-live(nowish) lookup cache, it can be disabled by setting its value to 0.
+2. `nowishSecs`  is the time configuration for near-live lookup. Nowish call will use the exchange rate stored in nowish cache if its time stamp is less than or equal to `nowishSecs` old.
+3. `eodCacheSize`  is the size configuration for end-of-day(eod) lookup cache, it can be disabled by setting its value to 0.
+4. `getNearestDay` is the rounding configuration for latest prior eod(at) lookup. The lookup will be performed on the next day if the rounding mode is set to EodRoundUp, and on the previous day if EodRoundDown.
+5. `baseCurrency` can be configured if the user is using Unlimited or Enterprise account. If it is set to other currencies other than USD, the configurableBase value in OerClient has to be set to true accordingly.   
+For an explanation for the default values please see section **XX Usage notes** below.
 
-2. `configurableBase` is a boolean value indicating if the base currency can be configured. The baseCurrency value in ForexConfig can be changed if the boolean value is set to true. Note that only Enterprise and Unlimited users are allowed to set the value to true.
+#### 2.2.2 OerClientConfig
+
+Case class with defaults:
 
 ```scala
 case class OerClientConfig extends ForexClientConfig(
   appId: String,            
   configurableBase: Boolean  
 )  
+``` 
+
+To go through each in turn:
+
+1. `appId` is the unique key for the user's account
+2. `configurableBase` is a boolean value indicating if the base currency can be configured. The baseCurrency value in ForexConfig can be changed if the boolean value is set to true. Note that only Enterprise and Unlimited users are allowed to set the value to true.
+
+### 2.3 REPL setup
+
+To try out Scala Forex in the Scala REPL:
+
+```
+$ git clone https://github.com/snowplow/scala-forex.git
+$ cd scala-forex
+$ sbt console
+...
+scala> val appId = "<<key>>"
+scala> import com.snowplowanalytics.forex.{Forex, ForexConfig}
+scala> import com.snowplowanalytics.forex.oerclient.OerClientConfig
 ```
 
-## Usage
+### 2.4 Running tests
 
-The OER Scala Client supports two types of usage:
+To run the Scala Forex test suite locally:
+
+```
+$ export OER_KEY=<<key>>
+$ git clone https://github.com/snowplow/scala-forex.git
+$ cd scala-forex
+$ sbt test
+```
+
+## 3. Usage
+
+The Scala Forex supports two types of usage:
 
 1. Exchange rate lookups
 2. Currency conversions
 
 Both usage types support live, near-live or historical (end-of-day) exchange rates.
 
-#### IMPORTANT:
-Run "export OER_KEY=>>insert your app ID here<<" in terminal before you do any queries, this is for setting the environment variable which is your unique app ID.
-Use the following command to get the ID. 
-```scala
-val appId = sys.env("OER_KEY") 
-```
+### 3.1 Rate lookup
 
+For the required imports, please see section **2.3 REPL setup** above.
 
-### 1. Rate lookup
-
-#### Live rate
+#### 3.1.1 Live rate
 
 Lookup a live rate _(no cacheing available)_:
 
 ```scala
-import com.snowplowanalytics.forex.Forex
-
 // USD => JPY
 val fx = Forex(ForexConfig(), OerClientConfig(appId, false))
 val usd2jpy = fx.rate().to("JPY").now              
 ```
 
-### Near-live rate
+#### 3.1.2 Near-live rate
 
 Lookup a near-live rate _(cacheing available)_:
 
 ```scala
-import com.snowplowanalytics.forex.Forex
-
 // JPY => GBP
 val fx = Forex(ForexConfig(), OerClientConfig(appId, false))
 val jpy2gbp = fx.rate("JPY").to("GBP").nowish 
 ```
 
-### Near-live rate without cache
+#### 3.1.3 Near-live rate without cache
 
-Note that this will be a live rate lookup if cache is not available.
-Lookup a live rate  
+Lookup a near-live rate (_uses cache selectively_):
 
 ```scala
-import com.snowplowanalytics.forex.Forex
-
 // JPY => GBP
 val fx = Forex(ForexConfig(nowishCacheSize = 0), OerClientConfig(appId, false))
 val jpy2gbp = fx.rate("JPY").to("GBP").nowish 
 ```
 
-### Latest-prior EOD rate
+#### 3.1.4 Latest-prior EOD rate
 
 Lookup the latest EOD (end-of-date) rate prior to your event _(cacheing available)_:
 
 ```scala
-import com.snowplowanalytics.forex.Forex
 import org.joda.time.DateTime
 
 // USD => JPY at the end of 12/03/2011 
@@ -128,12 +143,11 @@ val tradeDate = DateTime(2011, 3, 13, 11, 39, 27, 567, DateTimeZone.forID("Ameri
 val usd2yen = fx.rate().to("JPY").at(tradeDate) 
 ```
 
-### Latest-post EOD rate 
+#### 3.1.5 Latest-post EOD rate 
 
 Lookup the latest EOD (end-of-date) rate post to your event _(cacheing available)_:
 
 ```scala
-import com.snowplowanalytics.forex.Forex
 import org.joda.time.DateTime
 
 // USD => JPY at the end of 13/03/2011 
@@ -142,13 +156,12 @@ val tradeDate = DateTime(2011, 3, 13, 11, 39, 27, 567, DateTimeZone.forID("Ameri
 val usd2yen = fx.rate().to("JPY").at(tradeDate) 
 ```
 
-### Specific EOD rate
+#### 3.1.6 Specific EOD rate
 
 Lookup the EOD rate for a specific date _(cacheing available)_,
 note that GBP is set to be the base currency:
 
 ```scala
-import com.snowplowanalytics.forex.Forex
 import org.joda.time.DateTime
 
 // GBP => JPY at the end of 13/03/2011
@@ -157,14 +170,13 @@ val eodDate = DateTime(2011, 3, 13, 0, 0)
 val gbp2jpy = fx.rate.to("JPY").eod(eodDate) 
 ```
 
-### Specific EOD rate without cache
+#### 3.1.6 Specific EOD rate without cache
 
 Lookup the EOD rate for a specific date,
 note that GBP is set to be the base currency,
 this lookup will be done via HTTP request: 
 
 ```scala
-import com.snowplowanalytics.forex.Forex
 import org.joda.time.DateTime
 
 // GBP => JPY at the end of 13/03/2011
@@ -173,16 +185,15 @@ val eodDate = DateTime(2011, 3, 13, 0, 0)
 val gbp2jpy = fx.rate.to("JPY").eod(eodDate) 
 ```
 
-
 ### 2. Currency conversion
+
+For the required imports, please see section **2.3 REPL setup** above.
 
 #### Live rate
 
 Conversion using the live exchange rate _(no cacheing available)_:
 
 ```scala
-import com.snowplowanalytics.forex.Forex
-
 // 9.99 USD => EUR
 val fx = Forex(ForexConfig(), OerClientConfig(appId, false))
 val priceInEuros = fx.convert(9.99).to("EUR").now 
@@ -193,8 +204,6 @@ val priceInEuros = fx.convert(9.99).to("EUR").now
 Conversion using a near-live exchange rate with 500 seconds nowishSecs _(cacheing available)_:
 
 ```scala
-import com.snowplowanalytics.forex.Forex
-
 // 9.99 GBP => EUR 
 val fx = Forex(ForexConfig(nowishSecs = 500), OerClientConfig(appId, false))
 val priceInEuros = fx.convert(9.99, "GBP").to("EUR").nowish
@@ -205,8 +214,8 @@ val priceInEuros = fx.convert(9.99, "GBP").to("EUR").nowish
 Note that this will be a live rate conversion if cache is not available.
 Conversion using a live exchange rate with 500 seconds nowishSecs,
 this conversion will be done via HTTP request: 
+
 ```scala
-import com.snowplowanalytics.forex.Forex
 
 // 9.99 GBP => EUR
 val fx = Forex(ForexConfig(nowishSecs = 500), OerClientConfig(appId, false))
@@ -218,7 +227,6 @@ val priceInEuros = fx.convert(9.99, "GBP").to("EUR").nowish
 Conversion using the latest EOD (end-of-date) rate prior to your event _(cacheing available)_:
 
 ```scala
-import com.snowplowanalytics.forex.Forex
 import org.joda.time.DateTime
 
 // 10000 GBP => JPY at the end of 12/03/2011 
@@ -232,7 +240,6 @@ val tradeInYen = fx.convert(10000, "GBP").to("JPY").at(tradeDate)
 Lookup the latest EOD (end-of-date) rate post to your event _(cacheing available)_:
 
 ```scala
-import com.snowplowanalytics.forex.Forex
 import org.joda.time.DateTime
 
 // 10000 GBP => JPY at the end of 13/03/2011
@@ -247,7 +254,6 @@ Conversion using the EOD rate for a specific date _(cacheing available)_,
 note that GBP is set to the base currency:
 
 ```scala
-import com.snowplowanalytics.forex.Forex
 import org.joda.time.DateTime
 
 // 10000 GBP => JPY at the end of 13/03/2011
@@ -263,7 +269,6 @@ note that GBP is set to the base currency,
 this conversion will be done via HTTP request: 
 
 ```scala
-import com.snowplowanalytics.forex.Forex
 import org.joda.time.DateTime
 
 // 10000 GBP => JPY at the end of 13/03/2011
@@ -304,13 +309,13 @@ The `homeCurrency` is set to USD by default, only Unlimited or Enterprise users 
 
 ### End-of-day definition
 
-The end of today is 00:00 on the next day
+The end of today is 00:00 on the next day.
 
 ### Exchange rate lookup
 
 When `.now` is specified, the **live** exchange rate available from Open Exchange Rates is used.
 
-When `.nowish` is specified, a **cached** version of the **live** exchange rate is used, if the timestamp of that exchange rate is less than or equal to `nowishSecs` (see above) old. Otherwise a new lookup is performed.
+When `.nowish` is specified, a **cached** version of the **live** exchange rate is used, if the timestamp of that exchange rate is less than or equal to `nowishSecs` (see above) ago. Otherwise a new lookup is performed.
 
 When `.at(...)` is specified, the **latest end-of-day rate prior** to the datetime is used by default. Users can configure so that the rate on that specific date is used.
   
@@ -320,7 +325,7 @@ When `.eod(...)` is specified, the end-of-day rate for the **specified day** is 
 
 We recommend trying different LRU cache sizes to see what works best for you.
 
-Please note that the LRU cache is **not** thread-safe ([see this note] [twitter-lru-cache]). Switch it off if you are working with threads.
+Please note that the LRU cache implementation is **not** thread-safe ([see this note] [twitter-lru-cache]). Switch it off if you are working with threads.
 
 
 ## Copyright and license
