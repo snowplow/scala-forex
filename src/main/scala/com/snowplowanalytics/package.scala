@@ -20,9 +20,7 @@ import org.joda.time._
 import com.twitter.util.LruMap
 
 package object forex {
-  /**
-   * The key and value for each cache entry.
-   */
+  /** The key and value for each cache entry */
   type NowishCacheKey       = Tuple2[String, String] // source currency , target currency 
   type NowishCacheValue     = Tuple2[DateTime, BigDecimal] // timestamp, exchange rate 
   type EodCacheKey          = Tuple3[String, String, DateTime] // source currency, target currency, timestamp

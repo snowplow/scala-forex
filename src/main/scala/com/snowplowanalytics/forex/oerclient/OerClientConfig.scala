@@ -13,13 +13,9 @@
 package com.snowplowanalytics.forex
 package oerclient
 
-/**
- * OER-specific configuration
- */
+/** OER-specific configuration */
 case class OerClientConfig(
-  /**
-   * Register an account on https://openexchangerates.org to obtain your unique key
-   */
+  /** Register an account on https://openexchangerates.org to obtain your unique key */
   appId: String,              
   
   /** 

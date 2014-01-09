@@ -12,11 +12,11 @@
  */
 package com.snowplowanalytics.forex
 
-/**
- * User defined type for getNearestDay flag
- */
+/** User defined type for getNearestDay flag */
 sealed trait EodRounding
+/** Round to previous day*/
 object EodRoundDown extends EodRounding
+/** Round to next day*/
 object EodRoundUp extends EodRounding
 
 /**
@@ -36,15 +36,10 @@ case class ForexConfig(
    * There are 165 currencies in total, the combinations of a currency pair
    * has 165 * (165 - 1) possibilities. (X,Y) is the same as (Y,X) hence 165 * 164 / 2
    */
-  nowishCacheSize: Int       = 13530, 
-                                     
-  /**
-   * 5 mins by default 
-   */
+  nowishCacheSize: Int       = 13530,                              
+  /** 5 mins by default */
   nowishSecs: Int            = 300,   
-  /**
-   * 165 * 164 / 2 * 30 = 405900, assuming the cache stores data within a month
-   */
+  /** 165 * 164 / 2 * 30 = 405900, assuming the cache stores data within a month */
   eodCacheSize: Int          = 405900,
   getNearestDay: EodRounding = EodRoundDown,
   baseCurrency: String       = "USD" 

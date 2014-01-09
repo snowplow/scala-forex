@@ -20,9 +20,7 @@ import org.specs2.mutable.Specification
 // Joda 
 import org.joda.time._
 
-/**
- * Testing methods for Open exchange rate client 
- */
+/** Testing methods for Open exchange rate client */
 class OerClientSpec extends Specification { 
   val fx  = TestHelper.fx
 

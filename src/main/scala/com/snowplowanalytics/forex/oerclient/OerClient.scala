@@ -39,14 +39,10 @@ class OerClient(
   eodCache: MaybeEodCache  = None
   ) extends ForexClient(config, nowishCache, eodCache) {
 
-  /**
-   * Base URL to OER API
-   */
+  /** Base URL to OER API */
   private val oerUrl = "http://openexchangerates.org/api/"
 
-  /**
-   * Sets the base currency in the url
-   */
+  /** Sets the base currency in the url */
   private val base   = if (oerConfig.configurableBase) "&base=" + config.baseCurrency 
                        else ""
   /**
@@ -61,14 +57,10 @@ class OerClient(
    */
   private val historical = "historical/%04d-%02d-%02d.json?app_id=" + oerConfig.appId + base
 
-  /**
-   * Mapper for reading JSON objects 
-   */
+  /** Mapper for reading JSON objects */
   private val mapper = new ObjectMapper()
 
-  /**
-   * The earliest date OER service is availble
-   */
+  /** The earliest date OER service is availble */
   private val oerDataFrom = new DateTime(1999,1,1,0,0)
 
   /**
@@ -108,7 +100,7 @@ class OerClient(
   }
 
   /**
-   * Build the historical link for the URI according to the date
+   * Builds the historical link for the URI according to the date
    * @param date - The historical date for the currency look up, 
    * which should be the same as date argument in the getHistoricalCurrencyValue method below
    * @return the link in string format   
