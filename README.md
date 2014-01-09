@@ -338,8 +338,12 @@ By convention, we are always interested in the exchange rates prior to the query
 
 Only Unlimited or Enterprise users can set the base currency to other currencies.
 
+## 5. Authors
 
-## 5. Copyright and license
+* [Jiawen Zhou] [jz4112]: all development and testing; documentation
+* [Alex Dean] [alexanderdean]: API design; some documentation
+
+## 6. Copyright and license
 
 Scala Forex is copyright 2013-2014 Snowplow Analytics Ltd.
 
@@ -360,5 +364,8 @@ limitations under the License.
 [joda-time]: http://www.joda.org/joda-time/
 
 [twitter-lru-cache]: http://twitter.github.com/commons/apidocs/com/twitter/common/util/caching/LRUCache.html
+
+[jz4112]: https://github.com/jz4112
+[alexanderdean]: https://github.com/alexanderdean
 
 [license]: http://www.apache.org/licenses/LICENSE-2.0
