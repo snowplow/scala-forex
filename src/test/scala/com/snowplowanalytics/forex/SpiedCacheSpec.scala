@@ -48,7 +48,11 @@ class SpiedCacheSpec extends Specification with Mockito{
   // call nowish within 5 secs will get the value from the cache which is the same as valueFromFirstHttpRequest
   spiedFxWith5NowishSecs.rate("CAD").to("GBP").nowish
   // nowish will get the value from cache
-  spiedNowishCache must haveValue(valueFromFirstHttpRequest)
+  "A first-time lookup of CAD->GBP" should {
+    "store the value returned from the HTTP request into the nowish cache" in {
+      spiedNowishCache must haveValue(valueFromFirstHttpRequest)
+    }
+  } 
   // pause for 6 secs
   Thread.sleep(6000)
   // nowish will get the value over HTTP request, which will replace the previous value in the cache
@@ -56,7 +60,11 @@ class SpiedCacheSpec extends Specification with Mockito{
   // value will be different from previous value -
   // even if the monetary value is the same, the
   // timestamp will be different
-  spiedNowishCache must haveValue(valueFromFirstHttpRequest).not
+  "A second time lookup of CAD->GBP after the memory time" should { 
+    "overwrite the value in the nowish cache" in {
+      spiedNowishCache must haveValue(valueFromFirstHttpRequest).not
+    }
+  }
 
   /**
    * CAD -> GBP with base currency USD on 13-03-2011
