@@ -325,7 +325,7 @@ When `.eod(...)` is specified, the end-of-day rate for the **specified day** is 
 
 We recommend trying different LRU cache sizes to see what works best for you.
 
-Please note that the LRU cache is **not** thread-safe ([see this note] [twitter-lru-cache]). Switch it off if you are working with threads.
+Please note that the LRU cache implementation is **not** thread-safe ([see this note] [twitter-lru-cache]). Switch it off if you are working with threads.
 
 
 ## Copyright and license
