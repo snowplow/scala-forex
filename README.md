@@ -4,7 +4,7 @@
 
 Scala Forex is a high-performance Scala library for performing exchange rate lookups and currency conversions, using [Joda-Money] [joda-money] and [Joda-Time] [joda-time].
 
-It includes a configurable LRU (Least Recently Used) cache to minimize calls to the API; this makes the library usable in high-volume environments such as Hadoop and Storm.
+It includes configurable LRU (Least Recently Used) caches to minimize calls to the API; this makes the library usable in high-volume environments such as Hadoop and Storm.
 
 Currently Scala Forex uses the [Open Exchange Rates API] [oer-api] to perform currency lookups.
 
