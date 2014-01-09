@@ -135,12 +135,12 @@ val jpy2gbp = fx.rate("JPY").to("GBP").nowish
 Lookup the latest EOD (end-of-date) rate prior to your event _(cacheing available)_:
 
 ```scala
-import org.joda.time.DateTime
+import org.joda.time.{DateTime, DateTimeZone}
 
 // USD => JPY at the end of 12/03/2011 
 val fx = Forex(ForexConfig(), OerClientConfig(appId, false)) // round down to previous day by default
-val tradeDate = DateTime(2011, 3, 13, 11, 39, 27, 567, DateTimeZone.forID("America/New_York"))
-val usd2yen = fx.rate().to("JPY").at(tradeDate) 
+val tradeDate = new DateTime(2011, 3, 13, 11, 39, 27, 567, DateTimeZone.forID("America/New_York"))
+val usd2yen = fx.rate.to("JPY").at(tradeDate) 
 ```
 
 #### 3.1.5 Latest-post EOD rate 
@@ -148,12 +148,13 @@ val usd2yen = fx.rate().to("JPY").at(tradeDate)
 Lookup the latest EOD (end-of-date) rate post to your event _(cacheing available)_:
 
 ```scala
-import org.joda.time.DateTime
+import org.joda.time.{DateTime, DateTimeZone}
+import com.snowplowanalytics.forex.EodRoundUp
 
 // USD => JPY at the end of 13/03/2011 
 val fx = Forex(ForexConfig(getNearestDay = EodRoundUp), OerClientConfig(appId, false)) 
-val tradeDate = DateTime(2011, 3, 13, 11, 39, 27, 567, DateTimeZone.forID("America/New_York"))
-val usd2yen = fx.rate().to("JPY").at(tradeDate) 
+val tradeDate = new DateTime(2011, 3, 13, 11, 39, 27, 567, DateTimeZone.forID("America/New_York"))
+val usd2yen = fx.rate.to("JPY").at(tradeDate) 
 ```
 
 #### 3.1.6 Specific EOD rate
@@ -166,7 +167,7 @@ import org.joda.time.DateTime
 
 // GBP => JPY at the end of 13/03/2011
 val fx = Forex(ForexConfig(baseCurrency="GBP"), OerClientConfig(appId, true))
-val eodDate = DateTime(2011, 3, 13, 0, 0)
+val eodDate = new DateTime(2011, 3, 13, 0, 0)
 val gbp2jpy = fx.rate.to("JPY").eod(eodDate) 
 ```
 
@@ -181,7 +182,7 @@ import org.joda.time.DateTime
 
 // GBP => JPY at the end of 13/03/2011
 val fx = Forex(ForexConfig(eodCacheSize = 0, baseCurrency="GBP"), OerClientConfig(appId, true))
-val eodDate = DateTime(2011, 3, 13, 0, 0)
+val eodDate = new DateTime(2011, 3, 13, 0, 0)
 val gbp2jpy = fx.rate.to("JPY").eod(eodDate) 
 ```
 
@@ -218,7 +219,7 @@ this conversion will be done via HTTP request:
 ```scala
 
 // 9.99 GBP => EUR
-val fx = Forex(ForexConfig(nowishSecs = 500), OerClientConfig(appId, false))
+val fx = Forex(ForexConfig(nowishSecs = 500, nowishCacheSize = 0), OerClientConfig(appId, false))
 val priceInEuros = fx.convert(9.99, "GBP").to("EUR").nowish
 ```
 
@@ -227,11 +228,11 @@ val priceInEuros = fx.convert(9.99, "GBP").to("EUR").nowish
 Conversion using the latest EOD (end-of-date) rate prior to your event _(cacheing available)_:
 
 ```scala
-import org.joda.time.DateTime
+import org.joda.time.{DateTime, DateTimeZone}
 
 // 10000 GBP => JPY at the end of 12/03/2011 
 val fx = Forex(ForexConfig(), OerClientConfig(appId, false))
-val tradeDate = DateTime(2011, 3, 13, 11, 39, 27, 567, DateTimeZone.forID("America/New_York"))
+val tradeDate = new DateTime(2011, 3, 13, 11, 39, 27, 567, DateTimeZone.forID("America/New_York"))
 val tradeInYen = fx.convert(10000, "GBP").to("JPY").at(tradeDate)                   
 ```
 
@@ -240,11 +241,12 @@ val tradeInYen = fx.convert(10000, "GBP").to("JPY").at(tradeDate)
 Lookup the latest EOD (end-of-date) rate following your event _(cacheing available)_:
 
 ```scala
-import org.joda.time.DateTime
+import org.joda.time.{DateTime, DateTimeZone}
+import com.snowplowanalytics.forex.EodRoundUp
 
 // 10000 GBP => JPY at the end of 13/03/2011
 val fx = Forex(ForexConfig(getNearestDay = EodRoundUp), OerClientConfig(appId, false)) 
-val tradeDate = DateTime(2011, 3, 13, 11, 39, 27, 567, DateTimeZone.forID("America/New_York"))
+val tradeDate = new DateTime(2011, 3, 13, 11, 39, 27, 567, DateTimeZone.forID("America/New_York"))
 val usd2yen = fx.convert(10000, "GBP").to("JPY").at(tradeDate) 
 ```
 
@@ -258,7 +260,7 @@ import org.joda.time.DateTime
 
 // 10000 GBP => JPY at the end of 13/03/2011
 val fx = Forex(ForexConfig(baseCurrency="GBP"), OerClientConfig(appId, true))
-val eodDate = DateTime(2011, 3, 13, 0, 0)
+val eodDate = new DateTime(2011, 3, 13, 0, 0)
 val tradeInYen = fx.convert(10000).to("JPY").eod(eodDate)
 ```
 
@@ -273,7 +275,7 @@ import org.joda.time.DateTime
 
 // 10000 GBP => JPY at the end of 13/03/2011
 val fx = Forex(ForexConfig(eodCacheSize = 0, baseCurrency="GBP"), OerClientConfig(appId, true))
-val eodDate = DateTime(2011, 3, 13, 0, 0)
+val eodDate = new DateTime(2011, 3, 13, 0, 0)
 val tradeInYen = fx.convert(10000).to("JPY").eod(eodDate)
 ```
 
