@@ -185,11 +185,11 @@ val eodDate = DateTime(2011, 3, 13, 0, 0)
 val gbp2jpy = fx.rate.to("JPY").eod(eodDate) 
 ```
 
-### 2. Currency conversion
+### 3.2 Currency conversion
 
 For the required imports, please see section **2.3 REPL setup** above.
 
-#### Live rate
+#### 3.2.1 Live rate
 
 Conversion using the live exchange rate _(no cacheing available)_:
 
@@ -199,7 +199,7 @@ val fx = Forex(ForexConfig(), OerClientConfig(appId, false))
 val priceInEuros = fx.convert(9.99).to("EUR").now 
 ```
 
-#### Near-live rate
+#### 3.2.2 Near-live rate
 
 Conversion using a near-live exchange rate with 500 seconds nowishSecs _(cacheing available)_:
 
@@ -209,7 +209,7 @@ val fx = Forex(ForexConfig(nowishSecs = 500), OerClientConfig(appId, false))
 val priceInEuros = fx.convert(9.99, "GBP").to("EUR").nowish
 ```
 
-#### Near-live rate without cache
+#### 3.2.3 Near-live rate without cache
 
 Note that this will be a live rate conversion if cache is not available.
 Conversion using a live exchange rate with 500 seconds nowishSecs,
@@ -222,7 +222,7 @@ val fx = Forex(ForexConfig(nowishSecs = 500), OerClientConfig(appId, false))
 val priceInEuros = fx.convert(9.99, "GBP").to("EUR").nowish
 ```
 
-#### Latest-prior EOD rate
+#### 3.2.4 Latest-prior EOD rate
 
 Conversion using the latest EOD (end-of-date) rate prior to your event _(cacheing available)_:
 
@@ -235,7 +235,7 @@ val tradeDate = DateTime(2011, 3, 13, 11, 39, 27, 567, DateTimeZone.forID("Ameri
 val tradeInYen = fx.convert(10000, "GBP").to("JPY").at(tradeDate)                   
 ```
 
-### Latest-post EOD rate 
+### 3.2.5 Latest-post EOD rate 
 
 Lookup the latest EOD (end-of-date) rate post to your event _(cacheing available)_:
 
@@ -248,7 +248,7 @@ val tradeDate = DateTime(2011, 3, 13, 11, 39, 27, 567, DateTimeZone.forID("Ameri
 val usd2yen = fx.convert(10000, "GBP").to("JPY").at(tradeDate) 
 ```
 
-#### Specific EOD rate
+#### 3.2.6 Specific EOD rate
 
 Conversion using the EOD rate for a specific date _(cacheing available)_,
 note that GBP is set to the base currency:
@@ -262,7 +262,7 @@ val eodDate = DateTime(2011, 3, 13, 0, 0)
 val tradeInYen = fx.convert(10000).to("JPY").eod(eodDate)
 ```
 
-#### Specific EOD rate without cache
+#### 3.2.7 Specific EOD rate without cache
 
 Conversion using the EOD rate for a specific date,
 note that GBP is set to the base currency,
@@ -278,19 +278,18 @@ val tradeInYen = fx.convert(10000).to("JPY").eod(eodDate)
 ```
 
 
-### 3. Usage notes
+### 3.3 Usage notes
 
-#### LRU cache
+#### 3.3.1 LRU cache
 
 The `lruCache` value determines the maximum number of values to keep in the LRU cache, which the Client will check prior to making an API lookup. To disable the LRU cache, set its size to zero, i.e. `lruCache = 0`.
 
-#### From currency selection
+#### 3.3.2 From currency selection
 
 A default _"from currency"_ can be specified for all operations, using the `baseCurrency` argument to the `ForexConfig` object.
+If not specified, `baseCurrency` is set to USD by default.
 
-If this is not specified, all calls to `rate()` or `convert()` **must** specify the source currency.
-
-#### Constructor defaults
+#### 3.3.3 Constructor defaults
 
 If not specified, the `eodCache` defaults to 60,000 entries. This is equivalent to around one year's worth of EOD currency rates for 165 currencies (165 * 365 = 60,225).
 
@@ -305,13 +304,13 @@ The `getNearestDay` argurment is set to EodRoundDown by default to get the date 
 The `homeCurrency` is set to USD by default, only Unlimited or Enterprise users can set it to other currencies.
 
 
-## Implementation details
+## 4. Implementation details
 
-### End-of-day definition
+### 4.1 End-of-day definition
 
 The end of today is 00:00 on the next day.
 
-### Exchange rate lookup
+### 4.2 Exchange rate lookup
 
 When `.now` is specified, the **live** exchange rate available from Open Exchange Rates is used.
 
@@ -321,14 +320,14 @@ When `.at(...)` is specified, the **latest end-of-day rate prior** to the dateti
   
 When `.eod(...)` is specified, the end-of-day rate for the **specified day** is used. Any hour/minute/second/etc portion of the datetime is ignored.
 
-### LRU cache
+### 4.3 LRU cache
 
 We recommend trying different LRU cache sizes to see what works best for you.
 
 Please note that the LRU cache implementation is **not** thread-safe ([see this note] [twitter-lru-cache]). Switch it off if you are working with threads.
 
 
-## Copyright and license
+## 5. Copyright and license
 
 Scala Forex is copyright 2013-2014 Snowplow Analytics Ltd.
 
