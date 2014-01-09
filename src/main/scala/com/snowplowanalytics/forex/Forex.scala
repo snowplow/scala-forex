@@ -341,7 +341,6 @@ case class ForexLookupWhen(conversionAmount: Double, fromCurr: String, toCurr: S
       if (toCurrencyUnit.isLeft) {
         errMessage += toCurrencyUnit.left.get.errorMessage
       }
-      println(errMessage)
       Left(OerResponseError(errMessage, IllegalCurrency))
     } 
   }
@@ -361,7 +360,6 @@ case class ForexLookupWhen(conversionAmount: Double, fromCurr: String, toCurr: S
       errMsg += toCurrencyUnit.left.get.errorMessage
     }
     errMsg += errObject.errorMessage
-    println(errMsg)
-    Left(OerResponseError(errMsg, OtherErrors))
+    Left(OerResponseError(errMsg, errObject.errorType))
   }
 }

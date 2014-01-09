@@ -16,25 +16,13 @@ package com.snowplowanalytics.forex
 import org.specs2.mutable.Specification
 // TestHelpers
 import TestHelpers._
-// oerclient
-import oerclient.IllegalCurrency
-import oerclient.OerResponseError
-// Joda money
-import org.joda.money.Money
+// OerClientConfig
+import oerclient.OerClientConfig
 
-/** 
- *  Testing for unsupported currencies in joda money, e.g. bitcoin(BTC)
+/**
+ * Testing that setting cache size to zero will disable the use of cache 
  */
-class UnsupportedCurrencySpec extends Specification { 
-  "Joda money" should {
-    Seq("BTC", "RRU", "EEK") foreach { currency =>
-      (" not support currency: " + currency) >> {
-        val rate = fx.rate(currency).to("GBP").now
-        rate must beLike {
-          case Left(OerResponseError(_, IllegalCurrency)) => ok
-        }
-      } 
-    }
-  }
+class ForexWithoutCachesSpec extends Specification { 
+  val fxWithoutCache = Forex.getForex(ForexConfig(nowishCacheSize = 0, eodCacheSize = 0), oerConfig) 
   
 }

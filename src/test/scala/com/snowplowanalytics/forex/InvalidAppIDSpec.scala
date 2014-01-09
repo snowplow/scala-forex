@@ -14,27 +14,18 @@ package com.snowplowanalytics.forex
 
 // Specs2
 import org.specs2.mutable.Specification
-// TestHelpers
-import TestHelpers._
 // oerclient
-import oerclient.IllegalCurrency
+import oerclient.InvalidAppId
 import oerclient.OerResponseError
-// Joda money
-import org.joda.money.Money
+// OerClientConfig
+import oerclient.OerClientConfig
 
-/** 
- *  Testing for unsupported currencies in joda money, e.g. bitcoin(BTC)
+/**
+ * Testing validity of appID 
  */
-class UnsupportedCurrencySpec extends Specification { 
-  "Joda money" should {
-    Seq("BTC", "RRU", "EEK") foreach { currency =>
-      (" not support currency: " + currency) >> {
-        val rate = fx.rate(currency).to("GBP").now
-        rate must beLike {
-          case Left(OerResponseError(_, IllegalCurrency)) => ok
-        }
-      } 
-    }
+class InvalidAppIdSpec extends Specification { 
+  val fxWithInvalidID  = Forex.getForex(ForexConfig(), OerClientConfig("this is invalid appId", false)) 
+  fxWithInvalidID.rate.to("GBP").now must beLike {
+    case Left(OerResponseError(_, InvalidAppId)) => ok
   }
-  
 }

@@ -12,8 +12,8 @@
  */
 package com.snowplowanalytics.forex
 
-// OpenExchangeRate client
-import oerclient._
+// OerClientConfig
+import oerclient.OerClientConfig
 // LRUCache
 import com.twitter.util.LruMap
 

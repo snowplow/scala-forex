@@ -176,8 +176,13 @@ class OerClient(
           while (root.hasNext) {
            resNode = root.next
           }
-          return Left(OerResponseError(resNode.getTextValue, InvalidAppId))
-        } else {
+          if (resNode.getTextValue ==
+           "Invalid App ID provided - please sign up at https://openexchangerates.org/signup, or contact support@openexchangerates.org. Thanks!") {
+            return Left(OerResponseError(resNode.getTextValue, InvalidAppId))
+          } else {
+            return Left(OerResponseError(resNode.getTextValue, OtherErrors))    
+          }
+      } else {
           val inputStream = httpUrlConn.getInputStream
           val root = mapper.readTree(inputStream).getElements
           var resNode = root.next

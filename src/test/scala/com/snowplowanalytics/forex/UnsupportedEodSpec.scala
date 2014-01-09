@@ -18,30 +18,38 @@ import org.specs2.mutable.Specification
 import org.joda.time._
 // TestHelpers
 import TestHelpers._
+// oerclient
+import oerclient.OerResponseError
+import oerclient.ResourcesNotAvailable
 
 /**
  *  Testing for exceptions caused by invalid dates
  */
 class UnsupportedEodSpec extends Specification { 
-  /**
-   * 1900 is earlier than 1990 which is the earliest available date for looking up exchange rates  
-   */
-  val rateIn1900 = fx.rate.to("GBP").eod(new DateTime(1900, 3, 13, 0, 0))
-  
+
   "An end-of-date lookup in 1900" should {
     "throw an exception" in {
-      rateIn1900.isLeft
+      /**
+       * 1900 is earlier than 1990 which is the earliest available date for looking up exchange rates  
+       */
+      val date1900 = new DateTime(1900, 3, 13, 0, 0)
+      val rateIn1900 = fx.rate.to("GBP").eod(date1900)
+      rateIn1900 must beLike {
+        case Left(OerResponseError(_, ResourcesNotAvailable)) => ok
+      }
     }
   }
 
- /**
-  * 2020 is in the future so it won't be available either
-  */
-  val rateIn2020 = fx.rate.to("GBP").eod(new DateTime(2020, 3, 13, 0, 0))
-  
   "An end-of-date lookup in 2020" should {
     "throw an exception" in {
-      rateIn2020.isLeft
+      /**
+       * 2020 is in the future so it won't be available either
+       */
+      val date2020 = new DateTime(2020, 3, 13, 0, 0)
+      val rateIn2020 = fx.rate.to("GBP").eod(date2020)
+      rateIn2020 must beLike {
+        case Left(OerResponseError(_, ResourcesNotAvailable)) => ok
+      }
     }
   }
 }
