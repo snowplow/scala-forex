@@ -170,7 +170,7 @@ val eodDate = DateTime(2011, 3, 13, 0, 0)
 val gbp2jpy = fx.rate.to("JPY").eod(eodDate) 
 ```
 
-#### 3.1.6 Specific EOD rate without cache
+#### 3.1.7 Specific EOD rate without cache
 
 Lookup the EOD rate for a specific date,
 note that GBP is set to be the base currency,
@@ -235,7 +235,7 @@ val tradeDate = DateTime(2011, 3, 13, 11, 39, 27, 567, DateTimeZone.forID("Ameri
 val tradeInYen = fx.convert(10000, "GBP").to("JPY").at(tradeDate)                   
 ```
 
-### 3.2.5 Latest-post EOD rate 
+#### 3.2.5 Latest-post EOD rate 
 
 Lookup the latest EOD (end-of-date) rate post to your event _(cacheing available)_:
 
