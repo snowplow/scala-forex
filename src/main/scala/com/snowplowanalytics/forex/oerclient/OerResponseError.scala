@@ -18,32 +18,32 @@ package oerclient
  * @param errorMessage - error message from OER API
  * @param errorType - specific error type
  */
-case class OerResponseError(errorMessage: String, errorType: OerErrorType)
+case class OerResponseError(errorMessage: String, errorType: OerError)
 
 /**
  * User defined error types 
  */
-sealed trait OerErrorType
+sealed trait OerError
 
 /**
  * Caused by invalid DateTime argument
  * i.e. either earlier than the earliest date OER service is available or later than currenct time
  */
-object ResourcesNotAvailable extends OerErrorType 
+object ResourcesNotAvailable extends OerError
 
 /**
  * Invalid appId  
  */
-object InvalidAppId extends OerErrorType
+object InvalidAppId extends OerError
 
 /**
  * Currency not supported by API or
  * Joda Money or both
  */
-object IllegalCurrency extends OerErrorType
+object IllegalCurrency extends OerError
 
 /**
  * Other possible error types e.g.
  * access permissions
  */
-object OtherErrors extends OerErrorType
+object OtherErrors extends OerError
