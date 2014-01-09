@@ -107,7 +107,7 @@ Lookup a live rate _(no cacheing available)_:
 ```scala
 // USD => JPY
 val fx = Forex(ForexConfig(), OerClientConfig(appId, false))
-val usd2jpy = fx.rate.to("JPY").now              
+val usd2jpy = fx.rate.to("JPY").now   // => Right(JPY 105)           
 ```
 
 #### 3.1.2 Near-live rate
@@ -117,7 +117,7 @@ Lookup a near-live rate _(cacheing available)_:
 ```scala
 // JPY => GBP
 val fx = Forex(ForexConfig(), OerClientConfig(appId, false))
-val jpy2gbp = fx.rate("JPY").to("GBP").nowish 
+val jpy2gbp = fx.rate("JPY").to("GBP").nowish   // => Right(GBP 0.01)
 ```
 
 #### 3.1.3 Near-live rate without cache
@@ -127,7 +127,7 @@ Lookup a near-live rate (_uses cache selectively_):
 ```scala
 // JPY => GBP
 val fx = Forex(ForexConfig(nowishCacheSize = 0), OerClientConfig(appId, false))
-val jpy2gbp = fx.rate("JPY").to("GBP").nowish 
+val jpy2gbp = fx.rate("JPY").to("GBP").nowish   // => Right(GBP 0.01)
 ```
 
 #### 3.1.4 Latest-prior EOD rate
@@ -140,7 +140,7 @@ import org.joda.time.{DateTime, DateTimeZone}
 // USD => JPY at the end of 12/03/2011 
 val fx = Forex(ForexConfig(), OerClientConfig(appId, false)) // round down to previous day by default
 val tradeDate = new DateTime(2011, 3, 13, 11, 39, 27, 567, DateTimeZone.forID("America/New_York"))
-val usd2yen = fx.rate.to("JPY").at(tradeDate) 
+val usd2yen = fx.rate.to("JPY").at(tradeDate)   // => Right(JPY 82)
 ```
 
 #### 3.1.5 Latest-post EOD rate 
@@ -154,7 +154,7 @@ import com.snowplowanalytics.forex.EodRoundUp
 // USD => JPY at the end of 13/03/2011 
 val fx = Forex(ForexConfig(getNearestDay = EodRoundUp), OerClientConfig(appId, false)) 
 val tradeDate = new DateTime(2011, 3, 13, 11, 39, 27, 567, DateTimeZone.forID("America/New_York"))
-val usd2yen = fx.rate.to("JPY").at(tradeDate) 
+val usd2yen = fx.rate.to("JPY").at(tradeDate)   // => Right(JPY 82)
 ```
 
 #### 3.1.6 Specific EOD rate
@@ -168,14 +168,12 @@ import org.joda.time.DateTime
 // GBP => JPY at the end of 13/03/2011
 val fx = Forex(ForexConfig(baseCurrency="GBP"), OerClientConfig(appId, true))
 val eodDate = new DateTime(2011, 3, 13, 0, 0)
-val gbp2jpy = fx.rate.to("JPY").eod(eodDate) 
+val gbp2jpy = fx.rate.to("JPY").eod(eodDate)   // => Right(JPY 131)
 ```
 
 #### 3.1.7 Specific EOD rate without cache
 
-Lookup the EOD rate for a specific date,
-note that GBP is set to be the base currency,
-this lookup will be done via HTTP request: 
+Lookup the EOD rate for a specific date _(no cacheing)_: 
 
 ```scala
 import org.joda.time.DateTime
@@ -183,7 +181,7 @@ import org.joda.time.DateTime
 // GBP => JPY at the end of 13/03/2011
 val fx = Forex(ForexConfig(eodCacheSize = 0, baseCurrency="GBP"), OerClientConfig(appId, true))
 val eodDate = new DateTime(2011, 3, 13, 0, 0)
-val gbp2jpy = fx.rate.to("JPY").eod(eodDate) 
+val gbp2jpy = fx.rate.to("JPY").eod(eodDate)   // => Right(JPY 131)
 ```
 
 ### 3.2 Currency conversion
@@ -252,8 +250,7 @@ val usd2yen = fx.convert(10000, "GBP").to("JPY").at(tradeDate)
 
 #### 3.2.6 Specific EOD rate
 
-Conversion using the EOD rate for a specific date _(cacheing available)_,
-note that GBP is set to the base currency:
+Conversion using the EOD rate for a specific date _(cacheing available)_:
 
 ```scala
 import org.joda.time.DateTime
@@ -266,9 +263,7 @@ val tradeInYen = fx.convert(10000).to("JPY").eod(eodDate)
 
 #### 3.2.7 Specific EOD rate without cache
 
-Conversion using the EOD rate for a specific date,
-note that GBP is set to the base currency,
-this conversion will be done via HTTP request: 
+Conversion using the EOD rate for a specific date, _(no cacheing)_: 
 
 ```scala
 import org.joda.time.DateTime
