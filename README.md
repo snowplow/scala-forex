@@ -83,6 +83,7 @@ To run the Scala Forex test suite locally:
 ```
 $ export OER_KEY=<<key>>
 $ git clone https://github.com/snowplow/scala-forex.git
+$ cd scala-forex
 sbt test
 ```
 
@@ -94,13 +95,6 @@ The Scala Forex supports two types of usage:
 2. Currency conversions
 
 Both usage types support live, near-live or historical (end-of-day) exchange rates.
-
-#### IMPORTANT:
-Run "export OER_KEY=>>insert your app ID here<<" in terminal before you do any queries, this is for setting the environment variable which is your unique app ID.
-Use the following command to get the ID. 
-```scala
-val appId = sys.env("OER_KEY") 
-```
 
 ### 3.1 Rate lookup
 
@@ -183,7 +177,6 @@ note that GBP is set to be the base currency,
 this lookup will be done via HTTP request: 
 
 ```scala
-import com.snowplowanalytics.forex.Forex
 import org.joda.time.DateTime
 
 // GBP => JPY at the end of 13/03/2011
@@ -201,8 +194,6 @@ For the required imports, please see section **2.3 REPL setup** above.
 Conversion using the live exchange rate _(no cacheing available)_:
 
 ```scala
-import com.snowplowanalytics.forex.Forex
-
 // 9.99 USD => EUR
 val fx = Forex(ForexConfig(), OerClientConfig(appId, false))
 val priceInEuros = fx.convert(9.99).to("EUR").now 
@@ -213,8 +204,6 @@ val priceInEuros = fx.convert(9.99).to("EUR").now
 Conversion using a near-live exchange rate with 500 seconds nowishSecs _(cacheing available)_:
 
 ```scala
-import com.snowplowanalytics.forex.Forex
-
 // 9.99 GBP => EUR 
 val fx = Forex(ForexConfig(nowishSecs = 500), OerClientConfig(appId, false))
 val priceInEuros = fx.convert(9.99, "GBP").to("EUR").nowish
@@ -225,8 +214,8 @@ val priceInEuros = fx.convert(9.99, "GBP").to("EUR").nowish
 Note that this will be a live rate conversion if cache is not available.
 Conversion using a live exchange rate with 500 seconds nowishSecs,
 this conversion will be done via HTTP request: 
+
 ```scala
-import com.snowplowanalytics.forex.Forex
 
 // 9.99 GBP => EUR
 val fx = Forex(ForexConfig(nowishSecs = 500), OerClientConfig(appId, false))
@@ -238,7 +227,6 @@ val priceInEuros = fx.convert(9.99, "GBP").to("EUR").nowish
 Conversion using the latest EOD (end-of-date) rate prior to your event _(cacheing available)_:
 
 ```scala
-import com.snowplowanalytics.forex.Forex
 import org.joda.time.DateTime
 
 // 10000 GBP => JPY at the end of 12/03/2011 
@@ -252,7 +240,6 @@ val tradeInYen = fx.convert(10000, "GBP").to("JPY").at(tradeDate)
 Lookup the latest EOD (end-of-date) rate post to your event _(cacheing available)_:
 
 ```scala
-import com.snowplowanalytics.forex.Forex
 import org.joda.time.DateTime
 
 // 10000 GBP => JPY at the end of 13/03/2011
@@ -267,7 +254,6 @@ Conversion using the EOD rate for a specific date _(cacheing available)_,
 note that GBP is set to the base currency:
 
 ```scala
-import com.snowplowanalytics.forex.Forex
 import org.joda.time.DateTime
 
 // 10000 GBP => JPY at the end of 13/03/2011
@@ -283,7 +269,6 @@ note that GBP is set to the base currency,
 this conversion will be done via HTTP request: 
 
 ```scala
-import com.snowplowanalytics.forex.Forex
 import org.joda.time.DateTime
 
 // 10000 GBP => JPY at the end of 13/03/2011
