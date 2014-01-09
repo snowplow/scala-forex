@@ -64,4 +64,3 @@ class ForexNowishSpec extends Specification {
     }
   }      
 }
-
