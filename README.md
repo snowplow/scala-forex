@@ -237,7 +237,7 @@ val tradeInYen = fx.convert(10000, "GBP").to("JPY").at(tradeDate)
 
 #### 3.2.5 Latest-post EOD rate 
 
-Lookup the latest EOD (end-of-date) rate post to your event _(cacheing available)_:
+Lookup the latest EOD (end-of-date) rate following your event _(cacheing available)_:
 
 ```scala
 import org.joda.time.DateTime
