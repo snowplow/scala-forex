@@ -107,7 +107,7 @@ Lookup a live rate _(no cacheing available)_:
 ```scala
 // USD => JPY
 val fx = Forex(ForexConfig(), OerClientConfig(appId, false))
-val usd2jpy = fx.rate().to("JPY").now              
+val usd2jpy = fx.rate.to("JPY").now              
 ```
 
 #### 3.1.2 Near-live rate
