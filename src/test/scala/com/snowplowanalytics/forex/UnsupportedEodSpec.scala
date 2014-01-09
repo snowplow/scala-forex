@@ -16,13 +16,13 @@ package com.snowplowanalytics.forex
 import org.specs2.mutable.Specification
 // Joda 
 import org.joda.time._
+// TestHelpers
+import TestHelpers._
 
 /**
  *  Testing for exceptions caused by invalid dates
  */
 class UnsupportedEodSpec extends Specification { 
-  val fx  = TestHelper.fx 
-  
   /**
    * 1900 is earlier than 1990 which is the earliest available date for looking up exchange rates  
    */

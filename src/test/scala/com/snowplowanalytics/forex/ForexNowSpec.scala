@@ -18,14 +18,13 @@ import java.math.RoundingMode
 import org.specs2.mutable.Specification
 // Joda 
 import org.joda.money._
+// TestHelpers
+import TestHelpers._
 
 /**
 * Testing method for getting the live exchange rate
 */
 class ForexNowSpec extends Specification { 
-  val fx  = TestHelper.fx 
-  val fxWithBaseGBP = TestHelper.fxWithBaseGBP
-  
   /**
   * Trade 10000 USD to JPY at live exchange rate
   */

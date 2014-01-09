@@ -14,29 +14,27 @@ package com.snowplowanalytics.forex
 
 // Specs2
 import org.specs2.mutable.Specification
-
 // Mockito
 import org.specs2.matcher._
 import org.specs2.mock.Mockito
-
 // Joda 
 import org.joda.time._
-
 // LRUCache
 import com.twitter.util.LruMap
-
 // Java
 import java.lang.Thread
 import java.math.BigDecimal
+// TestHelpers
+import TestHelpers._
 
 /**
  * Testing cache behaviours
  */
 class SpiedCacheSpec extends Specification with Mockito{
-  val spiedNowishCache = spy(new LruMap[NowishCacheKey, NowishCacheValue](TestHelper.config.nowishCacheSize)) 
-  val spiedEodCache    = spy(new LruMap[EodCacheKey, EodCacheValue](TestHelper.config.eodCacheSize))
-  val spiedFx = Forex.getForex(TestHelper.config, TestHelper.oerConfig, Some(spiedNowishCache), Some(spiedEodCache)) 
-  val spiedFxWith5NowishSecs = Forex.getForex(TestHelper.fxConfigWith5NowishSecs, TestHelper.oerConfig, Some(spiedNowishCache), Some(spiedEodCache)) 
+  val spiedNowishCache = spy(new LruMap[NowishCacheKey, NowishCacheValue](config.nowishCacheSize)) 
+  val spiedEodCache    = spy(new LruMap[EodCacheKey, EodCacheValue](config.eodCacheSize))
+  val spiedFx = Forex.getForex(config, oerConfig, Some(spiedNowishCache), Some(spiedEodCache)) 
+  val spiedFxWith5NowishSecs = Forex.getForex(fxConfigWith5NowishSecs, oerConfig, Some(spiedNowishCache), Some(spiedEodCache)) 
 
   /**
    * nowish cache with 5-sec memory

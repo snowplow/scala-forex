@@ -19,10 +19,11 @@ import java.math.BigDecimal
 import org.specs2.mutable.Specification
 // Joda 
 import org.joda.time._
+// TestHelpers
+import TestHelpers._
 
 /** Testing methods for Open exchange rate client */
 class OerClientSpec extends Specification { 
-  val fx  = TestHelper.fx
 
   "live currency value for USD" should { 
     "always equal to 1" in {

@@ -16,14 +16,14 @@ package com.snowplowanalytics.forex
 import org.specs2.mutable.Specification
 // Joda 
 import org.joda.time._
+// TestHelpers
+import TestHelpers._
 
 /**
  * Testing method for getting the latest end-of-day rate 
  * prior to the datetime or the day after according to the user's setting 
  */
 class ForexAtSpec extends Specification { 
-  val fx  = TestHelper.fx 
-  val fxWithBaseGBP = TestHelper.fxWithBaseGBP
   /**
    * GBP->CAD with USD as baseCurrency 
    */

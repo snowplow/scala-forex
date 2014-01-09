@@ -17,6 +17,8 @@ import org.specs2.mutable.Specification
 import org.specs2.matcher.DataTables
 // Joda 
 import org.joda.time._
+// TestHelpers
+import TestHelpers._
 
 /**
 * Testing method for getting the end-of-date exchange rate
@@ -24,7 +26,6 @@ import org.joda.time._
 * the same as the value in the table
 */
 class ForexEodSpec extends Specification with DataTables { 
-  val fx  = TestHelper.fx 
 
   override def is = 
     "end-of-date lookup tests: forex rate between two currencies for a specific date is always the same" ! e1

@@ -14,13 +14,13 @@ package com.snowplowanalytics.forex
 
 // Specs2
 import org.specs2.mutable.Specification
+// TestHelpers
+import TestHelpers._
 
 /** 
  *  Testing for unsupported currencies in joda money, e.g. bitcoin(BTC)
  */
 class UnsupportedCurrencySpec extends Specification { 
-  val fx  = TestHelper.fx 
-  
   "Joda money" should {
     Seq("BTC", "RRU", "EEK") foreach { currency =>
       (" not support currency: " + currency) >> {

@@ -18,13 +18,13 @@ import java.math.RoundingMode
 import org.specs2.mutable.Specification
 // Joda 
 import org.joda.money._
+// TestHelpers
+import TestHelpers._
 
 /**
 * Testing method for getting the approximate exchange rate
 */
 class ForexNowishSpec extends Specification { 
-  val fx  = TestHelper.fx 
-  val fxWithBaseGBP = TestHelper.fxWithBaseGBP  
   /**
   * CAD -> GBP with base currency USD 
   */
