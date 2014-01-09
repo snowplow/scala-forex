@@ -84,7 +84,7 @@ To run the Scala Forex test suite locally:
 $ export OER_KEY=<<key>>
 $ git clone https://github.com/snowplow/scala-forex.git
 $ cd scala-forex
-sbt test
+$ sbt test
 ```
 
 ## 3. Usage
