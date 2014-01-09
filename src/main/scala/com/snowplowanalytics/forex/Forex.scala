@@ -23,7 +23,6 @@ import scala.collection.JavaConversions._
 // OerClient
 import com.snowplowanalytics.forex.oerclient._
 
-
 /**
  * Companion object to get Forex object
  */
