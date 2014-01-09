@@ -314,8 +314,6 @@ When `.nowish` is specified, a **cached** version of the **live** exchange rate 
 
 When `.at(...)` is specified, the **latest end-of-day rate prior** to the datetime is used by default. Users can configure so that the rate on that specific date is used.
   
-* What do we do if the EOD is not yet available? e.g. at 00:00:01?
-
 When `.eod(...)` is specified, the end-of-day rate for the **specified day** is used. Any hour/minute/second/etc portion of the datetime is ignored.
 
 ### LRU cache
