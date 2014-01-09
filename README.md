@@ -22,15 +22,15 @@ There are three types of accounts, note that Enterprise and Unlimited allow user
 
 ForexConfig contains only general configurations:
 
-1. _'nowishCacheSize'_  is the size configuration for near-live(nowish) lookup cache, it can be disabled by setting its value to 0.
+1. `nowishCacheSize`  is the size configuration for near-live(nowish) lookup cache, it can be disabled by setting its value to 0.
 
-2. _'nowishSecs'_  is the time configuration for near-live lookup. Nowish call will use the exchange rate stored in nowish cache if its time stamp is less than or equal to 'nowishSecs' old.
+2. `nowishSecs`  is the time configuration for near-live lookup. Nowish call will use the exchange rate stored in nowish cache if its time stamp is less than or equal to `nowishSecs` old.
 
-3. _'eodCacheSize'_  is the size configuration for end-of-day(eod) lookup cache, it can be disabled by setting its value to 0.
+3. `eodCacheSize`  is the size configuration for end-of-day(eod) lookup cache, it can be disabled by setting its value to 0.
 
-4. _'getNearestDay'_ is the rounding configuration for latest prior eod(at) lookup. The lookup will be performed on the next day if the rounding mode is set to EodRoundUp, and on the previous day if EodRoundDown.
+4. `getNearestDay` is the rounding configuration for latest prior eod(at) lookup. The lookup will be performed on the next day if the rounding mode is set to EodRoundUp, and on the previous day if EodRoundDown.
 
-5. _'baseCurrency'_ can be configured if the user is using Unlimited or Enterprise account. If it is set to other currencies other than USD, the configurableBase value in OerClient has to be set to true accordingly.    
+5. `baseCurrency` can be configured if the user is using Unlimited or Enterprise account. If it is set to other currencies other than USD, the configurableBase value in OerClient has to be set to true accordingly.    
 
 All configurations in ForexConfig are set to recommended values, but users are free to set them to desired values. 
 
@@ -47,9 +47,9 @@ case class ForexConfig(
 
 OerClientConfig has congurations specific to the OER API:
 
-1. _'appId'_ is the unique key for the user's account,
+1. `appId` is the unique key for the user's account,
 
-2. _'configurableBase'_ is a boolean value indicating if the base currency can be configured. The baseCurrency value in ForexConfig can be changed if the boolean value is set to true. Note that only Enterprise and Unlimited users are allowed to set the value to true.
+2. `configurableBase` is a boolean value indicating if the base currency can be configured. The baseCurrency value in ForexConfig can be changed if the boolean value is set to true. Note that only Enterprise and Unlimited users are allowed to set the value to true.
 
 ```scala
 case class OerClientConfig extends ForexClientConfig(
@@ -277,27 +277,27 @@ val tradeInYen = fx.convert(10000).to("JPY").eod(eodDate)
 
 #### LRU cache
 
-The _`lruCache`_ value determines the maximum number of values to keep in the LRU cache, which the Client will check prior to making an API lookup. To disable the LRU cache, set its size to zero, i.e. `lruCache = 0`.
+The `lruCache` value determines the maximum number of values to keep in the LRU cache, which the Client will check prior to making an API lookup. To disable the LRU cache, set its size to zero, i.e. `lruCache = 0`.
 
 #### From currency selection
 
-A default _"from currency"_ can be specified for all operations, using the _`baseCurrency`_ argument to the _`ForexConfig`_ object.
+A default _"from currency"_ can be specified for all operations, using the `baseCurrency` argument to the `ForexConfig` object.
 
-If this is not specified, all calls to _`rate()`_ or _`convert()`_ **must** specify the _`fromCurrency`_ argument.
+If this is not specified, all calls to `rate()` or `convert()` **must** specify the source currency.
 
 #### Constructor defaults
 
-If not specified, the _`eodCache`_ defaults to 60,000 entries. This is equivalent to around one year's worth of EOD currency rates for 165 currencies (165 * 365 = 60,225).
+If not specified, the `eodCache` defaults to 60,000 entries. This is equivalent to around one year's worth of EOD currency rates for 165 currencies (165 * 365 = 60,225).
 
 nowishCache = (165 * 164 / 2) = 13530 <- recommended size
 
 eodCache = (165 * 164 / 2) * 30 = 405900 assuming 1 month <- suggested size
 
-If not specified, the _`nowishSecs`_ defaults to 300 seconds (5 minutes).
+If not specified, the `nowishSecs` defaults to 300 seconds (5 minutes).
 
-The _'getNearestDay'_ argurment is set to EodRoundDown by default to get the date prior to the specified date.
+The `getNearestDay` argurment is set to EodRoundDown by default to get the date prior to the specified date.
 
-The _'homeCurrency'_ is set to USD by default, only Unlimited or Enterprise users can set it to other currencies.
+The `homeCurrency` is set to USD by default, only Unlimited or Enterprise users can set it to other currencies.
 
 
 ## Implementation details
@@ -308,15 +308,15 @@ The end of today is 00:00 on the next day
 
 ### Exchange rate lookup
 
-When _`.now`_ is specified, the **live** exchange rate available from Open Exchange Rates is used.
+When `.now` is specified, the **live** exchange rate available from Open Exchange Rates is used.
 
-When _`.nowish`_ is specified, a **cached** version of the **live** exchange rate is used, if the timestamp of that exchange rate is less than or equal to `nowishSecs` (see above) old. Otherwise a new lookup is performed.
+When `.nowish` is specified, a **cached** version of the **live** exchange rate is used, if the timestamp of that exchange rate is less than or equal to `nowishSecs` (see above) old. Otherwise a new lookup is performed.
 
-When _`.at(...)`_ is specified, the **latest end-of-day rate prior** to the datetime is used by default. Users can configure so that the rate on that specific date is used.
+When `.at(...)` is specified, the **latest end-of-day rate prior** to the datetime is used by default. Users can configure so that the rate on that specific date is used.
   
 * What do we do if the EOD is not yet available? e.g. at 00:00:01?
 
-When _`.eod(...)`_ is specified, the end-of-day rate for the **specified day** is used. Any hour/minute/second/etc portion of the datetime is ignored.
+When `.eod(...)` is specified, the end-of-day rate for the **specified day** is used. Any hour/minute/second/etc portion of the datetime is ignored.
 
 ### LRU cache
 
