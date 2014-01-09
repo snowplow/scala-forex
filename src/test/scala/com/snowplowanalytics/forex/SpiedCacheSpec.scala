@@ -53,7 +53,9 @@ class SpiedCacheSpec extends Specification with Mockito{
   Thread.sleep(6000)
   // nowish will get the value over HTTP request, which will replace the previous value in the cache
   spiedFxWith5NowishSecs.rate("CAD").to("GBP").nowish
-  // value will be different from previous value
+  // value will be different from previous value -
+  // even if the monetary value is the same, the
+  // timestamp will be different
   spiedNowishCache must haveValue(valueFromFirstHttpRequest).not
 
   /**
