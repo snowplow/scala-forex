@@ -308,8 +308,8 @@ When `.now` is specified, the **live** exchange rate available from Open Exchang
 
 When `.nowish` is specified, a **cached** version of the **live** exchange rate is used, if the timestamp of that exchange rate is less than or equal to `nowishSecs` (see above) ago. Otherwise a new lookup is performed.
 
-When `.at(...)` is specified, the **latest end-of-day rate prior** to the datetime is used by default. Users can configure so that the rate on that specific date is used.
-  
+When `.at(...)` is specified, the **latest end-of-day rate prior** to the datetime is used by default. Or users can configure that Scala Forex "round up" to the end of the occurring day.
+
 When `.eod(...)` is specified, the end-of-day rate for the **specified day** is used. Any hour/minute/second/etc portion of the datetime is ignored.
 
 ### 4.3 LRU cache
