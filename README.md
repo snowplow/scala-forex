@@ -14,9 +14,7 @@ Currently Scala Forex uses the [Open Exchange Rates API] [oer-api] to perform cu
 
 First [sign up] [oer-signup] to Open Exchange Rates to get your App ID for API access.
 
-There are three types of accounts supported by OER API, Unlimited, Enterprise and Developer levels. See the [sign up] [oer-signup] page for specific account descriptions.
-
-For Scala Forex, the main difference between account levels is that users with Unlimited or Enterprise accounts will be able to use their configured `baseCurrency` directly in calls to OER. For Developer users, this library will provide automatic conversions between OER's default base currency (USD) and user-defined base currencies, at some loss of precision.
+There are three types of accounts supported by OER API, Unlimited, Enterprise and Developer levels. See the [sign up] [oer-signup] page for specific account descriptions. For Scala Forex, we recommend an Enterprise or Unlimited account, unless all of your conversions are to or from USD (see section 4.5 OER accounts for an explanation).
 
 ### 2.2 Configuration
 
@@ -320,7 +318,6 @@ We recommend trying different LRU cache sizes to see what works best for you.
 
 Please note that the LRU cache implementation is **not** thread-safe ([see this note] [twitter-lru-cache]). Switch it off if you are working with threads.
 
-
 ### 4.4 Explanation of defaults
 
 #### 4.4.1 `nowishCache` = (165 * 164 / 2) = 13530 
@@ -343,7 +340,11 @@ By convention, we are always interested in the exchange rates prior to the query
 
 #### 4.4.5 `baseCurrency` = USD
 
-Only Unlimited or Enterprise users can set the base currency to other currencies.
+We selected USD for the base currency because this is the OER default as well.
+
+#### 4.5 OER accounts
+
+With Open Exchange Rates' Unlimited and Enterprise accounts, Scala Forex can specify the base currency to use when looking up exchange rates; Developer-level accounts will always retrieve rates against USD, so a rate lookup from e.g. GBY to EUR will require two conversions (GBY -> USD -> EUR). For this reason, we recommend Unlimited and Enterprise-level accounts for slightly more accurate non-USD-related lookups.
 
 ## 5. Authors
 
