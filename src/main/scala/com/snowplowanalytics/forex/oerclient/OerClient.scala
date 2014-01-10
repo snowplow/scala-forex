@@ -42,12 +42,19 @@ class OerClient(
   /** Base URL to OER API */
   private val oerUrl = "http://openexchangerates.org/api/"
 
-  /** Sets the base currency in the url */
-  private val base   = if (oerConfig.configurableBase) "&base=" + config.baseCurrency 
-                       else ""
+  /** Sets the base currency in the url
+   * according to the API, only Unlimited and Enterprise accounts 
+   * are allowed to set the base currency in the HTTP URL
+   */
+  private val base   = oerConfig.accountLevel match {
+      case UnlimitedAccount  => "&base=" + config.baseCurrency 
+      case EnterpriseAccount => "&base=" + config.baseCurrency 
+      case DeveloperAccount  => ""
+  } 
+                    
   /**
-   * The constant that will hold the URI for
-   * a latest-exchange rate lookup from OER
+   * The constant that will hold the URL for
+   * a live exchange rate lookup from OER
    */
   private val latest = "latest.json?app_id=" + oerConfig.appId + base
 
@@ -80,12 +87,33 @@ class OerClient(
         nowishCache match {
           case Some(cache) => {
                 val currencyNameIterator = node.getFieldNames
-                while (currencyNameIterator.hasNext) {  
-                  val currencyName = currencyNameIterator.next
-                    val keyPair   = (config.baseCurrency, currencyName)
-                    val valuePair = (DateTime.now, node.findValue(currencyName).getDecimalValue)                                                                    
-                    cache.put(keyPair, valuePair)
-                } 
+                oerConfig.accountLevel match {
+                  // if the user is using Developer account, then base currency returned from the API is USD
+                  // to store (user-defined base currency, curr) into the cache, 
+                  // we need to convert USD/curr * (user-defined base currency)/USD 
+                  case DeveloperAccount 
+                    => {
+                      val usdOverBase = node.findValue(config.baseCurrency).getDecimalValue
+                      while (currencyNameIterator.hasNext) {  
+                        val currencyName = currencyNameIterator.next
+                        val keyPair   = (config.baseCurrency, currencyName)
+                        val usdOverCurr  = node.findValue(currencyName).getDecimalValue
+                        val fromCurrIsBaseCurr = (config.baseCurrency == "USD")
+                        val baseOverCurr = Forex.getForexRate(fromCurrIsBaseCurr, usdOverBase, usdOverCurr) 
+                        val valPair = (DateTime.now, baseOverCurr)
+                        cache.put(keyPair, valPair)
+                      }
+                    }
+                  case _ 
+                    => {
+                      while (currencyNameIterator.hasNext) {  
+                        val currencyName = currencyNameIterator.next
+                        val keyPair = (config.baseCurrency, currencyName)
+                        val valPair = (DateTime.now, node.findValue(currencyName).getDecimalValue)
+                        cache.put(keyPair, valPair)
+                      }
+                    }
+                }   
           }
           case None => // do nothing   
         }
@@ -137,12 +165,31 @@ class OerClient(
         case Right(node)  => {
           eodCache match {
           case Some(cache) => {
-            val currencyNameIterator = node.getFieldNames 
-            while (currencyNameIterator.hasNext) {  
-              val currencyName = currencyNameIterator.next
-              val keySet = (config.baseCurrency, currencyName, date)
-              cache.put(keySet, node.findValue(currencyName).getDecimalValue)                                                        
-            }
+            val currencyNameIterator = node.getFieldNames
+            oerConfig.accountLevel match {
+              // if the user is using Developer account, then base currency returned from the API is USD
+              // to store (user-defined base currency, curr) into the cache, 
+              // we need to convert USD/curr * (user-defined base currency)/USD 
+              case DeveloperAccount 
+                => {
+                  val usdOverBase = node.findValue(config.baseCurrency).getDecimalValue
+                  while (currencyNameIterator.hasNext) {  
+                    val currencyName = currencyNameIterator.next
+                    val keyPair   = (config.baseCurrency, currencyName, date)
+                    val usdOverCurr  = node.findValue(currencyName).getDecimalValue
+                    val fromCurrIsBaseCurr = (config.baseCurrency == "USD")
+                    cache.put(keyPair, Forex.getForexRate(fromCurrIsBaseCurr, usdOverBase, usdOverCurr) )
+                  }
+                }
+              case _ 
+                => {
+                  while (currencyNameIterator.hasNext) {  
+                    val currencyName = currencyNameIterator.next
+                    val keyPair = (config.baseCurrency, currencyName, date)
+                    cache.put(keyPair, node.findValue(currencyName).getDecimalValue)
+                  }
+                }
+            }  
           }
           case None => // do nothing
           }

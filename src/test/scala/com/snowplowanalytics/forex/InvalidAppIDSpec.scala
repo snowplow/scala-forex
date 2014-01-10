@@ -17,14 +17,14 @@ import org.specs2.mutable.Specification
 // oerclient
 import oerclient.InvalidAppId
 import oerclient.OerResponseError
-// OerClientConfig
-import oerclient.OerClientConfig
+// oerclient
+import oerclient._
 
 /**
  * Testing validity of appID 
  */
 class InvalidAppIdSpec extends Specification { 
-  val fxWithInvalidID  = Forex.getForex(ForexConfig(), OerClientConfig("this is invalid appId", false)) 
+  val fxWithInvalidID  = Forex.getForex(ForexConfig(), OerClientConfig("this is invalid appId", DeveloperAccount)) 
   fxWithInvalidID.rate.to("GBP").now must beLike {
     case Left(OerResponseError(_, InvalidAppId)) => ok
   }

@@ -12,8 +12,8 @@
  */
 package com.snowplowanalytics.forex
 
-// OerClientConfig
-import oerclient.OerClientConfig
+// oerclient
+import oerclient._
 // LRUCache
 import com.twitter.util.LruMap
 
@@ -24,10 +24,10 @@ object TestHelpers{
   val key = sys.env("OER_KEY") // Warning: this will give nasty errors if env var not exported
   val config = ForexConfig()   // ForexConfig object with default values
   val fxConfigWith5NowishSecs = ForexConfig(nowishSecs = 5) // ForexConfig object with 5 nowishSecs 
-  val oerConfig = OerClientConfig(key, false) // with default base currency USD
+  val oerConfig = OerClientConfig(key, DeveloperAccount) // with default base currency USD
   val fx = Forex.getForex(config, oerConfig) // Forex object with USD as base currency
   val forexConfig = ForexConfig(nowishCacheSize = 0, eodCacheSize = 0)
   val fxWithoutCache = Forex.getForex(forexConfig, oerConfig) // Forex object with caches disabled 
-  val confWithBaseGBP = OerClientConfig(key, true) // set base currency to GBP
+  val confWithBaseGBP = OerClientConfig(key, EnterpriseAccount) // set base currency to GBP
   val fxWithBaseGBP = Forex.getForex(ForexConfig(baseCurrency = "GBP"), confWithBaseGBP) // Forex object with GBP as base currency
 }

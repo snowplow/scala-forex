@@ -16,6 +16,7 @@ package com.snowplowanalytics.forex
 import java.lang.Throwable
 
 /**
- * Exception is thrown when 
+ * NoSuchClientException is thrown when the forex client 
+ * provided by the user is not available to scala-forex yet.
  */
 case class NoSuchClientException(errorMessage: String) extends Throwable

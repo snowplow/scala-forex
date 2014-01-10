@@ -28,6 +28,22 @@ import com.snowplowanalytics.forex.oerclient._
  */
 object Forex {
   /**
+  * Fields for calculating currency rates conversions. 
+  * Usually the currency rate has 6 decimal places 
+  */
+  val commonScale = 6 
+  
+  /** Helper method to get the ratio of from:to in BigDecimal type */
+  def getForexRate(fromCurrIsBaseCurr: Boolean, baseOverFrom: BigDecimal, baseOverTo: BigDecimal): BigDecimal = {
+    if (!fromCurrIsBaseCurr) {
+      val fromOverBase = new BigDecimal(1).divide(baseOverFrom, Forex.commonScale, RoundingMode.HALF_EVEN)
+      fromOverBase.multiply(baseOverTo)
+    } else {
+      baseOverTo
+    }
+  }
+  
+  /**
    * Getter for Forex object 
    */
   def getForex(config: ForexConfig, clientConfig: ForexClientConfig): Forex =
@@ -38,7 +54,6 @@ object Forex {
    */
   def getForex(config: ForexConfig, clientConfig: ForexClientConfig, 
     nowish: MaybeNowishCache, eod: MaybeEodCache): Forex = {
-
     new Forex(config, clientConfig, nowishCache = nowish, eodCache = eod)
   }
 }
@@ -58,11 +73,7 @@ case class Forex(config: ForexConfig, clientConfig: ForexClientConfig,
                   nowishCache: MaybeNowishCache = None, eodCache: MaybeEodCache  = None) {
 
   // For now, we are hard-wired to the OER Client library
-  val client = ForexClient.getOerClient(config, clientConfig, nowish = nowishCache, eod = eodCache)
-  // Preserve 10 digits after decimal point of a number when performing division 
-  val maxScale         = 10 
-  // Usually the currency rate has 6 decimal places 
-  val commonScale      = 6 
+  val client = ForexClient.getClient(config, clientConfig, nowish = nowishCache, eod = eodCache)
 
   /**
    * Starts building a fluent interface, 
@@ -168,7 +179,8 @@ case class ForexLookupWhen(conversionAmount: Double, fromCurr: String, toCurr: S
       // API request succeeds
       val baseOverFrom = from.right.get
       val baseOverTo = to.right.get
-      val rate = getForexRate(baseOverFrom, baseOverTo)
+      val fromCurrIsBaseCurr = (fromCurr == fx.config.baseCurrency)
+      val rate = Forex.getForexRate(fromCurrIsBaseCurr, baseOverFrom, baseOverTo)
       // Note that if `fromCurr` is not the same as the base currency, 
       // then we need to add the <fromCurr, toCurr> pair into the cache in particular,
       // because only <baseCurrency, toCurr> were added earlier
@@ -212,7 +224,7 @@ case class ForexLookupWhen(conversionAmount: Double, fromCurr: String, toCurr: S
                 // to:from found in LRU
                 case Some(tpl) => { 
                   val (time, rate) = tpl
-                  returnMoneyOrJodaError(new BigDecimal(1).divide(rate, fx.commonScale, RoundingMode.HALF_EVEN))
+                  returnMoneyOrJodaError(new BigDecimal(1).divide(rate, Forex.commonScale, RoundingMode.HALF_EVEN))
                 }
                 // Neither direction found in LRU
                 case None => {
@@ -256,7 +268,7 @@ case class ForexLookupWhen(conversionAmount: Double, fromCurr: String, toCurr: S
             cache.get((toCurr, fromCurr, eodDate)) match {                  
               // to->from found in the cache
               case Some(exchangeRate) =>                                              
-                returnMoneyOrJodaError(new BigDecimal(1).divide(exchangeRate, fx.commonScale, RoundingMode.HALF_EVEN))
+                returnMoneyOrJodaError(new BigDecimal(1).divide(exchangeRate, Forex.commonScale, RoundingMode.HALF_EVEN))
               // neither from->to nor to->from found in the cache
               case None =>
                 getHistoricalRate(eodDate)         
@@ -278,7 +290,8 @@ case class ForexLookupWhen(conversionAmount: Double, fromCurr: String, toCurr: S
       // API request succeeds
       val baseOverFrom = from.right.get
       val baseOverTo = to.right.get
-      val rate = getForexRate(baseOverFrom, baseOverTo)
+      val fromCurrIsBaseCurr = (fromCurr == fx.config.baseCurrency)
+      val rate = Forex.getForexRate(fromCurrIsBaseCurr, baseOverFrom, baseOverTo)
       // Note that if `fromCurr` is not the same as the base currency, 
       // then we need to add the <fromCurr, toCurr> pair into the cache in particular,
       // because only <baseCurrency, toCurr> were added earlier
@@ -293,16 +306,7 @@ case class ForexLookupWhen(conversionAmount: Double, fromCurr: String, toCurr: S
     }
   }
 
-  /** Helper method to get the ratio of from:to in BigDecimal type */
-  private def getForexRate(baseOverFrom: BigDecimal, baseOverTo: BigDecimal): BigDecimal = {
-    if (fromCurr != CurrencyUnit.getInstance(fx.config.baseCurrency)) {
-      val fromOverBase = new BigDecimal(1).divide(baseOverFrom, fx.commonScale, RoundingMode.HALF_EVEN)
-      fromOverBase.multiply(baseOverTo)
-    } else {
-      baseOverTo
-    }
-  }
-  
+
   /**
    * Helper method to convert a currency type in String representation to CurrencyUnit representation 
    * @param currencyInStringRepresentation - the currency to be converted

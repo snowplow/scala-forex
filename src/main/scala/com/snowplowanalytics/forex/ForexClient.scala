@@ -23,17 +23,16 @@ import com.twitter.util.LruMap
 
 /**
  * Companion object for ForexClient class
- * This object has getters for different Forex Clients, 
- * but for now there is only one getter since we are only using OER client
+ * This class has one method for getting forex clients 
+ * but for now there is only one client since we are only using OER 
  */
 object ForexClient {
   /**
-   * Getter for Oer client with specified caches
-   * @param oerConfig - This has to be of type OerClientConfig if the user is calling this method
+   * Getter for clients with specified caches(optional)
    */
-  def getOerClient(config: ForexConfig, oerConfig: ForexClientConfig,
+  def getClient(config: ForexConfig, clientConfig: ForexClientConfig,
                     nowish: MaybeNowishCache= None, eod: MaybeEodCache = None): ForexClient = {
-    oerConfig match {
+    clientConfig match {
       case oerClientConfig: OerClientConfig => new OerClient(config, oerClientConfig, nowishCache = nowish, eodCache = eod)
       case _ => throw NoSuchClientException("This client is not supported by scala-forex currently")
     }

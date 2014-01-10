@@ -31,7 +31,10 @@ package object forex {
   type EodCacheKey          = Tuple3[String, String, DateTime] // source currency, target currency, timestamp
   type EodCacheValue        = BigDecimal // exchange rate
   
-  type ApiRequestResult     = Either[OerResponseError, BigDecimal]
+  // The API request either returns exchange rates in BigDecimal representation
+  // or OerResponseError if the request failed
+  type ApiRequestResult     = Either[OerResponseError, BigDecimal]   
+  
   /**
    * The two LRU caches we use
    */
