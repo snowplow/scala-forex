@@ -331,8 +331,8 @@ case class ForexLookupWhen(conversionAmount: Double, fromCurr: String, toCurr: S
       val moneyInSourceCurrency = BigMoney.of(fromCurrencyUnit.right.get, conversionAmt) 
       Right(moneyInSourceCurrency.convertedTo(toCurrencyUnit.right.get, rate).toMoney(RoundingMode.HALF_EVEN))
     } else {
-      var errMessage = "Currency [" + fromCurr + "] and ["+ toCurr + "] can be found from the API " + 
-                       "and the forex rate is [" + fromCurr + "]:[" + toCurr + "] = " + rate + ". However, " 
+      var errMessage = "The exchange rate of [" + fromCurr + "]:["+ toCurr + "] " + 
+                       "is " + rate + ". However, " 
       if (fromCurrencyUnit.isLeft) {
         errMessage += fromCurrencyUnit.left.get.errorMessage
       }
