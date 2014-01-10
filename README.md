@@ -15,9 +15,8 @@ Currently Scala Forex uses the [Open Exchange Rates API] [oer-api] to perform cu
 First [sign up] [oer-signup] to Open Exchange Rates to get your App ID for API access.
 
 There are three types of accounts supported by OER API, Unlimited, Enterprise and Developer levels. See the [sign up] [oer-signup] page for specific account descriptions.
-For scala-forex library, the main difference between Unlimited/Enterprise and Developer users is that users with Unlimited/Enterprise accounts can use the base currency they defined for API requests, but this library will provide automatic conversions between OER default base currencies(USD) and user-defined base currencies. 
-However this will increase calls to the API hence slow down the library performance.
 
+For Scala Forex, the main difference between account levels is that users with Unlimited or Enterprise accounts will be able to use their configured `baseCurrency` directly in calls to OER. For Developer users, this library will provide automatic conversions between OER's default base currency (USD) and user-defined base currencies, at some loss of precision.
 
 ### 2.2 Configuration
 
