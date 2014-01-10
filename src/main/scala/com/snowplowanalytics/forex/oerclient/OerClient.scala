@@ -88,9 +88,11 @@ class OerClient(
           case Some(cache) => {
                 val currencyNameIterator = node.getFieldNames
                 oerConfig.accountLevel match {
-                  // if the user is using Developer account, then base currency returned from the API is USD
-                  // to store (user-defined base currency, curr) into the cache, 
-                  // we need to convert USD/curr * (user-defined base currency)/USD 
+                  // If the user is using Developer account, 
+                  // then base currency returned from the API is USD.
+                  // To store user-defined base currency into the cache, 
+                  // we need to convert the forex rate between target currency and USD
+                  // to target currency and user-defined base currency 
                   case DeveloperAccount 
                     => {
                       val usdOverBase = node.findValue(config.baseCurrency).getDecimalValue
@@ -98,12 +100,15 @@ class OerClient(
                         val currencyName = currencyNameIterator.next
                         val keyPair   = (config.baseCurrency, currencyName)
                         val usdOverCurr  = node.findValue(currencyName).getDecimalValue
+                        // flag indicating if the base currency has been set to USD
                         val fromCurrIsBaseCurr = (config.baseCurrency == "USD")
                         val baseOverCurr = Forex.getForexRate(fromCurrIsBaseCurr, usdOverBase, usdOverCurr) 
                         val valPair = (DateTime.now, baseOverCurr)
                         cache.put(keyPair, valPair)
                       }
                     }
+                  // For Enterprise and Unlimited users, OER allows them to configure the base currencies.
+                  // So the exchange rate returned from the API is between target currency and the base currency they defined.
                   case _ 
                     => {
                       while (currencyNameIterator.hasNext) {  
@@ -167,9 +172,11 @@ class OerClient(
           case Some(cache) => {
             val currencyNameIterator = node.getFieldNames
             oerConfig.accountLevel match {
-              // if the user is using Developer account, then base currency returned from the API is USD
-              // to store (user-defined base currency, curr) into the cache, 
-              // we need to convert USD/curr * (user-defined base currency)/USD 
+              // If the user is using Developer account, 
+              // then base currency returned from the API is USD.
+              // To store user-defined base currency into the cache, 
+              // we need to convert the forex rate between target currency and USD
+              // to target currency and user-defined base currency 
               case DeveloperAccount 
                 => {
                   val usdOverBase = node.findValue(config.baseCurrency).getDecimalValue
@@ -181,6 +188,8 @@ class OerClient(
                     cache.put(keyPair, Forex.getForexRate(fromCurrIsBaseCurr, usdOverBase, usdOverCurr) )
                   }
                 }
+              // For Enterprise and Unlimited users, OER allows them to configure the base currencies.
+              // So the exchange rate returned from the API is between target currency and the base currency they defined.
               case _ 
                 => {
                   while (currencyNameIterator.hasNext) {  
