@@ -33,7 +33,10 @@ object ForexClient {
    */
   def getOerClient(config: ForexConfig, oerConfig: ForexClientConfig,
                     nowish: MaybeNowishCache= None, eod: MaybeEodCache = None): ForexClient = {
-    new OerClient(config, oerConfig.asInstanceOf[OerClientConfig], nowishCache = nowish, eodCache = eod)
+    oerConfig match {
+      case oerClientConfig: OerClientConfig => new OerClient(config, oerClientConfig, nowishCache = nowish, eodCache = eod)
+      case _ => throw NoSuchClientException("This client is not supported by scala-forex currently")
+    }
   }
 }
 
