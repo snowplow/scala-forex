@@ -86,7 +86,8 @@ $ sbt console
 ...
 scala> val appId = "<<key>>"
 scala> import com.snowplowanalytics.forex.{Forex, ForexConfig}
-scala> import com.snowplowanalytics.forex.oerclient.OerClientConfig
+scala> import com.snowplowanalytics.forex.oerclient.{OerClientConfig, <<Your AccountType>>} 
+  e.g. import com.snowplowanalytics.forex.oerclient.{OerClientConfig, DeveloperAccount}  
 ```
 
 ### 2.4 Running tests
