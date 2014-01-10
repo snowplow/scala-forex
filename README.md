@@ -71,9 +71,9 @@ To go through each in turn:
 1. `appId` is the unique key for the user's account
 2. `accountLevel` is the account type provided by the user which should obviously be consistent with the app ID.
 There are three types of account level, users should provide the exact account type name to configure the OER Client:
-1. UnlimitedAccount
-2. EnterpriseAccount
-3. DeveloperAccount
+  1. UnlimitedAccount
+  2. EnterpriseAccount
+  3. DeveloperAccount
 
 ### 2.3 REPL setup
 
