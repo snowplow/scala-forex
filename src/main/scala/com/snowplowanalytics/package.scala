@@ -18,6 +18,8 @@ import java.math.BigDecimal
 import org.joda.time._
 // LRUCache
 import com.twitter.util.LruMap
+// oerclient
+import forex.oerclient.OerResponseError
 
 package object forex {
   /**
@@ -29,6 +31,7 @@ package object forex {
   type EodCacheKey          = Tuple3[String, String, DateTime] // source currency, target currency, timestamp
   type EodCacheValue        = BigDecimal // exchange rate
   
+  type ApiRequestResult     = Either[OerResponseError, BigDecimal]
   /**
    * The two LRU caches we use
    */

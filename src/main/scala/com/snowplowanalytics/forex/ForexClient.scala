@@ -76,9 +76,9 @@ abstract class ForexClient(
    * 
    * @param currency
    *            Desired currency
-   * @return Latest value of exchange rate or OerResponseError object
+   * @return result returned from API
    */
-   def getLiveCurrencyValue(currency: String): Either[OerResponseError, BigDecimal]
+   def getLiveCurrencyValue(currency: String): ApiRequestResult
 
   /**
    * Get a historical exchange rate from a given currency and date
@@ -87,7 +87,7 @@ abstract class ForexClient(
    *            Desired currency
    * @param date
    *            Date of desired rate
-   * @return Value of exchange rate on desired date or OerResponseError object
+   * @return result returned from API
    */
-   def getHistoricalCurrencyValue(currency: String, date: DateTime): Either[OerResponseError, BigDecimal]
+   def getHistoricalCurrencyValue(currency: String, date: DateTime): ApiRequestResult
 }

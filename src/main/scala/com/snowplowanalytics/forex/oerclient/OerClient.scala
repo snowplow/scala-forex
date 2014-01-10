@@ -69,9 +69,9 @@ class OerClient(
    * If cache exists, update nowishCache when an API request has been done,
    * else just return the forex rate
    * @param currency - The desired currency we want to look up from the API
-   * @return live exchange rate obtained from API, else OerResponseError object
+   * @return result returned from API
    */
-  def getLiveCurrencyValue(currency: String): Either[OerResponseError, BigDecimal]= {
+  def getLiveCurrencyValue(currency: String): ApiRequestResult = {
 
     val key = (config.baseCurrency, currency)     
     getJsonNodeFromApi(latest) match {
@@ -120,9 +120,9 @@ class OerClient(
    * else just return the look up result
    * @param currency - The desired currency we want to look up from the API
    * @param date - The specific date we want to look up on
-   * @return live exchange rate obtained from API if available, else OerResponseError object 
+   * @return result returned from API
    */
-  def getHistoricalCurrencyValue(currency: String, date: DateTime): Either[OerResponseError, BigDecimal] = {
+  def getHistoricalCurrencyValue(currency: String, date: DateTime): ApiRequestResult = {
     
    /**
     * Return OerResponseError if the date given is not supported by OER
