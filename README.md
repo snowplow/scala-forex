@@ -29,11 +29,11 @@ Case class with defaults:
 
 ```scala
 case class ForexConfig(
-  nowishCacheSize: Int         = 13530, 
-  nowishSecs: Int              = 300,  
-  eodCacheSize: Int            = 405900,  
-  getNearestDay: EodRounding   = EodRoundDown,
-  baseCurrency: String   = "USD"  
+  nowishCacheSize: Int       = 13530, 
+  nowishSecs: Int            = 300,  
+  eodCacheSize: Int          = 405900,  
+  getNearestDay: EodRounding = EodRoundDown,
+  baseCurrency: String       = "USD"  
 ) 
 ``` 
 
