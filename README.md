@@ -342,7 +342,7 @@ By convention, we are always interested in the exchange rates prior to the query
 
 We selected USD for the base currency because this is the OER default as well.
 
-#### 4.5 OER accounts
+### 4.5 OER accounts
 
 With Open Exchange Rates' Unlimited and Enterprise accounts, Scala Forex can specify the base currency to use when looking up exchange rates; Developer-level accounts will always retrieve rates against USD, so a rate lookup from e.g. GBY to EUR will require two conversions (GBY -> USD -> EUR). For this reason, we recommend Unlimited and Enterprise-level accounts for slightly more accurate non-USD-related lookups.
 
