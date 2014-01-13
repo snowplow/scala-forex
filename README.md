@@ -370,7 +370,6 @@ limitations under the License.
 
 [joda-money]: http://www.joda.org/joda-money/
 [joda-time]: http://www.joda.org/joda-time/
-
 [twitter-lru-cache]: http://twitter.github.com/commons/apidocs/com/twitter/common/util/caching/LRUCache.html
 
 [jz4112]: https://github.com/jz4112
