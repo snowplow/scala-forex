@@ -14,7 +14,7 @@ Currently Scala Forex uses the [Open Exchange Rates API] [oer-signup] to perform
 
 First [sign up] [oer-signup] to Open Exchange Rates to get your App ID for API access.
 
-There are three types of accounts supported by OER API, Unlimited, Enterprise and Developer levels. See the [sign up] [oer-signup] page for specific account descriptions. For Scala Forex, we recommend an Enterprise or Unlimited account, unless all of your conversions are to or from USD (see section 4.5 OER accounts for an explanation).
+There are three types of accounts supported by OER API, Unlimited, Enterprise and Developer levels. See the [sign up] [oer-signup] page for specific account descriptions. For Scala Forex, we recommend an Enterprise or Unlimited account, unless all of your conversions are to or from USD (see section 4.5 OER accounts for an explanation). For 10-minute rate updates, you will need an Unlimited account (other accounts are hourly).
 
 ### 2.2 Configuration
 
