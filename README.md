@@ -6,7 +6,7 @@ Scala Forex is a high-performance Scala library for performing exchange rate loo
 
 It includes configurable LRU (Least Recently Used) caches to minimize calls to the API; this makes the library usable in high-volume environments such as Hadoop and Storm.
 
-Currently Scala Forex uses the [Open Exchange Rates API] [oer-api] to perform currency lookups.
+Currently Scala Forex uses the [Open Exchange Rates API] [oer-signup] to perform currency lookups.
 
 ## 2. Setup
 
@@ -364,9 +364,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-[oer-api]: https://openexchangerates.org/
-[oer-scala]: https://github.com/snowplow/scala-forex/blob/master/src/main/scala/com/snowplowanalytics/forex/oerclient/OerClient.scala
-[oer-signup]: https://openexchangerates.org/signup
+[oer-signup]: https://openexchangerates.org/signup?r=snowplow
 
 [joda-money]: http://www.joda.org/joda-money/
 [joda-time]: http://www.joda.org/joda-time/
