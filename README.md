@@ -28,7 +28,7 @@ val snowplowRepo = "SnowPlow Repo" at "http://maven.snplow.com/releases/"
 val twitterRepo  = "Twitter Maven Repo" at "http://maven.twttr.com/"
 
 // Dependency
-val maxmindGeoip = "com.snowplowanalytics"  %% "scala-forex"  % "0.1.0"
+val scalaForex = "com.snowplowanalytics"  %% "scala-forex"  % "0.1.0"
 ```
 
 Note the double percent (`%%`) between the group and artifactId. That'll ensure you get the right package for your Scala version.
