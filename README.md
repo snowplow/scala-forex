@@ -10,11 +10,28 @@ Currently Scala Forex uses the [Open Exchange Rates API] [oer-signup] to perform
 
 ## 2. Setup
 
-### 2.1 OER Sign Up
+### 2.0 OER Sign Up
 
 First [sign up] [oer-signup] to Open Exchange Rates to get your App ID for API access.
 
 There are three types of accounts supported by OER API, Unlimited, Enterprise and Developer levels. See the [sign up] [oer-signup] page for specific account descriptions. For Scala Forex, we recommend an Enterprise or Unlimited account, unless all of your conversions are to or from USD (see section 4.5 OER accounts for an explanation). For 10-minute rate updates, you will need an Unlimited account (other accounts are hourly).
+
+### 2.1 Installation
+
+The latest version of Scala Forex is **0.1.0** and is dual-published to be Scala 2.9 and 2.10 compatible.
+
+Add this to your SBT config:
+
+```scala
+// Resolvers
+val snowplowRepo = "SnowPlow Repo" at "http://maven.snplow.com/releases/"
+val twitterRepo  = "Twitter Maven Repo" at "http://maven.twttr.com/"
+
+// Dependency
+val maxmindGeoip = "com.snowplowanalytics"  %% "scala-forex"  % "0.1.0"
+```
+
+Note the double percent (`%%`) between the group and artifactId. That'll ensure you get the right package for your Scala version.
 
 ### 2.2 Configuration
 
