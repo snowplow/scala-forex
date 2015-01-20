@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2012 SnowPlow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2015 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -27,18 +27,17 @@ object ScalaForexBuild extends Build {
   lazy val project = Project("scala-forex", file("."))
     .settings(buildSettings: _*)
     .settings(
-      libraryDependencies ++= Seq(
+      libraryDependencies <++= Dependencies.onVersion(
+        all = Seq(
         Libraries.jodaTime,
         Libraries.jodaConvert,
         Libraries.jodaMoney,
         Libraries.jackson,
         Libraries.scalaUtil,
-        Libraries.mockito
-      )
-    ).settings(
-      libraryDependencies <++= Dependencies.onVersion(
-        on292 = Seq(Libraries.collUtilOld, Libraries.specs2Old),
-        on210 = Seq(Libraries.collUtil, Libraries.specs2)
+        Libraries.mockito),
+        on29 = Seq(Libraries.collUtil._29, Libraries.specs2._29),
+        on210 = Seq(Libraries.collUtil._210, Libraries.specs2._210),
+        on211 = Seq(Libraries.collUtil._211, Libraries.specs2._211)
       )
     )
 }

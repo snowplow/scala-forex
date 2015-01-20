@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2015 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -17,9 +17,10 @@ object Dependencies {
 
   val resolutionRepos = Seq(
     // For scala-util
-    "Snowplow Analytics Maven repo" at "http://maven.snplow.com/releases/",
+    "Snowplow Analytics" at "http://maven.snplow.com/releases/",
     // For Twitter's LRU cache
-    "Twitter Maven Repo" at "http://maven.twttr.com/"
+    "Twitter Maven Repo" at "http://maven.twttr.com/",
+    "Sonatype" at "https://oss.sonatype.org/content/repositories/releases"
   )
 
   object V {
@@ -30,14 +31,22 @@ object Dependencies {
     val jackson     = "1.9.7"
     
     // Scala
-    val collUtilOld = "5.3.10"
-    val collUtil    = "6.3.4"
     val scalaUtil   = "0.1.0"
+    object collUtil {
+      val _29       = "5.3.10"
+      val _210      = "6.3.4"
+      val _211      = "6.23.0"
+    }
+
+    // Java (test only)
     val mockito     = "1.9.5"
 
     // Scala (test only)
-    val specs2Old   = "1.12.4.1"
-    val specs2      = "2.3.7"
+    object specs2 {
+      val _29       = "1.12.4.1"
+      val _210      = "2.3.13"
+      val _211      = "2.3.13"
+    }
   }
 
   object Libraries {
@@ -48,16 +57,30 @@ object Dependencies {
     val jackson     = "org.codehaus.jackson"       % "jackson-mapper-asl" % V.jackson
 
     // Scala
-    val collUtilOld = "com.twitter"                %  "util-collection"   % V.collUtilOld
-    val collUtil    = "com.twitter"                %% "util-collection"   % V.collUtil
     val scalaUtil   = "com.snowplowanalytics"      %  "scala-util"        % V.scalaUtil
-    val mockito     = "org.mockito"                %  "mockito-all"       % V.mockito     
+    object collUtil {
+      val _29       = "com.twitter"                % "util-collection"    % V.collUtil._29
+      val _210      = "com.twitter"                %% "util-collection"   % V.collUtil._210
+      val _211      = "com.twitter"                %% "util-collection"   % V.collUtil._211
+    }
+
+    // Java (test only)
+    val mockito     = "org.mockito"                %  "mockito-all"       % V.mockito            % "test"
 
     // Scala (test only)
-    val specs2Old   = "org.specs2"                 %% "specs2"            % V.specs2Old    % "test"
-    val specs2      = "org.specs2"                 %% "specs2"            % V.specs2       % "test"
+    object specs2 {
+      val _29       = "org.specs2"                 %% "specs2"            % V.specs2._29         % "test"
+      val _210      = "org.specs2"                 %% "specs2"            % V.specs2._210        % "test"
+      val _211      = "org.specs2"                 %% "specs2"            % V.specs2._211        % "test"
+    }
   }
 
-  def onVersion[A](all: Seq[A] = Seq(), on292: => Seq[A] = Seq(), on210: => Seq[A] = Seq()) =
-    scalaVersion(v => all ++ (if (v.contains("2.10")) on210 else on292))
+  def onVersion[A](all: Seq[A] = Seq(), on29: => Seq[A] = Seq(), on210: => Seq[A] = Seq(), on211: => Seq[A] = Seq()) =
+    scalaVersion(v => all ++ (if (v.contains("2.9.")) {
+      on29
+    } else if (v.contains("2.10.")) {
+      on210
+    } else {
+      on211
+    }))
 }

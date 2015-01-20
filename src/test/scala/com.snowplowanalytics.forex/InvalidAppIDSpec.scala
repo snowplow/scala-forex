@@ -1,5 +1,5 @@
-/*
- * Copyright (c) 2013-2014 Snowplow Analytics Ltd. All rights reserved.
+/* 
+ * Copyright (c) 2013-2015 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -12,8 +12,20 @@
  */
 package com.snowplowanalytics.forex
 
+// Specs2
+import org.specs2.mutable.Specification
+// oerclient
+import oerclient.InvalidAppId
+import oerclient.OerResponseError
+// oerclient
+import oerclient._
+
 /**
- * Configurator for Forex clients,
- * every Forex client configurator is a sub-class of this class 
+ * Testing validity of appID 
  */
-trait ForexClientConfig
+class InvalidAppIdSpec extends Specification { 
+  val fxWithInvalidID  = Forex.getForex(ForexConfig(), OerClientConfig("this is invalid appId", DeveloperAccount)) 
+  fxWithInvalidID.rate.to("GBP").now must beLike {
+    case Left(OerResponseError(_, InvalidAppId)) => ok
+  }
+}

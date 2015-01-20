@@ -1,3 +1,14 @@
+Version 0.2.0 (2015-01-20)
+--------------------------
+Added cross-build for Scala 2.11.5 (#80)
+Removed Scala 2.9.2 support (#87)
+Updated Travis to test against Scala 2.11.5 (#84)
+Tweaked twitter/util and Specs2 dependencies (#85)
+Added License button to README (#83)
+Added Release button to README (#82)
+Added dedicated Vagrant setup (#81)
+Bumped SBT to 0.13.2 (#86)
+
 Version 0.1.0 (2014-01-18)
----------------------------
+--------------------------
 Initial release
