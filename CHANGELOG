@@ -1,3 +1,8 @@
+Version 0.3.0 (2015-xx-xx)
+--------------------------
+Switched from LruMap to SynchronizedLruMap (#89)
+Fixed to latest Peru version (#91)
+
 Version 0.2.0 (2015-01-20)
 --------------------------
 Added cross-build for Scala 2.11.5 (#80)
