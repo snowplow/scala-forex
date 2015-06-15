@@ -19,7 +19,7 @@ import org.joda.time._
 // OpenExchangeRate client
 import oerclient._
 // LRUCache
-import com.twitter.util.LruMap
+import com.twitter.util.SynchronizedLruMap
 
 /**
  * Companion object for ForexClient class
@@ -53,7 +53,7 @@ abstract class ForexClient(
       if (nowishCache.isDefined) {
         nowishCache
       } else if (config.nowishCacheSize > 0) {
-        Some(new LruMap[NowishCacheKey, NowishCacheValue](config.nowishCacheSize))
+        Some(new SynchronizedLruMap[NowishCacheKey, NowishCacheValue](config.nowishCacheSize))
       } else {
         None
       }
@@ -64,7 +64,7 @@ abstract class ForexClient(
       if (eodCache.isDefined) {
         eodCache 
       } else if (config.eodCacheSize > 0) {
-        Some(new LruMap[EodCacheKey, EodCacheValue](config.eodCacheSize))
+        Some(new SynchronizedLruMap[EodCacheKey, EodCacheValue](config.eodCacheSize))
       } else {
         None
       }

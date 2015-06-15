@@ -17,7 +17,7 @@ import java.math.BigDecimal
 // Joda 
 import org.joda.time._
 // LRUCache
-import com.twitter.util.LruMap
+import com.twitter.util.SynchronizedLruMap
 // oerclient
 import forex.oerclient.OerResponseError
 
@@ -38,8 +38,8 @@ package object forex {
   /**
    * The two LRU caches we use
    */
-  type NowishCache          = LruMap[NowishCacheKey, NowishCacheValue]
-  type EodCache             = LruMap[EodCacheKey, EodCacheValue]
+  type NowishCache          = SynchronizedLruMap[NowishCacheKey, NowishCacheValue]
+  type EodCache             = SynchronizedLruMap[EodCacheKey, EodCacheValue]
 
   type MaybeNowishCache     = Option[NowishCache]
   type MaybeEodCache        = Option[EodCache]

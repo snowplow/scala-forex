@@ -19,7 +19,7 @@ import org.specs2.mock.Mockito
 // Joda 
 import org.joda.time._
 // LRUCache
-import com.twitter.util.LruMap
+import com.twitter.util.SynchronizedLruMap
 // Java
 import java.lang.Thread
 import java.math.BigDecimal
@@ -30,8 +30,8 @@ import TestHelpers._
  * Testing cache behaviours
  */
 class SpiedCacheSpec extends Specification with Mockito{
-  val spiedNowishCache = spy(new LruMap[NowishCacheKey, NowishCacheValue](config.nowishCacheSize)) 
-  val spiedEodCache    = spy(new LruMap[EodCacheKey, EodCacheValue](config.eodCacheSize))
+  val spiedNowishCache = spy(new SynchronizedLruMap[NowishCacheKey, NowishCacheValue](config.nowishCacheSize)) 
+  val spiedEodCache    = spy(new SynchronizedLruMap[EodCacheKey, EodCacheValue](config.eodCacheSize))
   val spiedFx = Forex.getForex(config, oerConfig, Some(spiedNowishCache), Some(spiedEodCache)) 
   val spiedFxWith5NowishSecs = Forex.getForex(fxConfigWith5NowishSecs, oerConfig, Some(spiedNowishCache), Some(spiedEodCache)) 
 
