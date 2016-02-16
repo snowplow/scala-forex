@@ -20,7 +20,7 @@ There are three types of accounts supported by OER API, Unlimited, Enterprise an
 
 ### 2.2 Installation
 
-The latest version of Scala Forex is 0.3.0, which is cross-built against Scala 2.9.3, 2.10.x and 2.11.x.
+The latest version of Scala Forex is 0.4.0, which is cross-built against Scala 2.9.3, 2.10.x and 2.11.x.
 
 If you're using SBT, add the following lines to your build file:
 
@@ -31,7 +31,7 @@ val oldTwitterRepo  = "Twitter Maven Repo" at "http://maven.twttr.com/"
 val newTwitterRepo = "Sonatype" at "https://oss.sonatype.org/content/repositories/releases"
 
 // Dependency
-val scalaForex = "com.snowplowanalytics"  %% "scala-forex"  % "0.3.0"
+val scalaForex = "com.snowplowanalytics"  %% "scala-forex"  % "0.4.0"
 ```
 
 Note the double percent (`%%`) between the group and artifactId. That'll ensure you get the right package for your Scala version.
@@ -379,7 +379,7 @@ With Open Exchange Rates' Unlimited and Enterprise accounts, Scala Forex can spe
 
 ## 6. Copyright and license
 
-Scala Forex is copyright 2013-2015 Snowplow Analytics Ltd.
+Scala Forex is copyright 2013-2016 Snowplow Analytics Ltd.
 
 Licensed under the [Apache License, Version 2.0] [license] (the "License");
 you may not use this software except in compliance with the License.
@@ -405,7 +405,7 @@ limitations under the License.
 [travis]: https://travis-ci.org/snowplow/scala-forex
 [travis-image]: https://travis-ci.org/snowplow/scala-forex.png?branch=master
 
-[release-image]: http://img.shields.io/badge/release-0.3.0-blue.svg?style=flat
+[release-image]: http://img.shields.io/badge/release-0.4.0-blue.svg?style=flat
 [releases]: https://github.com/snowplow/scala-forex/releases
 
 [license-image]: http://img.shields.io/badge/license-Apache--2-blue.svg?style=flat
