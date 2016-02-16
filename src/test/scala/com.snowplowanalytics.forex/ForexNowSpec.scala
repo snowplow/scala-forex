@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2013-2015 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2016 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -62,5 +62,18 @@ class ForexNowSpec extends Specification {
     "be greater than 1 SGD" in { 
       sgdMoneyWithBaseGbp.isGreaterThan(Money.of(CurrencyUnit.getInstance("SGD"), 1))
     }
-  }        
+  }
+
+  /**
+   * GBP with GBP as base currency
+   */
+  val gbpToGbpWithBaseGbp = fxWithBaseGBP.rate.to("GBP").now
+
+  val gbpMoneyWithBaseGbp = gbpToGbpWithBaseGbp.right.get
+
+  "Do not throw JodaTime exception on converting identical currencies [%s]".format(gbpMoneyWithBaseGbp) should {
+    "be equal 1 GBP" in {
+      gbpMoneyWithBaseGbp.isEqual(Money.of(CurrencyUnit.getInstance("GBP"), 1))
+    }
+  }
 }

@@ -15,11 +15,11 @@ package com.snowplowanalytics.forex
 // Java
 import java.math.BigDecimal
 import java.math.RoundingMode
+
 // Joda 
 import org.joda.time._
 import org.joda.money._
-// Scala
-import scala.collection.JavaConversions._
+
 // OerClient
 import com.snowplowanalytics.forex.oerclient._
 
@@ -60,34 +60,37 @@ object Forex {
 
 /**
  * Starts building the fluent interface for currency look-up and conversion,
- * Forex class has methods rate and convert, which set the source currency to 
- * the currency we are interested in. 
- * They return ForexLookupTo object which is then passed to methods 
- * in ForexLookupTo class in the fluent interface. 
+ * Forex class has methods rate and convert, which set the source currency to
+ * the currency we are interested in.
+ * They return ForexLookupTo object which is then passed to methods
+ * in ForexLookupTo class in the fluent interface.
  * @param config - a configurator for Forex object
- * @param clientConfig - a configurator for Forex Client object 
+ * @param clientConfig - a configurator for Forex Client object
  * @param nowishCache - user defined nowishCache
  * @param eodCache - user defined eodCache
  */
-case class Forex(config: ForexConfig, clientConfig: ForexClientConfig, 
-                  nowishCache: MaybeNowishCache = None, eodCache: MaybeEodCache  = None) {
+case class Forex(
+  config: ForexConfig,
+  clientConfig: ForexClientConfig,
+  nowishCache: MaybeNowishCache = None,
+  eodCache: MaybeEodCache  = None) {
 
   // For now, we are hard-wired to the OER Client library
   val client = ForexClient.getClient(config, clientConfig, nowish = nowishCache, eod = eodCache)
 
-  /**
-   * Starts building a fluent interface, 
-   * performs currency look up from *source* currency.
-   * (The target currency will be supplied
-   * to the ForexLookupTo later). 
-   * If not specified, it is set to base currency by default.
-   * @param currency(optional) - source currency
-   * @return ForexLookupTo object which is the part of the fluent interface
-   */
   def rate: ForexLookupTo = {
     ForexLookupTo(1, config.baseCurrency, this)
   }
 
+  /**
+   * Starts building a fluent interface,
+   * performs currency look up from *source* currency.
+   * (The target currency will be supplied
+   * to the ForexLookupTo later).
+   * If not specified, it is set to base currency by default.
+   * @param currency(optional) - source currency
+   * @return ForexLookupTo object which is the part of the fluent interface
+   */
   def rate(currency: String): ForexLookupTo = {
     ForexLookupTo(1, currency, this)
   }
@@ -332,8 +335,13 @@ case class ForexLookupWhen(conversionAmount: Double, fromCurr: String, toCurr: S
   private def returnMoneyOrJodaError(rate: BigDecimal): Either[OerResponseError, Money] = {
     if (fromCurrencyUnit.isRight && toCurrencyUnit.isRight) {
       // Money in a given amount
-      val moneyInSourceCurrency = BigMoney.of(fromCurrencyUnit.right.get, conversionAmt) 
-      Right(moneyInSourceCurrency.convertedTo(toCurrencyUnit.right.get, rate).toMoney(RoundingMode.HALF_EVEN))
+      val moneyInSourceCurrency = BigMoney.of(fromCurrencyUnit.right.get, conversionAmt)
+      // prevent weird JodaTime exception when converting equal currencies
+      if (fromCurrencyUnit.right.get == toCurrencyUnit.right.get) {
+        Right(moneyInSourceCurrency.toMoney(RoundingMode.HALF_EVEN))
+      } else {
+        Right(moneyInSourceCurrency.convertedTo(toCurrencyUnit.right.get, rate).toMoney(RoundingMode.HALF_EVEN))
+      }
     } else {
       var errMessage = "The exchange rate of [" + fromCurr + "]:["+ toCurr + "] " + 
                        "is " + rate + ". However, " 
