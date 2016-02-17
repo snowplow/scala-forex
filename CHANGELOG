@@ -1,3 +1,9 @@
+Version 0.4.0 (2016-02-16)
+--------------------------
+Fixed handling of invalid API key (#96)
+Fixed exception on 1-to-1 currency conversion (#97)
+Fixed OpenJDK build in Travis CI (#98)
+
 Version 0.3.0 (2015-06-20)
 --------------------------
 Switched from LruMap to SynchronizedLruMap (#89)

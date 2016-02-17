@@ -14,15 +14,13 @@ package com.snowplowanalytics.forex
 package oerclient
 
 // Java
-import java.math.BigDecimal
 import java.net.URL
-import java.net.URLConnection
 import java.net.HttpURLConnection
 import java.util.Calendar
 // Json
 import org.codehaus.jackson.JsonNode
 import org.codehaus.jackson.map.ObjectMapper
-// Joda 
+// Joda
 import org.joda.time._
 
 /**
@@ -80,7 +78,6 @@ class OerClient(
    */
   def getLiveCurrencyValue(currency: String): ApiRequestResult = {
 
-    val key = (config.baseCurrency, currency)     
     getJsonNodeFromApi(latest) match {
       case Left(oerResponseError) => Left(oerResponseError)
       case Right(node)  => {
@@ -164,7 +161,6 @@ class OerClient(
       Left(OerResponseError("Exchange rate unavailable on the date [%s] ".format(date), ResourcesNotAvailable))
     } else {
       val historicalLink = buildHistoricalLink(date)
-      val key = (config.baseCurrency, currency, date) 
       getJsonNodeFromApi(historicalLink) match {
         case Left(oerResponseError) => Left(oerResponseError)
         case Right(node)  => {
@@ -232,11 +228,10 @@ class OerClient(
           while (root.hasNext) {
            resNode = root.next
           }
-          if (resNode.getTextValue ==
-           "Invalid App ID provided - please sign up at https://openexchangerates.org/signup, or contact support@openexchangerates.org. Thanks!") {
-            return Left(OerResponseError(resNode.getTextValue, InvalidAppId))
+          if (resNode.getTextValue.contains("Invalid App ID")) {
+            Left(OerResponseError(resNode.getTextValue, InvalidAppId))
           } else {
-            return Left(OerResponseError(resNode.getTextValue, OtherErrors))    
+            Left(OerResponseError(resNode.getTextValue, OtherErrors))
           }
       } else {
           val inputStream = httpUrlConn.getInputStream
@@ -245,7 +240,7 @@ class OerClient(
           while (root.hasNext) {
             resNode = root.next
           }
-          return Right(resNode)
+          Right(resNode)
         }
       }
       case _ => throw new ClassCastException
