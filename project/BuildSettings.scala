@@ -17,26 +17,35 @@ object BuildSettings {
 
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
-    organization          :=  "com.snowplowanalytics",
-    version               :=  "0.4.0",
-    description           :=  "High-performance Scala library for performing currency conversions using Open Exchange Rates",
-    scalaVersion          :=  "2.10.6",
-    crossScalaVersions    :=  Seq("2.10.6", "2.11.8"),
-    scalacOptions         :=  Seq("-deprecation", "-encoding", "utf8"),
+    organization          := "com.snowplowanalytics",
+    scalaVersion          := "2.11.8",
+    crossScalaVersions    := Seq("2.10.6", "2.11.8"),
+    scalacOptions         := compilerOptions,
     resolvers             ++= Dependencies.resolutionRepos
   )
 
+  lazy val compilerOptions = Seq(
+    "-deprecation",
+    "-encoding", "UTF-8",
+    "-feature",
+    "-language:existentials",
+    "-language:higherKinds",
+    "-language:implicitConversions",
+    "-unchecked",
+    "-Yno-adapted-args",
+    "-Ywarn-dead-code",
+    "-Ywarn-numeric-widen",
+    "-Xfuture",
+    "-Xlint"
+  )
 
   // Publish settings
   // TODO: update with ivy credentials etc when we start using Nexus
   lazy val publishSettings = Seq[Setting[_]](
     // Enables publishing to maven repo
     publishMavenStyle := true,
-
-    publishTo <<= version { version =>
-      val basePath = "target/repo/%s".format {
-        if (version.trim.endsWith("SNAPSHOT")) "snapshots/" else "releases/"
-      }
+    publishTo := {
+      val basePath = "target/repo/%s".format { if (isSnapshot.value) "snapshots/" else "releases/" }
       Some(Resolver.file("Local Maven repository", file(basePath)) transactional())
     }
   )
