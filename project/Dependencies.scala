@@ -16,8 +16,6 @@ import Keys._
 object Dependencies {
 
   val resolutionRepos = Seq(
-    // For scala-util
-    "Snowplow Analytics" at "http://maven.snplow.com/releases/",
     // For Twitter's LRU cache
     "Twitter Maven Repo" at "http://maven.twttr.com/",
     "Sonatype" at "https://oss.sonatype.org/content/repositories/releases"
@@ -31,7 +29,6 @@ object Dependencies {
     val jackson     = "1.9.7"
 
     // Scala
-    val scalaUtil = "0.1.0"
     val collUtil = "6.34.0"
 
     // Java (test only)
@@ -49,7 +46,6 @@ object Dependencies {
     val jackson     = "org.codehaus.jackson"  % "jackson-mapper-asl" % V.jackson
 
     // Scala
-    val scalaUtil   = "com.snowplowanalytics" %% "scala-util"        % V.scalaUtil
     val collUtil    = "com.twitter"           %% "util-collection"   % V.collUtil
 
     // Java (test only)
