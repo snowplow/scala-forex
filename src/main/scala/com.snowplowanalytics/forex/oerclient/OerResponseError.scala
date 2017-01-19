@@ -21,7 +21,7 @@ package oerclient
 case class OerResponseError(errorMessage: String, errorType: OerError)
 
 /**
- * User defined error types 
+ * User defined error types
  */
 sealed trait OerError
 
@@ -30,11 +30,6 @@ sealed trait OerError
  * i.e. either earlier than the earliest date OER service is available or later than currenct time
  */
 object ResourcesNotAvailable extends OerError
-
-/**
- * Invalid appId  
- */
-object InvalidAppId extends OerError
 
 /**
  * Currency not supported by API or

@@ -1,3 +1,11 @@
+Version 0.5.0 (2017-01-19)
+--------------------------
+Bump crossScalaVersions to 2.10.6 and 2.11.8 (#102)
+Drop Scala 2.9 support (#105)
+Bump to sbt 0.13.13 (#106)
+Remove scala-util dependency (#101)
+Add CI/CD (#103)
+
 Version 0.4.0 (2016-02-16)
 --------------------------
 Fixed handling of invalid API key (#96)
