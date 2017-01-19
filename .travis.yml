@@ -1,16 +1,19 @@
 language: scala
 scala:
-   - 2.9.3
-   - 2.10.1
-   - 2.11.5
+   - 2.10.6
+   - 2.11.8
 jdk:
   - oraclejdk7
-  - openjdk6
   - openjdk7
 env:
   global:
   - secure: kxIeiY9eiOSNOr9yn76bCHL/3/XnxyYT8MSSKcdmrAVcYxN9zohWo9kAXQNPi9mDeQxoVYaIG2EOd01gddjTa/DdVyeij93XDSS31e+HmtfqfF7rDa/r819MOemYwP0lgn2lOHnf5BNu6MQtRUnwXCUz6lUh/hXIYBD4TBQmVl4=
-addons:
-  # Fix OpenJDK builds
-  # https://github.com/travis-ci/travis-ci/issues/5227
-  hostname: short-hostname
+script:
+  - sbt test
+deploy:
+  skip_cleanup: true
+  provider: script
+  script: ./.travis/deploy.sh $TRAVIS_TAG
+  on:
+    condition: '"${TRAVIS_SCALA_VERSION}" == "2.11.8" && "${TRAVIS_JDK_VERSION}" == "oraclejdk7"' 
+    tags: true

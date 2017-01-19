@@ -20,6 +20,7 @@ lazy val root = project.in(file("."))
     description := "High-performance Scala library for performing currency conversions using Open Exchange Rates"
   )
   .settings(BuildSettings.buildSettings)
+  .settings(BuildSettings.publishSettings)
   .settings(
     libraryDependencies ++= Seq(
       Dependencies.Libraries.jodaTime,
