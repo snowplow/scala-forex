@@ -10,6 +10,8 @@ jdk:
 env:
   global:
   - secure: kxIeiY9eiOSNOr9yn76bCHL/3/XnxyYT8MSSKcdmrAVcYxN9zohWo9kAXQNPi9mDeQxoVYaIG2EOd01gddjTa/DdVyeij93XDSS31e+HmtfqfF7rDa/r819MOemYwP0lgn2lOHnf5BNu6MQtRUnwXCUz6lUh/hXIYBD4TBQmVl4=
+  - secure: aEgUK6zpFDbDQNXVsJC9Y3CrvUTrbDci7U6mM/vR2/ksVL4dVMBCJAJsdXWwc12wIlYRNDrtuZ62/R+LbS8O1gjIeyU8hKhc81L8pfyJFOm9BztbN+4XqkPsXS7WqgpqI6lr1TABdHaHPwTCh5kFLtqkCD2NXMmi7uhmScJfVc0=
+  - secure: LPO6f56t82laN2lzNuVuAIQkmkn8wOvmOzeu5ozYn9afJ+GGxjdJJ9TEYOQA5bZFKY/p6o65MemhlidhdMpZu++G1nVVdPoAh+NvEfesQxkQx0lFta6u2l2nKgUnpZL2mW8skM1LGepOyUZFujBAcSH6GHmQN0IP4zGVSrUvMX0=
 addons:
   # Fix OpenJDK builds
   # https://github.com/travis-ci/travis-ci/issues/5227
