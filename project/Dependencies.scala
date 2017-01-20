@@ -21,58 +21,33 @@ object Dependencies {
     val jodaMoney   = "0.9"
     val jodaConvert = "1.2"
     val jackson     = "1.9.7"
-    
+
     // Scala
-    val scalaUtil   = "0.1.0"
-    object collUtil {
-      val _29       = "5.3.10"
-      val _210      = "6.3.4"
-      val _211      = "6.23.0"
-    }
+    val scalaUtil = "0.1.0"
+    val collUtil = "6.34.0"
 
     // Java (test only)
     val mockito     = "1.9.5"
 
     // Scala (test only)
-    object specs2 {
-      val _29       = "1.12.4.1"
-      val _210      = "2.3.13"
-      val _211      = "2.3.13"
-    }
+    val specs2 = "2.3.13"
   }
 
   object Libraries {
     // Java
-    val jodaTime    = "joda-time"                  % "joda-time"          % V.jodaTime
-    val jodaMoney   = "org.joda"                   % "joda-money"         % V.jodaMoney
-    val jodaConvert = "org.joda"                   % "joda-convert"       % V.jodaConvert
-    val jackson     = "org.codehaus.jackson"       % "jackson-mapper-asl" % V.jackson
+    val jodaTime    = "joda-time"             % "joda-time"          % V.jodaTime
+    val jodaMoney   = "org.joda"              % "joda-money"         % V.jodaMoney
+    val jodaConvert = "org.joda"              % "joda-convert"       % V.jodaConvert
+    val jackson     = "org.codehaus.jackson"  % "jackson-mapper-asl" % V.jackson
 
     // Scala
-    val scalaUtil   = "com.snowplowanalytics"      %  "scala-util"        % V.scalaUtil
-    object collUtil {
-      val _29       = "com.twitter"                % "util-collection"    % V.collUtil._29
-      val _210      = "com.twitter"                %% "util-collection"   % V.collUtil._210
-      val _211      = "com.twitter"                %% "util-collection"   % V.collUtil._211
-    }
+    val scalaUtil   = "com.snowplowanalytics" %% "scala-util"        % V.scalaUtil
+    val collUtil    = "com.twitter"           %% "util-collection"   % V.collUtil
 
     // Java (test only)
-    val mockito     = "org.mockito"                %  "mockito-all"       % V.mockito            % "test"
+    val mockito     = "org.mockito"           %  "mockito-all"       % V.mockito       % "test"
 
     // Scala (test only)
-    object specs2 {
-      val _29       = "org.specs2"                 %% "specs2"            % V.specs2._29         % "test"
-      val _210      = "org.specs2"                 %% "specs2"            % V.specs2._210        % "test"
-      val _211      = "org.specs2"                 %% "specs2"            % V.specs2._211        % "test"
-    }
+    val specs2      = "org.specs2"            %% "specs2"            % V.specs2        % "test"
   }
-
-  def onVersion[A](all: Seq[A] = Seq(), on29: => Seq[A] = Seq(), on210: => Seq[A] = Seq(), on211: => Seq[A] = Seq()) =
-    scalaVersion(v => all ++ (if (v.contains("2.9.")) {
-      on29
-    } else if (v.contains("2.10.")) {
-      on210
-    } else {
-      on211
-    }))
 }
