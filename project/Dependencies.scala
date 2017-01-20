@@ -23,7 +23,6 @@ object Dependencies {
     val jackson     = "1.9.7"
 
     // Scala
-    val scalaUtil = "0.1.0"
     val collUtil = "6.34.0"
 
     // Java (test only)
@@ -41,7 +40,6 @@ object Dependencies {
     val jackson     = "org.codehaus.jackson"  % "jackson-mapper-asl" % V.jackson
 
     // Scala
-    val scalaUtil   = "com.snowplowanalytics" %% "scala-util"        % V.scalaUtil
     val collUtil    = "com.twitter"           %% "util-collection"   % V.collUtil
 
     // Java (test only)
