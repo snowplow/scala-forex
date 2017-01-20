@@ -26,12 +26,12 @@ import org.joda.time._
 /**
  * Implements Json for Open Exchange Rates(http://openexchangerates.org)
  * @param config - a configurator for Forex object
- * @param oerConfig - a configurator for OER Client object 
+ * @param oerConfig - a configurator for OER Client object
  * @param nowishCache - user defined nowishCache
  * @param eodCache - user defined eodCache
  */
 class OerClient(
-  config: ForexConfig, 
+  config: ForexConfig,
   oerConfig: OerClientConfig,
   nowishCache: MaybeNowishCache = None,
   eodCache: MaybeEodCache  = None
@@ -41,15 +41,15 @@ class OerClient(
   private val oerUrl = "http://openexchangerates.org/api/"
 
   /** Sets the base currency in the url
-   * according to the API, only Unlimited and Enterprise accounts 
+   * according to the API, only Unlimited and Enterprise accounts
    * are allowed to set the base currency in the HTTP URL
    */
   private val base   = oerConfig.accountLevel match {
-      case UnlimitedAccount  => "&base=" + config.baseCurrency 
-      case EnterpriseAccount => "&base=" + config.baseCurrency 
+      case UnlimitedAccount  => "&base=" + config.baseCurrency
+      case EnterpriseAccount => "&base=" + config.baseCurrency
       case DeveloperAccount  => ""
-  } 
-                    
+  }
+
   /**
    * The constant that will hold the URL for
    * a live exchange rate lookup from OER
@@ -57,7 +57,7 @@ class OerClient(
   private val latest = "latest.json?app_id=" + oerConfig.appId + base
 
   /**
-   * The constant will hold the URI for a 
+   * The constant will hold the URI for a
    * historical-exchange rate lookup from OER
    */
   private val historical = "historical/%04d-%02d-%02d.json?app_id=" + oerConfig.appId + base
@@ -69,8 +69,8 @@ class OerClient(
   private val oerDataFrom = new DateTime(1999,1,1,0,0)
 
   /**
-   * Gets live currency value for the desired currency, 
-   * silently drop the currency types which Joda money does not support.  
+   * Gets live currency value for the desired currency,
+   * silently drop the currency types which Joda money does not support.
    * If cache exists, update nowishCache when an API request has been done,
    * else just return the forex rate
    * @param currency - The desired currency we want to look up from the API
@@ -85,39 +85,39 @@ class OerClient(
           case Some(cache) => {
                 val currencyNameIterator = node.getFieldNames
                 oerConfig.accountLevel match {
-                  // If the user is using Developer account, 
+                  // If the user is using Developer account,
                   // then base currency returned from the API is USD.
-                  // To store user-defined base currency into the cache, 
+                  // To store user-defined base currency into the cache,
                   // we need to convert the forex rate between target currency and USD
-                  // to target currency and user-defined base currency 
-                  case DeveloperAccount 
+                  // to target currency and user-defined base currency
+                  case DeveloperAccount
                     => {
                       val usdOverBase = node.findValue(config.baseCurrency).getDecimalValue
-                      while (currencyNameIterator.hasNext) {  
+                      while (currencyNameIterator.hasNext) {
                         val currencyName = currencyNameIterator.next
                         val keyPair   = (config.baseCurrency, currencyName)
                         val usdOverCurr  = node.findValue(currencyName).getDecimalValue
                         // flag indicating if the base currency has been set to USD
                         val fromCurrIsBaseCurr = (config.baseCurrency == "USD")
-                        val baseOverCurr = Forex.getForexRate(fromCurrIsBaseCurr, usdOverBase, usdOverCurr) 
+                        val baseOverCurr = Forex.getForexRate(fromCurrIsBaseCurr, usdOverBase, usdOverCurr)
                         val valPair = (DateTime.now, baseOverCurr)
                         cache.put(keyPair, valPair)
                       }
                     }
                   // For Enterprise and Unlimited users, OER allows them to configure the base currencies.
                   // So the exchange rate returned from the API is between target currency and the base currency they defined.
-                  case _ 
+                  case _
                     => {
-                      while (currencyNameIterator.hasNext) {  
+                      while (currencyNameIterator.hasNext) {
                         val currencyName = currencyNameIterator.next
                         val keyPair = (config.baseCurrency, currencyName)
                         val valPair = (DateTime.now, node.findValue(currencyName).getDecimalValue)
                         cache.put(keyPair, valPair)
                       }
                     }
-                }   
+                }
           }
-          case None => // do nothing   
+          case None => // do nothing
         }
         val currencyNode = node.findValue(currency)
         if (currencyNode == null) {
@@ -131,9 +131,9 @@ class OerClient(
 
   /**
    * Builds the historical link for the URI according to the date
-   * @param date - The historical date for the currency look up, 
+   * @param date - The historical date for the currency look up,
    * which should be the same as date argument in the getHistoricalCurrencyValue method below
-   * @return the link in string format   
+   * @return the link in string format
    */
   private def buildHistoricalLink(date: DateTime) : String = {
     val dateCal = date.toGregorianCalendar
@@ -144,7 +144,7 @@ class OerClient(
   }
   /**
    * Gets historical forex rate for the given currency and date
-   * return error message if the date is invalid 
+   * return error message if the date is invalid
    * silently drop the currency types which Joda money does not support
    * if cache exists, update the eodCache when an API request has been done,
    * else just return the look up result
@@ -153,7 +153,7 @@ class OerClient(
    * @return result returned from API
    */
   def getHistoricalCurrencyValue(currency: String, date: DateTime): ApiRequestResult = {
-    
+
    /**
     * Return OerResponseError if the date given is not supported by OER
     */
@@ -168,15 +168,15 @@ class OerClient(
           case Some(cache) => {
             val currencyNameIterator = node.getFieldNames
             oerConfig.accountLevel match {
-              // If the user is using Developer account, 
+              // If the user is using Developer account,
               // then base currency returned from the API is USD.
-              // To store user-defined base currency into the cache, 
+              // To store user-defined base currency into the cache,
               // we need to convert the forex rate between target currency and USD
-              // to target currency and user-defined base currency 
-              case DeveloperAccount 
+              // to target currency and user-defined base currency
+              case DeveloperAccount
                 => {
                   val usdOverBase = node.findValue(config.baseCurrency).getDecimalValue
-                  while (currencyNameIterator.hasNext) {  
+                  while (currencyNameIterator.hasNext) {
                     val currencyName = currencyNameIterator.next
                     val keyPair   = (config.baseCurrency, currencyName, date)
                     val usdOverCurr  = node.findValue(currencyName).getDecimalValue
@@ -186,15 +186,15 @@ class OerClient(
                 }
               // For Enterprise and Unlimited users, OER allows them to configure the base currencies.
               // So the exchange rate returned from the API is between target currency and the base currency they defined.
-              case _ 
+              case _
                 => {
-                  while (currencyNameIterator.hasNext) {  
+                  while (currencyNameIterator.hasNext) {
                     val currencyName = currencyNameIterator.next
                     val keyPair = (config.baseCurrency, currencyName, date)
                     cache.put(keyPair, node.findValue(currencyName).getDecimalValue)
                   }
                 }
-            }  
+            }
           }
           case None => // do nothing
           }
@@ -215,7 +215,7 @@ class OerClient(
    * @param downloadPath - The URI link for the API request
    * @return JSON node which contains currency information obtained from API
    * or OerResponseError object which carries the error message returned by the API
-   */  
+   */
   private def getJsonNodeFromApi(downloadPath: String): Either[OerResponseError, JsonNode] = {
     val url  = new URL(oerUrl + downloadPath)
     val conn = url.openConnection
@@ -228,11 +228,7 @@ class OerClient(
           while (root.hasNext) {
            resNode = root.next
           }
-          if (resNode.getTextValue.contains("Invalid App ID")) {
-            Left(OerResponseError(resNode.getTextValue, InvalidAppId))
-          } else {
-            Left(OerResponseError(resNode.getTextValue, OtherErrors))
-          }
+          Left(OerResponseError(resNode.getTextValue, OtherErrors))
       } else {
           val inputStream = httpUrlConn.getInputStream
           val root = mapper.readTree(inputStream).getElements

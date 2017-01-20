@@ -20,10 +20,9 @@ object BuildSettings {
     organization          :=  "com.snowplowanalytics",
     version               :=  "0.4.0",
     description           :=  "High-performance Scala library for performing currency conversions using Open Exchange Rates",
-    scalaVersion          :=  "2.10.1",
-    crossScalaVersions    :=  Seq("2.9.3", "2.10.1", "2.11.5"), 
-    scalacOptions         :=  Seq("-deprecation", "-encoding", "utf8"),
-    resolvers             ++= Dependencies.resolutionRepos
+    scalaVersion          := "2.11.8",
+    crossScalaVersions    :=  Seq("2.9.3", "2.10.6", "2.11.8"),
+    scalacOptions         :=  Seq("-deprecation", "-encoding", "utf8")
   )
 
 

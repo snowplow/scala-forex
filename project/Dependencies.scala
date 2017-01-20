@@ -15,14 +15,6 @@ import Keys._
 
 object Dependencies {
 
-  val resolutionRepos = Seq(
-    // For scala-util
-    "Snowplow Analytics" at "http://maven.snplow.com/releases/",
-    // For Twitter's LRU cache
-    "Twitter Maven Repo" at "http://maven.twttr.com/",
-    "Sonatype" at "https://oss.sonatype.org/content/repositories/releases"
-  )
-
   object V {
     // Java
     val jodaTime    = "2.3"
