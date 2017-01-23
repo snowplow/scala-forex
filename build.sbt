@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2017 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -16,7 +16,7 @@
 lazy val root = project.in(file("."))
   .settings(
     name        := "scala-forex",
-    version     := "0.4.0",
+    version     := "0.5.0",
     description := "High-performance Scala library for performing currency conversions using Open Exchange Rates"
   )
   .settings(BuildSettings.buildSettings)
