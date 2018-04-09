@@ -1,22 +1,22 @@
 # Scala Forex
 
-[ ![Build Status] [travis-image] ] [travis] [ ![Release] [release-image] ] [releases] [ ![License] [license-image] ] [license]
+[![Build Status][travis-image]][travis] [![Release][release-image]][releases] [![License][license-image]][license]
 
 ## 1. Introduction
 
-Scala Forex is a high-performance Scala library for performing exchange rate lookups and currency conversions, using [Joda-Money] [joda-money] and [Joda-Time] [joda-time].
+Scala Forex is a high-performance Scala library for performing exchange rate lookups and currency conversions, using [Joda-Money][joda-money] and [Joda-Time][joda-time].
 
 It includes configurable LRU (Least Recently Used) caches to minimize calls to the API; this makes the library usable in high-volume environments such as Hadoop and Storm.
 
-Currently Scala Forex uses the [Open Exchange Rates API] [oer-signup] to perform currency lookups.
+Currently Scala Forex uses the [Open Exchange Rates API][oer-signup] to perform currency lookups.
 
 ## 2. Setup
 
 ### 2.1 OER Sign Up
 
-First [sign up] [oer-signup] to Open Exchange Rates to get your App ID for API access.
+First [sign up][oer-signup] to Open Exchange Rates to get your App ID for API access.
 
-There are three types of accounts supported by OER API, Unlimited, Enterprise and Developer levels. See the [sign up] [oer-signup] page for specific account descriptions. For Scala Forex, we recommend an Enterprise or Unlimited account, unless all of your conversions are to or from USD (see section 4.5 OER accounts for an explanation). For 10-minute rate updates, you will need an Unlimited account (other accounts are hourly).
+There are three types of accounts supported by OER API, Unlimited, Enterprise and Developer levels. See the [sign up][oer-signup] page for specific account descriptions. For Scala Forex, we recommend an Enterprise or Unlimited account, unless all of your conversions are to or from USD (see section 4.5 OER accounts for an explanation). For 10-minute rate updates, you will need an Unlimited account (other accounts are hourly).
 
 ### 2.2 Installation
 
@@ -288,7 +288,7 @@ If not specified, `baseCurrency` is set to USD by default.
 
 ### 4.1 Building
 
-Assuming git, [Vagrant] [vagrant-install] and [VirtualBox] [virtualbox-install] installed:
+Assuming git, [Vagrant][vagrant-install] and [VirtualBox][virtualbox-install] installed:
 
 ```bash
  host> git clone https://github.com/snowplow/scala-forex
@@ -343,7 +343,7 @@ When `.eod(...)` is specified, the end-of-day rate for the **specified day** is 
 
 We recommend trying different LRU cache sizes to see what works best for you.
 
-Please note that the LRU cache implementation is **not** thread-safe ([see this note] [twitter-lru-cache]). Switch it off if you are working with threads.
+Please note that the LRU cache implementation is **not** thread-safe ([see this note][twitter-lru-cache]). Switch it off if you are working with threads.
 
 ### 5.4 Explanation of defaults
 
@@ -377,7 +377,7 @@ With Open Exchange Rates' Unlimited and Enterprise accounts, Scala Forex can spe
 
 Scala Forex is copyright 2013-2016 Snowplow Analytics Ltd.
 
-Licensed under the [Apache License, Version 2.0] [license] (the "License");
+Licensed under the [Apache License, Version 2.0][license] (the "License");
 you may not use this software except in compliance with the License.
 
 Unless required by applicable law or agreed to in writing, software
