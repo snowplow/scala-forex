@@ -13,8 +13,8 @@
 package com.snowplowanalytics
 
 // Java
-import java.math.BigDecimal
 import java.time.ZonedDateTime
+import java.math.BigDecimal
 // LRUCache
 import com.twitter.util.SynchronizedLruMap
 // oerclient
