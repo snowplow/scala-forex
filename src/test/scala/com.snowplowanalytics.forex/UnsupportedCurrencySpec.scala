@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2013-2017 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
@@ -22,10 +22,10 @@ import oerclient.OerResponseError
 // Joda money
 import org.joda.money.Money
 
-/** 
+/**
  *  Testing for unsupported currencies in joda money, e.g. bitcoin(BTC)
  */
-class UnsupportedCurrencySpec extends Specification { 
+class UnsupportedCurrencySpec extends Specification {
   "Joda money" should {
     Seq("BTC", "RRU", "EEK") foreach { currency =>
       (" not support currency: " + currency) >> {
@@ -33,8 +33,8 @@ class UnsupportedCurrencySpec extends Specification {
         rate must beLike {
           case Left(OerResponseError(_, IllegalCurrency)) => ok
         }
-      } 
+      }
     }
   }
-  
+
 }

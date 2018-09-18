@@ -17,21 +17,21 @@ package oerclient
 import java.math.BigDecimal
 // Specs2
 import org.specs2.mutable.Specification
-// Joda 
+// Joda
 import org.joda.time._
 // TestHelpers
 import TestHelpers._
 
 /** Testing methods for Open exchange rate client */
-class OerClientSpec extends Specification { 
+class OerClientSpec extends Specification {
 
-  "live currency value for USD" should { 
+  "live currency value for USD" should {
     "always equal to 1" in {
       fx.client.getLiveCurrencyValue("USD").right.get must_== (new BigDecimal(1))
     }
   }
 
-  val gbpLiveRate =  fx.client.getLiveCurrencyValue("GBP")
+  val gbpLiveRate = fx.client.getLiveCurrencyValue("GBP")
   "live currency value for GBP [%s]".format(gbpLiveRate.right.get) should {
     "be less than 1" in {
       gbpLiveRate.right.get must be < (new BigDecimal(1))
@@ -45,4 +45,3 @@ class OerClientSpec extends Specification {
     }
   }
 }
-

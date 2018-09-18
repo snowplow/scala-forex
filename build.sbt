@@ -21,6 +21,7 @@ lazy val root = project.in(file("."))
   )
   .settings(BuildSettings.buildSettings)
   .settings(BuildSettings.publishSettings)
+  .settings(BuildSettings.formattingSettings)
   .settings(
     libraryDependencies ++= Seq(
       Dependencies.Libraries.jodaTime,

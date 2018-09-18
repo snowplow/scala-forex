@@ -23,32 +23,32 @@ import com.twitter.util.SynchronizedLruMap
 
 /**
  * Companion object for ForexClient class
- * This class has one method for getting forex clients 
- * but for now there is only one client since we are only using OER 
+ * This class has one method for getting forex clients
+ * but for now there is only one client since we are only using OER
  */
 object ForexClient {
+
   /**
    * Getter for clients with specified caches(optional)
    */
-  def getClient(config: ForexConfig, clientConfig: ForexClientConfig,
-                    nowish: MaybeNowishCache= None, eod: MaybeEodCache = None): ForexClient = {
+  def getClient(config: ForexConfig,
+                clientConfig: ForexClientConfig,
+                nowish: MaybeNowishCache = None,
+                eod: MaybeEodCache       = None): ForexClient =
     clientConfig match {
-      case oerClientConfig: OerClientConfig => new OerClient(config, oerClientConfig, nowishCache = nowish, eodCache = eod)
+      case oerClientConfig: OerClientConfig =>
+        new OerClient(config, oerClientConfig, nowishCache = nowish, eodCache = eod)
       case _ => throw NoSuchClientException("This client is not supported by scala-forex currently")
     }
-  }
 }
 
-abstract class ForexClient(
-  config: ForexConfig,
-  nowishCache: MaybeNowishCache = None,
-  eodCache: MaybeEodCache  = None) {
+abstract class ForexClient(config: ForexConfig, nowishCache: MaybeNowishCache = None, eodCache: MaybeEodCache = None) {
 
   // Assemble our caches
   object caches {
 
     // LRU cache for nowish request, with (source currency, target currency) as the key
-    // and (date time, exchange rate) as the value 
+    // and (date time, exchange rate) as the value
     val nowish =
       if (nowishCache.isDefined) {
         nowishCache
@@ -57,36 +57,36 @@ abstract class ForexClient(
       } else {
         None
       }
-      
-    // LRU cache for historical request, with (source currency, target currency, date time) as the key 
+
+    // LRU cache for historical request, with (source currency, target currency, date time) as the key
     // and exchange rate as the value
-    val eod = 
+    val eod =
       if (eodCache.isDefined) {
-        eodCache 
+        eodCache
       } else if (config.eodCacheSize > 0) {
         Some(new SynchronizedLruMap[EodCacheKey, EodCacheValue](config.eodCacheSize))
       } else {
         None
       }
   }
-    
+
   /**
    * Get the latest exchange rate from a given currency
-   * 
+   *
    * @param currency
    *            Desired currency
    * @return result returned from API
    */
-   def getLiveCurrencyValue(currency: String): ApiRequestResult
+  def getLiveCurrencyValue(currency: String): ApiRequestResult
 
   /**
    * Get a historical exchange rate from a given currency and date
-   * 
+   *
    * @param currency
    *            Desired currency
    * @param date
    *            Date of desired rate
    * @return result returned from API
    */
-   def getHistoricalCurrencyValue(currency: String, date: DateTime): ApiRequestResult
+  def getHistoricalCurrencyValue(currency: String, date: DateTime): ApiRequestResult
 }

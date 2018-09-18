@@ -14,6 +14,6 @@ package com.snowplowanalytics.forex
 
 /**
  * Configurator for Forex clients,
- * every Forex client configurator is a sub-class of this class 
+ * every Forex client configurator is a sub-class of this class
  */
 trait ForexClientConfig

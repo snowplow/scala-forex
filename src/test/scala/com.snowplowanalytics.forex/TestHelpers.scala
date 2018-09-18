@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2013-2017 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
@@ -20,14 +20,14 @@ import com.twitter.util.LruMap
 /**
  * All tests can have access to the same Forex object
  */
-object TestHelpers{
-  val key = sys.env("OER_KEY") // Warning: this will give nasty errors if env var not exported
-  val config = ForexConfig()   // ForexConfig object with default values
-  val fxConfigWith5NowishSecs = ForexConfig(nowishSecs = 5) // ForexConfig object with 5 nowishSecs 
-  val oerConfig = OerClientConfig(key, DeveloperAccount) // with default base currency USD
-  val fx = Forex.getForex(config, oerConfig) // Forex object with USD as base currency
-  val forexConfig = ForexConfig(nowishCacheSize = 0, eodCacheSize = 0)
-  val fxWithoutCache = Forex.getForex(forexConfig, oerConfig) // Forex object with caches disabled 
-  val confWithBaseGBP = OerClientConfig(key, EnterpriseAccount) // set base currency to GBP
-  val fxWithBaseGBP = Forex.getForex(ForexConfig(baseCurrency = "GBP"), confWithBaseGBP) // Forex object with GBP as base currency
+object TestHelpers {
+  val key                     = sys.env("OER_KEY") // Warning: this will give nasty errors if env var not exported
+  val config                  = ForexConfig() // ForexConfig object with default values
+  val fxConfigWith5NowishSecs = ForexConfig(nowishSecs = 5) // ForexConfig object with 5 nowishSecs
+  val oerConfig               = OerClientConfig(key, DeveloperAccount) // with default base currency USD
+  val fx                      = Forex.getForex(config, oerConfig) // Forex object with USD as base currency
+  val forexConfig             = ForexConfig(nowishCacheSize = 0, eodCacheSize = 0)
+  val fxWithoutCache          = Forex.getForex(forexConfig, oerConfig) // Forex object with caches disabled
+  val confWithBaseGBP         = OerClientConfig(key, EnterpriseAccount) // set base currency to GBP
+  val fxWithBaseGBP           = Forex.getForex(ForexConfig(baseCurrency = "GBP"), confWithBaseGBP) // Forex object with GBP as base currency
 }
