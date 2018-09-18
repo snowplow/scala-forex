@@ -24,7 +24,6 @@ lazy val root = project.in(file("."))
   .settings(BuildSettings.formattingSettings)
   .settings(
     libraryDependencies ++= Seq(
-      Dependencies.Libraries.jodaTime,
       Dependencies.Libraries.jodaConvert,
       Dependencies.Libraries.jodaMoney,
       Dependencies.Libraries.jackson,

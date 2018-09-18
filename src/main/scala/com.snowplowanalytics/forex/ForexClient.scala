@@ -14,8 +14,7 @@ package com.snowplowanalytics.forex
 
 // Java
 import java.math.BigDecimal
-// joda
-import org.joda.time._
+import java.time.ZonedDateTime
 // OpenExchangeRate client
 import oerclient._
 // LRUCache
@@ -88,5 +87,5 @@ abstract class ForexClient(config: ForexConfig, nowishCache: MaybeNowishCache = 
    *            Date of desired rate
    * @return result returned from API
    */
-  def getHistoricalCurrencyValue(currency: String, date: DateTime): ApiRequestResult
+  def getHistoricalCurrencyValue(currency: String, date: ZonedDateTime): ApiRequestResult
 }

@@ -15,9 +15,10 @@ package com.snowplowanalytics.forex
 // Java
 import java.math.BigDecimal
 import java.math.RoundingMode
+import java.time.ZonedDateTime
+import java.time.temporal.ChronoUnit
 
 // Joda
-import org.joda.time._
 import org.joda.money._
 
 // OerClient
@@ -167,7 +168,7 @@ case class ForexLookupWhen(conversionAmount: Double, fromCurr: String, toCurr: S
    * @return Money representation in target currency or OerResponseError object if API request failed
    */
   def now: Either[OerResponseError, Money] = {
-    val timeStamp = DateTime.now
+    val timeStamp = ZonedDateTime.now
     val from      = fx.client.getLiveCurrencyValue(fromCurr)
     val to        = fx.client.getLiveCurrencyValue(toCurr)
     if (from.isRight && to.isRight) {
@@ -200,7 +201,7 @@ case class ForexLookupWhen(conversionAmount: Double, fromCurr: String, toCurr: S
   def nowish: Either[OerResponseError, Money] =
     fx.client.caches.nowish match {
       case Some(cache) => {
-        val nowishTime = DateTime.now.minusSeconds(fx.config.nowishSecs)
+        val nowishTime = ZonedDateTime.now.minusSeconds(fx.config.nowishSecs)
         cache.get((fromCurr, toCurr)) match {
           // from:to found in LRU cache
           case Some(tpl) => {
@@ -236,11 +237,11 @@ case class ForexLookupWhen(conversionAmount: Double, fromCurr: String, toCurr: S
    * Gets the latest end-of-day rate prior to the event or post to the event
    * @return Money representation in target currency or OerResponseError object if API request failed
    */
-  def at(tradeDate: DateTime): Either[OerResponseError, Money] = {
+  def at(tradeDate: ZonedDateTime): Either[OerResponseError, Money] = {
     val latestEod = if (fx.config.getNearestDay == EodRoundUp) {
-      tradeDate.withTimeAtStartOfDay.plusDays(1)
+      tradeDate.truncatedTo(ChronoUnit.DAYS).plusDays(1)
     } else {
-      tradeDate.withTimeAtStartOfDay
+      tradeDate.truncatedTo(ChronoUnit.DAYS)
     }
     eod(latestEod)
   }
@@ -249,7 +250,7 @@ case class ForexLookupWhen(conversionAmount: Double, fromCurr: String, toCurr: S
    * Gets the end-of-day rate for the specified date
    * @return Money representation in target currency or OerResponseError object if API request failed
    */
-  def eod(eodDate: DateTime): Either[OerResponseError, Money] =
+  def eod(eodDate: ZonedDateTime): Either[OerResponseError, Money] =
     fx.client.caches.eod match {
       case Some(cache) => {
         cache.get((fromCurr, toCurr, eodDate)) match {
@@ -276,7 +277,7 @@ case class ForexLookupWhen(conversionAmount: Double, fromCurr: String, toCurr: S
    * Helper method to get the historical forex rate between two currencies on a given date,
    * @return Money in target currency representation or error message if the date given is invalid
    */
-  private def getHistoricalRate(date: DateTime): Either[OerResponseError, Money] = {
+  private def getHistoricalRate(date: ZonedDateTime): Either[OerResponseError, Money] = {
     val from = fx.client.getHistoricalCurrencyValue(fromCurr, date)
     val to   = fx.client.getHistoricalCurrencyValue(toCurr, date)
     if (from.isRight && to.isRight) {

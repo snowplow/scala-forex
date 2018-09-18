@@ -15,10 +15,9 @@ package oerclient
 
 // Java
 import java.math.BigDecimal
+import java.time.ZonedDateTime
 // Specs2
 import org.specs2.mutable.Specification
-// Joda
-import org.joda.time._
 // TestHelpers
 import TestHelpers._
 
@@ -27,7 +26,7 @@ class OerClientSpec extends Specification {
 
   "live currency value for USD" should {
     "always equal to 1" in {
-      fx.client.getLiveCurrencyValue("USD").right.get must_== (new BigDecimal(1))
+      fx.client.getLiveCurrencyValue("USD").right.get mustEqual (new BigDecimal(1))
     }
   }
 
@@ -38,10 +37,10 @@ class OerClientSpec extends Specification {
     }
   }
 
-  val date = DateTime.parse("2008-01-01T01:01:01.123+0900")
+  val date = ZonedDateTime.parse("2008-01-01T01:01:01.123+09:00")
   "historical currency value for USD on 01/01/2008" should {
     "always equal to 1 as well" in {
-      fx.client.getHistoricalCurrencyValue("USD", date) must_== Right((new BigDecimal(1)))
+      fx.client.getHistoricalCurrencyValue("USD", date) must beRight((new BigDecimal(1)))
     }
   }
 }
