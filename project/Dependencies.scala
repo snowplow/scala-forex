@@ -25,9 +25,6 @@ object Dependencies {
     // Scala
     val collUtil = "6.34.0"
 
-    // Java (test only)
-    val mockito     = "1.9.5"
-
     // Scala (test only)
     val specs2 = "4.3.4"
   }
@@ -42,10 +39,8 @@ object Dependencies {
     // Scala
     val collUtil    = "com.twitter"           %% "util-collection"   % V.collUtil
 
-    // Java (test only)
-    val mockito     = "org.mockito"           %  "mockito-all"       % V.mockito       % "test"
-
     // Scala (test only)
     val specs2Core  = "org.specs2"            %% "specs2-core"       % V.specs2        % "test"
+    val specs2Mock  = "org.specs2"            %% "specs2-mock"       % V.specs2        % "test"
   }
 }

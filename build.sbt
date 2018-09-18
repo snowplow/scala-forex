@@ -29,7 +29,7 @@ lazy val root = project.in(file("."))
       Dependencies.Libraries.jodaMoney,
       Dependencies.Libraries.jackson,
       Dependencies.Libraries.collUtil,
-      Dependencies.Libraries.mockito,
-      Dependencies.Libraries.specs2Core
+      Dependencies.Libraries.specs2Core,
+      Dependencies.Libraries.specs2Mock
     )
   )
