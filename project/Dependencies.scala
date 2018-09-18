@@ -19,7 +19,7 @@ object Dependencies {
     // Java
     val jodaTime    = "2.3"
     val jodaMoney   = "1.0.1"
-    val jodaConvert = "1.2"
+    val jodaConvert = "2.1.1"
     val jackson     = "1.9.7"
 
     // Scala
