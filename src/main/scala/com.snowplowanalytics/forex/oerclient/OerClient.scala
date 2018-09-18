@@ -16,12 +16,10 @@ package oerclient
 // Java
 import java.net.URL
 import java.net.HttpURLConnection
-import java.util.Calendar
+import java.time.{LocalDateTime, ZoneId, ZonedDateTime}
 // Json
 import org.codehaus.jackson.JsonNode
 import org.codehaus.jackson.map.ObjectMapper
-// Joda
-import org.joda.time._
 
 /**
  * Implements Json for Open Exchange Rates(http://openexchangerates.org)
@@ -56,17 +54,11 @@ class OerClient(
    */
   private val latest = "latest.json?app_id=" + oerConfig.appId + base
 
-  /**
-   * The constant will hold the URI for a
-   * historical-exchange rate lookup from OER
-   */
-  private val historical = "historical/%04d-%02d-%02d.json?app_id=" + oerConfig.appId + base
-
   /** Mapper for reading JSON objects */
   private val mapper = new ObjectMapper()
 
   /** The earliest date OER service is availble */
-  private val oerDataFrom = new DateTime(1999, 1, 1, 0, 0)
+  private val oerDataFrom = ZonedDateTime.of(LocalDateTime.of(1999, 1, 1, 0, 0), ZoneId.systemDefault)
 
   /**
    * Gets live currency value for the desired currency,
@@ -98,7 +90,7 @@ class OerClient(
                   // flag indicating if the base currency has been set to USD
                   val fromCurrIsBaseCurr = (config.baseCurrency == "USD")
                   val baseOverCurr       = Forex.getForexRate(fromCurrIsBaseCurr, usdOverBase, usdOverCurr)
-                  val valPair            = (DateTime.now, baseOverCurr)
+                  val valPair            = (ZonedDateTime.now, baseOverCurr)
                   cache.put(keyPair, valPair)
                 }
               }
@@ -108,7 +100,7 @@ class OerClient(
                 while (currencyNameIterator.hasNext) {
                   val currencyName = currencyNameIterator.next
                   val keyPair      = (config.baseCurrency, currencyName)
-                  val valPair      = (DateTime.now, node.findValue(currencyName).getDecimalValue)
+                  val valPair      = (ZonedDateTime.now, node.findValue(currencyName).getDecimalValue)
                   cache.put(keyPair, valPair)
                 }
               }
@@ -131,12 +123,9 @@ class OerClient(
    * which should be the same as date argument in the getHistoricalCurrencyValue method below
    * @return the link in string format
    */
-  private def buildHistoricalLink(date: DateTime): String = {
-    val dateCal = date.toGregorianCalendar
-    val day     = dateCal.get(Calendar.DAY_OF_MONTH)
-    val month   = dateCal.get(Calendar.MONTH) + 1
-    val year    = dateCal.get(Calendar.YEAR)
-    historical.format(year, month, day)
+  private def buildHistoricalLink(date: ZonedDateTime): String = {
+    val historical = "historical/%04d-%02d-%02d.json?app_id=" + oerConfig.appId + base
+    historical.format(date.getYear, date.getMonthValue, date.getDayOfMonth)
   }
 
   /**
@@ -149,11 +138,11 @@ class OerClient(
    * @param date - The specific date we want to look up on
    * @return result returned from API
    */
-  def getHistoricalCurrencyValue(currency: String, date: DateTime): ApiRequestResult =
+  def getHistoricalCurrencyValue(currency: String, date: ZonedDateTime): ApiRequestResult =
     /**
      * Return OerResponseError if the date given is not supported by OER
      */
-    if (date.isBefore(oerDataFrom) || date.isAfter(DateTime.now)) {
+    if (date.isBefore(oerDataFrom) || date.isAfter(ZonedDateTime.now)) {
       Left(OerResponseError("Exchange rate unavailable on the date [%s] ".format(date), ResourcesNotAvailable))
     } else {
       val historicalLink = buildHistoricalLink(date)

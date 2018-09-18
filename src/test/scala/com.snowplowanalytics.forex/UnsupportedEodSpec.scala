@@ -12,10 +12,11 @@
  */
 package com.snowplowanalytics.forex
 
+// Java
+import java.time.{ZoneId, ZonedDateTime}
+
 // Specs2
 import org.specs2.mutable.Specification
-// Joda
-import org.joda.time._
 // TestHelpers
 import TestHelpers._
 // oerclient
@@ -33,7 +34,7 @@ class UnsupportedEodSpec extends Specification {
       /**
        * 1900 is earlier than 1990 which is the earliest available date for looking up exchange rates
        */
-      val date1900   = new DateTime(1900, 3, 13, 0, 0)
+      val date1900   = ZonedDateTime.of(1900, 3, 13, 0, 0, 0, 0, ZoneId.systemDefault)
       val rateIn1900 = fx.rate.to("GBP").eod(date1900)
       rateIn1900 must beLike {
         case Left(OerResponseError(_, ResourcesNotAvailable)) => ok
@@ -47,7 +48,7 @@ class UnsupportedEodSpec extends Specification {
       /**
        * 2020 is in the future so it won't be available either
        */
-      val date2020   = new DateTime(2020, 3, 13, 0, 0)
+      val date2020   = ZonedDateTime.of(2020, 3, 13, 0, 0, 0, 0, ZoneId.systemDefault)
       val rateIn2020 = fx.rate.to("GBP").eod(date2020)
       rateIn2020 must beLike {
         case Left(OerResponseError(_, ResourcesNotAvailable)) => ok
