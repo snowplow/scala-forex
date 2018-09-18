@@ -1,7 +1,6 @@
 language: scala
 scala:
-   - 2.10.6
-   - 2.11.8
+   - 2.11.12
 jdk:
   - oraclejdk7
   - openjdk7
@@ -19,5 +18,5 @@ deploy:
   provider: script
   script: ./.travis/deploy.sh $TRAVIS_TAG
   on:
-    condition: '"${TRAVIS_SCALA_VERSION}" == "2.11.8" && "${TRAVIS_JDK_VERSION}" == "oraclejdk7"' 
+    condition: '"${TRAVIS_SCALA_VERSION}" == "2.11.12" && "${TRAVIS_JDK_VERSION}" == "oraclejdk7"' 
     tags: true
