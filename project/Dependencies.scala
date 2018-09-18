@@ -19,10 +19,10 @@ object Dependencies {
     // Java
     val jodaMoney   = "1.0.1"
     val jodaConvert = "2.1.1"
-    val jackson     = "1.9.7"
 
     // Scala
     val collUtil = "6.34.0"
+    val circe    = "0.9.3"
 
     // Scala (test only)
     val specs2 = "4.3.4"
@@ -30,15 +30,16 @@ object Dependencies {
 
   object Libraries {
     // Java
-    val jodaMoney   = "org.joda"              % "joda-money"         % V.jodaMoney
-    val jodaConvert = "org.joda"              % "joda-convert"       % V.jodaConvert
-    val jackson     = "org.codehaus.jackson"  % "jackson-mapper-asl" % V.jackson
+    val jodaMoney    = "org.joda"              % "joda-money"         % V.jodaMoney
+    val jodaConvert  = "org.joda"              % "joda-convert"       % V.jodaConvert
 
     // Scala
-    val collUtil    = "com.twitter"           %% "util-collection"   % V.collUtil
+    val collUtil     = "com.twitter"           %% "util-collection"   % V.collUtil
+    val circeParser  = "io.circe"              %% "circe-parser"      % V.circe
+    val circeGeneric = "io.circe"              %% "circe-generic"     % V.circe
 
     // Scala (test only)
-    val specs2Core  = "org.specs2"            %% "specs2-core"       % V.specs2        % "test"
-    val specs2Mock  = "org.specs2"            %% "specs2-mock"       % V.specs2        % "test"
+    val specs2Core   = "org.specs2"            %% "specs2-core"       % V.specs2        % "test"
+    val specs2Mock   = "org.specs2"            %% "specs2-mock"       % V.specs2        % "test"
   }
 }

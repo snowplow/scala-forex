@@ -29,7 +29,11 @@ object BuildSettings {
     organization          := "com.snowplowanalytics",
     scalaVersion          := "2.11.12",
     crossScalaVersions    := Seq("2.11.12"),
-    scalacOptions         := compilerOptions
+    scalacOptions         := compilerOptions,
+
+    addCompilerPlugin(
+      "org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full
+    )
   )
 
   lazy val compilerOptions = Seq(
