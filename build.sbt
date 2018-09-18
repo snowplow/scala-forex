@@ -30,6 +30,6 @@ lazy val root = project.in(file("."))
       Dependencies.Libraries.jackson,
       Dependencies.Libraries.collUtil,
       Dependencies.Libraries.mockito,
-      Dependencies.Libraries.specs2
+      Dependencies.Libraries.specs2Core
     )
   )
