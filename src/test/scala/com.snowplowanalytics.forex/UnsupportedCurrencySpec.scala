@@ -14,6 +14,7 @@ package com.snowplowanalytics.forex
 
 // Specs2
 import org.specs2.mutable.Specification
+import org.specs2.specification.core.Fragment
 // TestHelpers
 import TestHelpers._
 // oerclient
@@ -27,7 +28,7 @@ import org.joda.money.Money
  */
 class UnsupportedCurrencySpec extends Specification {
   "Joda money" should {
-    Seq("BTC", "RRU", "EEK") foreach { currency =>
+    Fragment.foreach(List("BTC", "RRU", "EEK")) { currency =>
       (" not support currency: " + currency) >> {
         val rate = fx.rate(currency).to("GBP").now
         rate must beLike {
