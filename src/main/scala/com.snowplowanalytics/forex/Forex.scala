@@ -13,10 +13,9 @@
 package com.snowplowanalytics.forex
 
 // Java
-import java.math.BigDecimal
-import java.math.RoundingMode
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
+import java.math.{BigDecimal, RoundingMode}
 
 // Joda
 import org.joda.money._

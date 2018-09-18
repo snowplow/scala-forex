@@ -17,9 +17,13 @@ package oerclient
 import java.net.URL
 import java.net.HttpURLConnection
 import java.time.{LocalDateTime, ZoneId, ZonedDateTime}
-// Json
-import org.codehaus.jackson.JsonNode
-import org.codehaus.jackson.map.ObjectMapper
+
+// circe
+import io.circe._
+import io.circe.parser.parse
+import io.circe.generic.JsonCodec
+
+@JsonCodec final case class OerResponse(base: String, rates: Map[String, BigDecimal])
 
 /**
  * Implements Json for Open Exchange Rates(http://openexchangerates.org)
@@ -54,9 +58,6 @@ class OerClient(
    */
   private val latest = "latest.json?app_id=" + oerConfig.appId + base
 
-  /** Mapper for reading JSON objects */
-  private val mapper = new ObjectMapper()
-
   /** The earliest date OER service is availble */
   private val oerDataFrom = ZonedDateTime.of(LocalDateTime.of(1999, 1, 1, 0, 0), ZoneId.systemDefault)
 
@@ -69,52 +70,41 @@ class OerClient(
    * @return result returned from API
    */
   def getLiveCurrencyValue(currency: String): ApiRequestResult =
-    getJsonNodeFromApi(latest) match {
-      case Left(oerResponseError) => Left(oerResponseError)
-      case Right(node) => {
-        nowishCache match {
-          case Some(cache) => {
-            val currencyNameIterator = node.getFieldNames
-            oerConfig.accountLevel match {
-              // If the user is using Developer account,
-              // then base currency returned from the API is USD.
-              // To store user-defined base currency into the cache,
-              // we need to convert the forex rate between target currency and USD
-              // to target currency and user-defined base currency
-              case DeveloperAccount => {
-                val usdOverBase = node.findValue(config.baseCurrency).getDecimalValue
-                while (currencyNameIterator.hasNext) {
-                  val currencyName = currencyNameIterator.next
-                  val keyPair      = (config.baseCurrency, currencyName)
-                  val usdOverCurr  = node.findValue(currencyName).getDecimalValue
-                  // flag indicating if the base currency has been set to USD
-                  val fromCurrIsBaseCurr = (config.baseCurrency == "USD")
-                  val baseOverCurr       = Forex.getForexRate(fromCurrIsBaseCurr, usdOverBase, usdOverCurr)
-                  val valPair            = (ZonedDateTime.now, baseOverCurr)
-                  cache.put(keyPair, valPair)
-                }
-              }
-              // For Enterprise and Unlimited users, OER allows them to configure the base currencies.
-              // So the exchange rate returned from the API is between target currency and the base currency they defined.
-              case _ => {
-                while (currencyNameIterator.hasNext) {
-                  val currencyName = currencyNameIterator.next
-                  val keyPair      = (config.baseCurrency, currencyName)
-                  val valPair      = (ZonedDateTime.now, node.findValue(currencyName).getDecimalValue)
-                  cache.put(keyPair, valPair)
-                }
-              }
+    getResponseFromApi(latest).right.flatMap { response =>
+      nowishCache.foreach { cache =>
+        oerConfig.accountLevel match {
+          // If the user is using Developer account,
+          // then base currency returned from the API is USD.
+          // To store user-defined base currency into the cache,
+          // we need to convert the forex rate between target currency and USD
+          // to target currency and user-defined base currency
+          case DeveloperAccount =>
+            val usdOverBase = response.rates(config.baseCurrency)
+            response.rates.foreach {
+              case (currencyName, usdOverCurr) =>
+                val keyPair = (config.baseCurrency, currencyName)
+                // flag indicating if the base currency has been set to USD
+                val fromCurrIsBaseCurr = config.baseCurrency == "USD"
+                val baseOverCurr =
+                  Forex.getForexRate(fromCurrIsBaseCurr, usdOverBase.bigDecimal, usdOverCurr.bigDecimal)
+                val valPair = (ZonedDateTime.now, baseOverCurr)
+                cache.put(keyPair, valPair)
             }
-          }
-          case None => // do nothing
-        }
-        val currencyNode = node.findValue(currency)
-        if (currencyNode == null) {
-          Left(OerResponseError("Currency not found in the API, invalid currency ", IllegalCurrency))
-        } else {
-          Right(currencyNode.getDecimalValue)
+          // For Enterprise and Unlimited users, OER allows them to configure the base currencies.
+          // So the exchange rate returned from the API is between target currency and the base currency they defined.
+          case _ =>
+            response.rates.foreach {
+              case (currencyName, currencyValue) =>
+                val keyPair = (config.baseCurrency, currencyName)
+                val valPair = (ZonedDateTime.now, currencyValue.bigDecimal)
+                cache.put(keyPair, valPair)
+            }
         }
       }
+      response.rates
+        .get(currency)
+        .map(_.bigDecimal)
+        .toRight(OerResponseError("Currency not found in the API, invalid currency ", IllegalCurrency))
     }
 
   /**
@@ -139,55 +129,41 @@ class OerClient(
    * @return result returned from API
    */
   def getHistoricalCurrencyValue(currency: String, date: ZonedDateTime): ApiRequestResult =
-    /**
-     * Return OerResponseError if the date given is not supported by OER
-     */
     if (date.isBefore(oerDataFrom) || date.isAfter(ZonedDateTime.now)) {
       Left(OerResponseError("Exchange rate unavailable on the date [%s] ".format(date), ResourcesNotAvailable))
     } else {
       val historicalLink = buildHistoricalLink(date)
-      getJsonNodeFromApi(historicalLink) match {
-        case Left(oerResponseError) => Left(oerResponseError)
-        case Right(node) => {
-          eodCache match {
-            case Some(cache) => {
-              val currencyNameIterator = node.getFieldNames
-              oerConfig.accountLevel match {
-                // If the user is using Developer account,
-                // then base currency returned from the API is USD.
-                // To store user-defined base currency into the cache,
-                // we need to convert the forex rate between target currency and USD
-                // to target currency and user-defined base currency
-                case DeveloperAccount => {
-                  val usdOverBase = node.findValue(config.baseCurrency).getDecimalValue
-                  while (currencyNameIterator.hasNext) {
-                    val currencyName       = currencyNameIterator.next
-                    val keyPair            = (config.baseCurrency, currencyName, date)
-                    val usdOverCurr        = node.findValue(currencyName).getDecimalValue
-                    val fromCurrIsBaseCurr = (config.baseCurrency == "USD")
-                    cache.put(keyPair, Forex.getForexRate(fromCurrIsBaseCurr, usdOverBase, usdOverCurr))
-                  }
-                }
-                // For Enterprise and Unlimited users, OER allows them to configure the base currencies.
-                // So the exchange rate returned from the API is between target currency and the base currency they defined.
-                case _ => {
-                  while (currencyNameIterator.hasNext) {
-                    val currencyName = currencyNameIterator.next
-                    val keyPair      = (config.baseCurrency, currencyName, date)
-                    cache.put(keyPair, node.findValue(currencyName).getDecimalValue)
-                  }
-                }
+      getResponseFromApi(historicalLink).right.flatMap { response =>
+        eodCache.foreach { cache =>
+          oerConfig.accountLevel match {
+            // If the user is using Developer account,
+            // then base currency returned from the API is USD.
+            // To store user-defined base currency into the cache,
+            // we need to convert the forex rate between target currency and USD
+            // to target currency and user-defined base currency
+            case DeveloperAccount =>
+              val usdOverBase = response.rates(config.baseCurrency)
+              response.rates.foreach {
+                case (currencyName, usdOverCurr) =>
+                  val keyPair            = (config.baseCurrency, currencyName, date)
+                  val fromCurrIsBaseCurr = config.baseCurrency == "USD"
+                  cache.put(keyPair,
+                            Forex.getForexRate(fromCurrIsBaseCurr, usdOverBase.bigDecimal, usdOverCurr.bigDecimal))
               }
-            }
-            case None => // do nothing
-          }
-          val currencyNode = node.findValue(currency)
-          if (currencyNode == null) {
-            Left(OerResponseError("Currency not found in the API, invalid currency ", IllegalCurrency))
-          } else {
-            Right(currencyNode.getDecimalValue)
+            // For Enterprise and Unlimited users, OER allows them to configure the base currencies.
+            // So the exchange rate returned from the API is between target currency and the base currency they defined.
+            case _ =>
+              response.rates.foreach {
+                case (currencyName, currencyValue) =>
+                  val keyPair = (config.baseCurrency, currencyName, date)
+                  cache.put(keyPair, currencyValue.bigDecimal)
+              }
           }
         }
+        response.rates
+          .get(currency)
+          .map(_.bigDecimal)
+          .toRight(OerResponseError(s"Currency not found in the API, invalid currency $currency", IllegalCurrency))
       }
     }
 
@@ -198,29 +174,25 @@ class OerClient(
    * @return JSON node which contains currency information obtained from API
    * or OerResponseError object which carries the error message returned by the API
    */
-  private def getJsonNodeFromApi(downloadPath: String): Either[OerResponseError, JsonNode] = {
+  private def getResponseFromApi(downloadPath: String): Either[OerResponseError, OerResponse] = {
     val url  = new URL(oerUrl + downloadPath)
     val conn = url.openConnection
     conn match {
-      case (httpUrlConn: HttpURLConnection) => {
+      case httpUrlConn: HttpURLConnection =>
         if (httpUrlConn.getResponseCode >= 400) {
-          val errorStream = httpUrlConn.getErrorStream
-          val root        = mapper.readTree(errorStream).getElements
-          var resNode     = root.next
-          while (root.hasNext) {
-            resNode = root.next
-          }
-          Left(OerResponseError(resNode.getTextValue, OtherErrors))
+          val errorString = scala.io.Source.fromInputStream(httpUrlConn.getErrorStream).mkString
+          parse(errorString).right
+            .flatMap(_.hcursor.downField("message").as[String])
+            .left
+            .map(e => OerResponseError(e.getMessage, OtherErrors))
+            .right
+            .flatMap(message => Left(OerResponseError(message, OtherErrors)))
         } else {
-          val inputStream = httpUrlConn.getInputStream
-          val root        = mapper.readTree(inputStream).getElements
-          var resNode     = root.next
-          while (root.hasNext) {
-            resNode = root.next
-          }
-          Right(resNode)
+          parse(scala.io.Source.fromInputStream(httpUrlConn.getInputStream).mkString).right
+            .flatMap(_.as[OerResponse])
+            .left
+            .map(e => OerResponseError(e.getMessage, OtherErrors))
         }
-      }
       case _ => throw new ClassCastException
     }
   }
