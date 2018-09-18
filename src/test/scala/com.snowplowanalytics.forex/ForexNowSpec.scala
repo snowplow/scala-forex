@@ -48,7 +48,7 @@ class ForexNowSpec extends Specification {
 
   "GBP to SGD with base currency USD live exchange rate [%s]".format(sgdMoneyWithBaseUsd) should {
     "be greater than 1 SGD" in {
-      sgdMoneyWithBaseUsd.isGreaterThan(Money.of(CurrencyUnit.getInstance("SGD"), 1))
+      sgdMoneyWithBaseUsd.isGreaterThan(Money.of(CurrencyUnit.of("SGD"), 1))
     }
   }
 
@@ -61,7 +61,7 @@ class ForexNowSpec extends Specification {
 
   "GBP to SGD with base currency GBP live exchange rate [%s]".format(sgdMoneyWithBaseGbp) should {
     "be greater than 1 SGD" in {
-      sgdMoneyWithBaseGbp.isGreaterThan(Money.of(CurrencyUnit.getInstance("SGD"), 1))
+      sgdMoneyWithBaseGbp.isGreaterThan(Money.of(CurrencyUnit.of("SGD"), 1))
     }
   }
 
@@ -74,7 +74,7 @@ class ForexNowSpec extends Specification {
 
   "Do not throw JodaTime exception on converting identical currencies [%s]".format(gbpMoneyWithBaseGbp) should {
     "be equal 1 GBP" in {
-      gbpMoneyWithBaseGbp.isEqual(Money.of(CurrencyUnit.getInstance("GBP"), 1))
+      gbpMoneyWithBaseGbp.isEqual(Money.of(CurrencyUnit.of("GBP"), 1))
     }
   }
 }

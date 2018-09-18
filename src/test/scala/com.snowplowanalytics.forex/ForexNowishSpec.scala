@@ -42,26 +42,26 @@ class ForexNowishSpec extends Specification {
   /**
    * GBP -> JPY with base currency USD
    */
-  val gbpToJpyWithBaseUsd = fx.rate(CurrencyUnit.GBP).to(CurrencyUnit.getInstance("JPY")).nowish
+  val gbpToJpyWithBaseUsd = fx.rate(CurrencyUnit.GBP).to(CurrencyUnit.of("JPY")).nowish
 
   val jpyMoneyWithBaseUsd = gbpToJpyWithBaseUsd.right.get
 
   "GBP to JPY with USD as base currency returning near-live rate [%s]".format(jpyMoneyWithBaseUsd) should {
     "be greater than 1 Yen" in {
-      jpyMoneyWithBaseUsd.isGreaterThan(BigMoney.of(CurrencyUnit.getInstance("JPY"), 1).toMoney(RoundingMode.HALF_EVEN))
+      jpyMoneyWithBaseUsd.isGreaterThan(BigMoney.of(CurrencyUnit.of("JPY"), 1).toMoney(RoundingMode.HALF_EVEN))
     }
   }
 
   /**
    * GBP -> JPY with base currency GBP
    */
-  val gbpToJpyWithBaseGbp = fxWithBaseGBP.rate.to(CurrencyUnit.getInstance("JPY")).nowish
+  val gbpToJpyWithBaseGbp = fxWithBaseGBP.rate.to(CurrencyUnit.of("JPY")).nowish
 
   val jpyMoneyWithBaseGbp = gbpToJpyWithBaseUsd.right.get
 
   "GBP to JPY with GBP as base currency returning near-live rate [%s]".format(jpyMoneyWithBaseGbp) should {
     "be greater than 1 Yen" in {
-      jpyMoneyWithBaseGbp.isGreaterThan(BigMoney.of(CurrencyUnit.getInstance("JPY"), 1).toMoney(RoundingMode.HALF_EVEN))
+      jpyMoneyWithBaseGbp.isGreaterThan(BigMoney.of(CurrencyUnit.of("JPY"), 1).toMoney(RoundingMode.HALF_EVEN))
     }
   }
 }

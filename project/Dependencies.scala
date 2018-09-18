@@ -18,7 +18,7 @@ object Dependencies {
   object V {
     // Java
     val jodaTime    = "2.3"
-    val jodaMoney   = "0.9"
+    val jodaMoney   = "1.0.1"
     val jodaConvert = "1.2"
     val jackson     = "1.9.7"
 
