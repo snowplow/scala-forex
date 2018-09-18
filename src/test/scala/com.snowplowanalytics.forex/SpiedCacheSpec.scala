@@ -16,7 +16,7 @@ package com.snowplowanalytics.forex
 import org.specs2.mutable.Specification
 // Mockito
 import org.specs2.mock.Mockito
-// Joda 
+// Joda
 import org.joda.time._
 // LRUCache
 import com.twitter.util.SynchronizedLruMap
@@ -29,11 +29,12 @@ import TestHelpers._
 /**
  * Testing cache behaviours
  */
-class SpiedCacheSpec extends Specification with Mockito{
-  val spiedNowishCache = spy(new SynchronizedLruMap[NowishCacheKey, NowishCacheValue](config.nowishCacheSize)) 
+class SpiedCacheSpec extends Specification with Mockito {
+  val spiedNowishCache = spy(new SynchronizedLruMap[NowishCacheKey, NowishCacheValue](config.nowishCacheSize))
   val spiedEodCache    = spy(new SynchronizedLruMap[EodCacheKey, EodCacheValue](config.eodCacheSize))
-  val spiedFx = Forex.getForex(config, oerConfig, Some(spiedNowishCache), Some(spiedEodCache)) 
-  val spiedFxWith5NowishSecs = Forex.getForex(fxConfigWith5NowishSecs, oerConfig, Some(spiedNowishCache), Some(spiedEodCache)) 
+  val spiedFx          = Forex.getForex(config, oerConfig, Some(spiedNowishCache), Some(spiedEodCache))
+  val spiedFxWith5NowishSecs =
+    Forex.getForex(fxConfigWith5NowishSecs, oerConfig, Some(spiedNowishCache), Some(spiedEodCache))
 
   /**
    * nowish cache with 5-sec memory
@@ -55,32 +56,29 @@ class SpiedCacheSpec extends Specification with Mockito{
       // value will be different from previous value -
       // even if the monetary value is the same, the
       // timestamp will be different
-      "A second time lookup of CAD->GBP after the memory time" + 
+      "A second time lookup of CAD->GBP after the memory time" +
         "should overwrite the value in the nowish cache" in {
         spiedNowishCache must haveValue(valueFromFirstHttpRequest).not
       }
     }
-   } 
-  
+  }
 
   /**
    * CAD -> GBP with base currency USD on 13-03-2011
    * The eod lookup will call get method on eod cache
-   * after the call, the key will be stored in the cache 
+   * after the call, the key will be stored in the cache
    */
   val date = new DateTime(2011, 3, 13, 0, 0)
-  
+
   spiedFx.rate("CAD").to("GBP").eod(date)
 
   "Eod query on CAD->GBP" should {
     "call get method on eod cache" in {
-      there was one(spiedEodCache).get(("CAD", "GBP", date)) 
+      there was one(spiedEodCache).get(("CAD", "GBP", date))
       "Eod cache have (CAD, GBP) entry after the query" in {
-        spiedEodCache must haveKey(("CAD", "GBP", date)) 
+        spiedEodCache must haveKey(("CAD", "GBP", date))
       }
     }
   }
-
-
 
 }

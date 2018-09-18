@@ -14,7 +14,7 @@ package com.snowplowanalytics
 
 // Java
 import java.math.BigDecimal
-// Joda 
+// Joda
 import org.joda.time._
 // LRUCache
 import com.twitter.util.SynchronizedLruMap
@@ -22,25 +22,26 @@ import com.twitter.util.SynchronizedLruMap
 import forex.oerclient.OerResponseError
 
 package object forex {
+
   /**
    * The key and value for each cache entry
    */
-  type NowishCacheKey       = Tuple2[String, String] // source currency , target currency 
-  type NowishCacheValue     = Tuple2[DateTime, BigDecimal] // timestamp, exchange rate 
+  type NowishCacheKey   = Tuple2[String, String]       // source currency , target currency
+  type NowishCacheValue = Tuple2[DateTime, BigDecimal] // timestamp, exchange rate
 
-  type EodCacheKey          = Tuple3[String, String, DateTime] // source currency, target currency, timestamp
-  type EodCacheValue        = BigDecimal // exchange rate
-  
+  type EodCacheKey   = Tuple3[String, String, DateTime] // source currency, target currency, timestamp
+  type EodCacheValue = BigDecimal                       // exchange rate
+
   // The API request either returns exchange rates in BigDecimal representation
   // or OerResponseError if the request failed
-  type ApiRequestResult     = Either[OerResponseError, BigDecimal]   
-  
+  type ApiRequestResult = Either[OerResponseError, BigDecimal]
+
   /**
    * The two LRU caches we use
    */
-  type NowishCache          = SynchronizedLruMap[NowishCacheKey, NowishCacheValue]
-  type EodCache             = SynchronizedLruMap[EodCacheKey, EodCacheValue]
+  type NowishCache = SynchronizedLruMap[NowishCacheKey, NowishCacheValue]
+  type EodCache    = SynchronizedLruMap[EodCacheKey, EodCacheValue]
 
-  type MaybeNowishCache     = Option[NowishCache]
-  type MaybeEodCache        = Option[EodCache]
+  type MaybeNowishCache = Option[NowishCache]
+  type MaybeEodCache    = Option[EodCache]
 }

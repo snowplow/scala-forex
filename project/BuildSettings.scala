@@ -19,6 +19,9 @@ import Keys._
 import bintray.BintrayPlugin._
 import bintray.BintrayKeys._
 
+// Scalafmt
+import org.scalafmt.sbt.ScalafmtPlugin.autoImport._
+
 object BuildSettings {
 
   // Basic settings for our app
@@ -65,5 +68,9 @@ object BuildSettings {
           <organizationUrl>http://snowplowanalytics.com</organizationUrl>
         </developer>
       </developers>)
+  )
+
+  lazy val formattingSettings = Seq(
+    scalafmtOnCompile := true
   )
 }

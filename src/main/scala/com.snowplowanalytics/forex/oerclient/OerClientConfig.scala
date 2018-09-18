@@ -16,25 +16,22 @@ package oerclient
 /** OER-specific configuration */
 case class OerClientConfig(
   /**
-   * Register an account on https://openexchangerates.org to obtain your unique key 
-   */ 
-  appId: String,              
-  accountLevel: AccountType // Account type of the user 
+   * Register an account on https://openexchangerates.org to obtain your unique key
+   */
+  appId: String,
+  accountLevel: AccountType // Account type of the user
 ) extends ForexClientConfig
 
 /**
  * There are three types of accounts supported by OER API.
  * For scala-forex library, the main difference between Unlimited/Enterprise
  * and Developer users is that users with Unlimited/Enterprise accounts
- * can use the base currency for API requests, but this library will provide 
+ * can use the base currency for API requests, but this library will provide
  * automatic conversions between OER default base currencies(USD)
  * and user-defined base currencies. However this will increase calls to the API
  * and will slow down the performance.
  */
-
 sealed trait AccountType
 object DeveloperAccount extends AccountType
 object EnterpriseAccount extends AccountType
 object UnlimitedAccount extends AccountType
-
-
