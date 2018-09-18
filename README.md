@@ -1,7 +1,9 @@
 # Scala Forex
 
-[![Build Status][travis-image]][travis] [![Release][release-image]][releases] [![License][license-image]][license]
-[![Join the chat at https://gitter.im/snowplow/scala-forex](https://badges.gitter.im/snowplow/scala-forex.svg)](https://gitter.im/snowplow/scala-forex?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Build Status][travis-image]][travis]
+[![Maven Central][maven-image]][maven-link]
+[![License][license-image]][license]
+[![Join the chat at https://gitter.im/snowplow/scala-forex][gitter-image]][gitter-link]
 
 ## 1. Introduction
 
@@ -387,8 +389,11 @@ limitations under the License.
 [travis]: https://travis-ci.org/snowplow/scala-forex
 [travis-image]: https://travis-ci.org/snowplow/scala-forex.png?branch=master
 
-[release-image]: http://img.shields.io/badge/release-0.5.0-blue.svg?style=flat
-[releases]: https://github.com/snowplow/scala-forex/releases
+[maven-image]: https://maven-badges.herokuapp.com/maven-central/com.snowplowanalytics/scala-forex_2.12/badge.svg
+[maven-link]: https://maven-badges.herokuapp.com/maven-central/com.snowplowanalytics/scala-forex_2.12
 
 [license-image]: http://img.shields.io/badge/license-Apache--2-blue.svg?style=flat
 [license]: http://www.apache.org/licenses/LICENSE-2.0
+
+[gitter-image]: https://badges.gitter.im/snowplow/scala-forex.svg
+[gitter-link]: https://gitter.im/snowplow/scala-forex?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
