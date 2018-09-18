@@ -287,19 +287,7 @@ If not specified, `baseCurrency` is set to USD by default.
 
 ## 4. Development
 
-### 4.1 Building
-
-Assuming git, [Vagrant][vagrant-install] and [VirtualBox][virtualbox-install] installed:
-
-```bash
- host> git clone https://github.com/snowplow/scala-forex
- host> cd scala-forex
- host> vagrant up && vagrant ssh
-guest> cd /vagrant
-guest> sbt build
-```
-
-### 4.2 REPL setup
+### 4.1 REPL setup
 
 To try out Scala Forex in the Scala REPL:
 
@@ -313,7 +301,7 @@ scala> val fx = Forex(ForexConfig(), OerClientConfig(appId, DeveloperAccount))
 scala> val usd2jpy = fx.rate.to("JPY").now
 ```
 
-### 4.3 Running tests
+### 4.2 Running tests
 
 You **must** export your `OER_KEY` or else the test suite will fail. To run the test suite locally:
 
@@ -395,9 +383,6 @@ limitations under the License.
 
 [jz4112]: https://github.com/jz4112
 [alexanderdean]: https://github.com/alexanderdean
-
-[vagrant-install]: http://docs.vagrantup.com/v2/installation/index.html
-[virtualbox-install]: https://www.virtualbox.org/wiki/Downloads
 
 [travis]: https://travis-ci.org/snowplow/scala-forex
 [travis-image]: https://travis-ci.org/snowplow/scala-forex.png?branch=master
