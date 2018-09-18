@@ -17,7 +17,6 @@ object Dependencies {
 
   object V {
     // Java
-    val jodaTime    = "2.3"
     val jodaMoney   = "1.0.1"
     val jodaConvert = "2.1.1"
     val jackson     = "1.9.7"
@@ -31,7 +30,6 @@ object Dependencies {
 
   object Libraries {
     // Java
-    val jodaTime    = "joda-time"             % "joda-time"          % V.jodaTime
     val jodaMoney   = "org.joda"              % "joda-money"         % V.jodaMoney
     val jodaConvert = "org.joda"              % "joda-convert"       % V.jodaConvert
     val jackson     = "org.codehaus.jackson"  % "jackson-mapper-asl" % V.jackson

@@ -12,17 +12,17 @@
  */
 package com.snowplowanalytics.forex
 
+// Java
+import java.lang.Thread
+import java.math.BigDecimal
+import java.time.{ZoneId, ZonedDateTime}
+
 // Specs2
 import org.specs2.mutable.Specification
 // Mockito
 import org.specs2.mock.Mockito
-// Joda
-import org.joda.time._
 // LRUCache
 import com.twitter.util.SynchronizedLruMap
-// Java
-import java.lang.Thread
-import java.math.BigDecimal
 // TestHelpers
 import TestHelpers._
 
@@ -68,7 +68,7 @@ class SpiedCacheSpec extends Specification with Mockito {
    * The eod lookup will call get method on eod cache
    * after the call, the key will be stored in the cache
    */
-  val date = new DateTime(2011, 3, 13, 0, 0)
+  val date = ZonedDateTime.of(2011, 3, 13, 0, 0, 0, 0, ZoneId.systemDefault)
 
   spiedFx.rate("CAD").to("GBP").eod(date)
 
