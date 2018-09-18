@@ -306,9 +306,9 @@ case class ForexLookupWhen(conversionAmount: Double, fromCurr: String, toCurr: S
    */
   private def convertToCurrencyUnit(currencyInStringRepresentation: String): Either[OerResponseError, CurrencyUnit] =
     try {
-      Right(CurrencyUnit.getInstance(currencyInStringRepresentation))
+      Right(CurrencyUnit.of(currencyInStringRepresentation))
     } catch {
-      case (e: IllegalCurrencyException) =>
+      case e: IllegalCurrencyException =>
         val errMessage = "Currency [" + fromCurr + "] is not supported by Joda money "
         Left(OerResponseError(errMessage, IllegalCurrency))
     }
