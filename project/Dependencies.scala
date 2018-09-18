@@ -29,7 +29,7 @@ object Dependencies {
     val mockito     = "1.9.5"
 
     // Scala (test only)
-    val specs2 = "2.3.13"
+    val specs2 = "4.3.4"
   }
 
   object Libraries {
@@ -46,6 +46,6 @@ object Dependencies {
     val mockito     = "org.mockito"           %  "mockito-all"       % V.mockito       % "test"
 
     // Scala (test only)
-    val specs2      = "org.specs2"            %% "specs2"            % V.specs2        % "test"
+    val specs2Core  = "org.specs2"            %% "specs2-core"       % V.specs2        % "test"
   }
 }
