@@ -15,6 +15,9 @@ package com.snowplowanalytics.forex
 // Java
 import java.time.{ZoneId, ZonedDateTime}
 
+// Joda
+import org.joda.money.Money
+
 // Specs2
 import org.specs2.mutable.Specification
 // TestHelpers
@@ -33,11 +36,11 @@ class ForexAtSpec extends Specification {
 
   val gbpToCadWithBaseUsd = fx.rate("GBP").to("CAD").at(tradeDate)
 
-  val cadMoney = gbpToCadWithBaseUsd.right.get
+  val cadMoney = gbpToCadWithBaseUsd
 
-  "GBP to CAD with USD as base currency returning latest eod rate [%s]".format(cadMoney) should {
+  "GBP to CAD with USD as base currency returning latest eod rate" should {
     "be > 0" in {
-      cadMoney.isPositive
+      gbpToCadWithBaseUsd.map(_ must beRight((m: Money) => m.isPositive)).unsafeRunSync()
     }
   }
 
@@ -46,11 +49,9 @@ class ForexAtSpec extends Specification {
    */
   val gbpToCadWithBaseGbp = fxWithBaseGBP.rate.to("CAD").at(tradeDate)
 
-  val cadMoneyWithBaseGbp = gbpToCadWithBaseGbp.right.get
-
-  "GBP to CAD with GBP as base currency returning latest eod rate [%s]".format(cadMoneyWithBaseGbp) should {
+  "GBP to CAD with GBP as base currency returning latest eod" should {
     "be > 0" in {
-      cadMoneyWithBaseGbp.isPositive
+      gbpToCadWithBaseGbp.map(_ must beRight((m: Money) => m.isPositive)).unsafeRunSync()
     }
   }
 
@@ -59,11 +60,9 @@ class ForexAtSpec extends Specification {
    */
   val cnyOverGbpHistorical = fx.rate("CNY").to("GBP").at(tradeDate)
 
-  val cnyTogbpmoney = cnyOverGbpHistorical.right.get
-
-  "CNY to GBP with USD as base currency returning latest eod rate [%s]".format(cnyTogbpmoney) should {
+  "CNY to GBP with USD as base currency returning latest eod rate" should {
     "be > 0" in {
-      cnyTogbpmoney.isPositive
+      cnyOverGbpHistorical.map(_ must beRight((m: Money) => m.isPositive)).unsafeRunSync()
     }
   }
 

@@ -30,10 +30,15 @@ class UnsupportedCurrencySpec extends Specification {
   "Joda money" should {
     Fragment.foreach(List("BTC", "RRU", "EEK")) { currency =>
       (" not support currency: " + currency) >> {
-        val rate = fx.rate(currency).to("GBP").now
-        rate must beLike {
-          case Left(OerResponseError(_, IllegalCurrency)) => ok
-        }
+        fx.rate(currency)
+          .to("GBP")
+          .now
+          .map { rate =>
+            rate must beLike {
+              case Left(OerResponseError(_, IllegalCurrency)) => ok
+            }
+          }
+          .unsafeRunSync()
       }
     }
   }

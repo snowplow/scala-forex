@@ -27,6 +27,7 @@ lazy val root = project.in(file("."))
       Dependencies.Libraries.jodaConvert,
       Dependencies.Libraries.jodaMoney,
       Dependencies.Libraries.collUtil,
+      Dependencies.Libraries.catsEffect,
       Dependencies.Libraries.circeParser,
       Dependencies.Libraries.circeGeneric,
       Dependencies.Libraries.specs2Core,

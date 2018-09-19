@@ -16,6 +16,10 @@ package oerclient
 // Java
 import java.math.BigDecimal
 import java.time.ZonedDateTime
+
+// cats
+import cats.data.EitherT
+
 // Specs2
 import org.specs2.mutable.Specification
 // TestHelpers
@@ -26,21 +30,29 @@ class OerClientSpec extends Specification {
 
   "live currency value for USD" should {
     "always equal to 1" in {
-      fx.client.getLiveCurrencyValue("USD").right.get mustEqual (new BigDecimal(1))
+      fx.client
+        .getLiveCurrencyValue("USD")
+        .map(_ must beRight(new BigDecimal(1)))
+        .unsafeRunSync()
     }
   }
 
   val gbpLiveRate = fx.client.getLiveCurrencyValue("GBP")
-  "live currency value for GBP [%s]".format(gbpLiveRate.right.get) should {
+  "live currency value for GBP" should {
     "be less than 1" in {
-      gbpLiveRate.right.get must be < (new BigDecimal(1))
+      gbpLiveRate
+        .map(_ must beRight((d: BigDecimal) => d.doubleValue() < 1))
+        .unsafeRunSync()
     }
   }
 
   val date = ZonedDateTime.parse("2008-01-01T01:01:01.123+09:00")
   "historical currency value for USD on 01/01/2008" should {
     "always equal to 1 as well" in {
-      fx.client.getHistoricalCurrencyValue("USD", date) must beRight((new BigDecimal(1)))
+      fx.client
+        .getHistoricalCurrencyValue("USD", date)
+        .map(_ must beRight(new BigDecimal(1)))
+        .unsafeRunSync()
     }
   }
 }
