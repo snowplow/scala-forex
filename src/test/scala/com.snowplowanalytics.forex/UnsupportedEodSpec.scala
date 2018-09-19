@@ -34,11 +34,16 @@ class UnsupportedEodSpec extends Specification {
       /**
        * 1900 is earlier than 1990 which is the earliest available date for looking up exchange rates
        */
-      val date1900   = ZonedDateTime.of(1900, 3, 13, 0, 0, 0, 0, ZoneId.systemDefault)
-      val rateIn1900 = fx.rate.to("GBP").eod(date1900)
-      rateIn1900 must beLike {
-        case Left(OerResponseError(_, ResourcesNotAvailable)) => ok
-      }
+      val date1900 = ZonedDateTime.of(1900, 3, 13, 0, 0, 0, 0, ZoneId.systemDefault)
+      fx.rate
+        .to("GBP")
+        .eod(date1900)
+        .map { rateIn1900 =>
+          rateIn1900 must beLike {
+            case Left(OerResponseError(_, ResourcesNotAvailable)) => ok
+          }
+        }
+        .unsafeRunSync()
     }
   }
 
@@ -48,11 +53,16 @@ class UnsupportedEodSpec extends Specification {
       /**
        * 2020 is in the future so it won't be available either
        */
-      val date2020   = ZonedDateTime.of(2020, 3, 13, 0, 0, 0, 0, ZoneId.systemDefault)
-      val rateIn2020 = fx.rate.to("GBP").eod(date2020)
-      rateIn2020 must beLike {
-        case Left(OerResponseError(_, ResourcesNotAvailable)) => ok
-      }
+      val date2020 = ZonedDateTime.of(2020, 3, 13, 0, 0, 0, 0, ZoneId.systemDefault)
+      fx.rate
+        .to("GBP")
+        .eod(date2020)
+        .map { rateIn2020 =>
+          rateIn2020 must beLike {
+            case Left(OerResponseError(_, ResourcesNotAvailable)) => ok
+          }
+        }
+        .unsafeRunSync()
     }
   }
 }

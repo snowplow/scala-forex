@@ -31,11 +31,11 @@ class ForexNowSpec extends Specification {
    */
   val tradeInYenNow = fx.convert(10000).to(CurrencyUnit.JPY).now
 
-  val jpyMoneyWithBaseUsd = tradeInYenNow.right.get
-
-  "convert 10000 USD dollars to Yen now = [%s]".format(jpyMoneyWithBaseUsd) should {
+  "convert 10000 USD dollars to Yen now" should {
     "be > 10000" in {
-      jpyMoneyWithBaseUsd.isGreaterThan(Money.of(CurrencyUnit.JPY, 10000, RoundingMode.HALF_EVEN))
+      tradeInYenNow
+        .map(_ must beRight((m: Money) => m.isGreaterThan(Money.of(CurrencyUnit.JPY, 10000, RoundingMode.HALF_EVEN))))
+        .unsafeRunSync()
     }
   }
 
@@ -44,11 +44,11 @@ class ForexNowSpec extends Specification {
    */
   val gbpToSgdWithBaseUsd = fx.rate(CurrencyUnit.GBP).to("SGD").now
 
-  val sgdMoneyWithBaseUsd = gbpToSgdWithBaseUsd.right.get
-
-  "GBP to SGD with base currency USD live exchange rate [%s]".format(sgdMoneyWithBaseUsd) should {
+  "GBP to SGD with base currency USD live exchange rate" should {
     "be greater than 1 SGD" in {
-      sgdMoneyWithBaseUsd.isGreaterThan(Money.of(CurrencyUnit.of("SGD"), 1))
+      gbpToSgdWithBaseUsd
+        .map(_ must beRight((m: Money) => m.isGreaterThan(Money.of(CurrencyUnit.of("SGD"), 1))))
+        .unsafeRunSync()
     }
   }
 
@@ -57,11 +57,11 @@ class ForexNowSpec extends Specification {
    */
   val gbpToSgdWithBaseGbp = fxWithBaseGBP.rate.to("SGD").now
 
-  val sgdMoneyWithBaseGbp = gbpToSgdWithBaseUsd.right.get
-
-  "GBP to SGD with base currency GBP live exchange rate [%s]".format(sgdMoneyWithBaseGbp) should {
+  "GBP to SGD with base currency GBP live exchange rate" should {
     "be greater than 1 SGD" in {
-      sgdMoneyWithBaseGbp.isGreaterThan(Money.of(CurrencyUnit.of("SGD"), 1))
+      gbpToSgdWithBaseGbp
+        .map(_ must beRight((m: Money) => m.isGreaterThan(Money.of(CurrencyUnit.of("SGD"), 1))))
+        .unsafeRunSync()
     }
   }
 
@@ -70,11 +70,11 @@ class ForexNowSpec extends Specification {
    */
   val gbpToGbpWithBaseGbp = fxWithBaseGBP.rate.to("GBP").now
 
-  val gbpMoneyWithBaseGbp = gbpToGbpWithBaseGbp.right.get
-
-  "Do not throw JodaTime exception on converting identical currencies [%s]".format(gbpMoneyWithBaseGbp) should {
+  "Do not throw JodaTime exception on converting identical currencies" should {
     "be equal 1 GBP" in {
-      gbpMoneyWithBaseGbp.isEqual(Money.of(CurrencyUnit.of("GBP"), 1))
+      gbpToGbpWithBaseGbp
+        .map(_ must beRight((m: Money) => m.isEqual(Money.of(CurrencyUnit.of("GBP"), 1))))
+        .unsafeRunSync()
     }
   }
 }

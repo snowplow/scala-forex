@@ -31,11 +31,11 @@ class ForexNowishSpec extends Specification {
    */
   val cadOverGbpNowish = fx.rate("CAD").to(CurrencyUnit.GBP).nowish
 
-  val gbpmoney = cadOverGbpNowish.right.get
-
-  "CAD to GBP with USD as base currency returning near-live rate [%s]".format(gbpmoney) should {
+  "CAD to GBP with USD as base currency returning near-live rate" should {
     "be smaller than 1 pound" in {
-      gbpmoney.isLessThan(Money.of(CurrencyUnit.GBP, 1))
+      cadOverGbpNowish
+        .map(_ must beRight((m: Money) => m.isLessThan(Money.of(CurrencyUnit.GBP, 1))))
+        .unsafeRunSync()
     }
   }
 
@@ -44,11 +44,12 @@ class ForexNowishSpec extends Specification {
    */
   val gbpToJpyWithBaseUsd = fx.rate(CurrencyUnit.GBP).to(CurrencyUnit.of("JPY")).nowish
 
-  val jpyMoneyWithBaseUsd = gbpToJpyWithBaseUsd.right.get
-
-  "GBP to JPY with USD as base currency returning near-live rate [%s]".format(jpyMoneyWithBaseUsd) should {
+  "GBP to JPY with USD as base currency returning near-live rate" should {
     "be greater than 1 Yen" in {
-      jpyMoneyWithBaseUsd.isGreaterThan(BigMoney.of(CurrencyUnit.of("JPY"), 1).toMoney(RoundingMode.HALF_EVEN))
+      gbpToJpyWithBaseUsd
+        .map(_ must beRight((m: Money) =>
+          m.isGreaterThan(BigMoney.of(CurrencyUnit.of("JPY"), 1).toMoney(RoundingMode.HALF_EVEN))))
+        .unsafeRunSync()
     }
   }
 
@@ -57,11 +58,12 @@ class ForexNowishSpec extends Specification {
    */
   val gbpToJpyWithBaseGbp = fxWithBaseGBP.rate.to(CurrencyUnit.of("JPY")).nowish
 
-  val jpyMoneyWithBaseGbp = gbpToJpyWithBaseUsd.right.get
-
-  "GBP to JPY with GBP as base currency returning near-live rate [%s]".format(jpyMoneyWithBaseGbp) should {
+  "GBP to JPY with GBP as base currency returning near-live rate" should {
     "be greater than 1 Yen" in {
-      jpyMoneyWithBaseGbp.isGreaterThan(BigMoney.of(CurrencyUnit.of("JPY"), 1).toMoney(RoundingMode.HALF_EVEN))
+      gbpToJpyWithBaseGbp
+        .map(_ must beRight((m: Money) =>
+          m.isGreaterThan(BigMoney.of(CurrencyUnit.of("JPY"), 1).toMoney(RoundingMode.HALF_EVEN))))
+        .unsafeRunSync()
     }
   }
 }

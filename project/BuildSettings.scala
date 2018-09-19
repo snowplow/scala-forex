@@ -47,6 +47,7 @@ object BuildSettings {
     "-Yno-adapted-args",
     "-Ywarn-dead-code",
     "-Ywarn-numeric-widen",
+    "-Ypartial-unification",
     "-Xfuture",
     "-Xlint"
   )

@@ -16,6 +16,9 @@ package com.snowplowanalytics.forex
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
+// Joda-Money
+import org.joda.money.Money
+
 // Specs2
 import org.specs2.mutable.Specification
 import org.specs2.matcher.DataTables
@@ -43,9 +46,7 @@ class ForexEodSpec extends Specification with DataTables {
       fx.rate(fromCurr)
         .to(toCurr)
         .eod(ZonedDateTime.parse(date, DateTimeFormatter.ISO_OFFSET_DATE_TIME))
-        .right
-        .get
-        .getAmount
-        .toString mustEqual exp
+        .map(_ must beRight((m: Money) => m.getAmount.toString mustEqual exp))
+        .unsafeRunSync()
     }
 }
