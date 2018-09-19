@@ -15,6 +15,10 @@ package com.snowplowanalytics.forex
 // Java
 import java.math.BigDecimal
 import java.time.ZonedDateTime
+
+// cats
+import cats.effect.Sync
+
 // OpenExchangeRate client
 import oerclient._
 // LRUCache
@@ -30,18 +34,20 @@ object ForexClient {
   /**
    * Getter for clients with specified caches(optional)
    */
-  def getClient(config: ForexConfig,
-                clientConfig: ForexClientConfig,
-                nowish: MaybeNowishCache = None,
-                eod: MaybeEodCache       = None): ForexClient =
+  def getClient[F[_]: Sync](config: ForexConfig,
+                            clientConfig: ForexClientConfig,
+                            nowish: MaybeNowishCache = None,
+                            eod: MaybeEodCache       = None): ForexClient[F] =
     clientConfig match {
       case oerClientConfig: OerClientConfig =>
-        new OerClient(config, oerClientConfig, nowishCache = nowish, eodCache = eod)
+        new OerClient[F](config, oerClientConfig, nowishCache = nowish, eodCache = eod)
       case _ => throw NoSuchClientException("This client is not supported by scala-forex currently")
     }
 }
 
-abstract class ForexClient(config: ForexConfig, nowishCache: MaybeNowishCache = None, eodCache: MaybeEodCache = None) {
+abstract class ForexClient[F[_]](config: ForexConfig,
+                                 nowishCache: MaybeNowishCache = None,
+                                 eodCache: MaybeEodCache       = None) {
 
   // Assemble our caches
   object caches {
@@ -76,7 +82,7 @@ abstract class ForexClient(config: ForexConfig, nowishCache: MaybeNowishCache = 
    *            Desired currency
    * @return result returned from API
    */
-  def getLiveCurrencyValue(currency: String): ApiRequestResult
+  def getLiveCurrencyValue(currency: String): F[ApiRequestResult]
 
   /**
    * Get a historical exchange rate from a given currency and date
@@ -87,5 +93,5 @@ abstract class ForexClient(config: ForexConfig, nowishCache: MaybeNowishCache = 
    *            Date of desired rate
    * @return result returned from API
    */
-  def getHistoricalCurrencyValue(currency: String, date: ZonedDateTime): ApiRequestResult
+  def getHistoricalCurrencyValue(currency: String, date: ZonedDateTime): F[ApiRequestResult]
 }

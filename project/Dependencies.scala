@@ -21,8 +21,9 @@ object Dependencies {
     val jodaConvert = "2.1.1"
 
     // Scala
-    val collUtil = "6.34.0"
-    val circe    = "0.9.3"
+    val collUtil   = "6.34.0"
+    val catsEffect = "1.0.0"
+    val circe      = "0.9.3"
 
     // Scala (test only)
     val specs2 = "4.3.4"
@@ -35,6 +36,7 @@ object Dependencies {
 
     // Scala
     val collUtil     = "com.twitter"           %% "util-collection"   % V.collUtil
+    val catsEffect   = "org.typelevel"         %% "cats-effect"       % V.catsEffect
     val circeParser  = "io.circe"              %% "circe-parser"      % V.circe
     val circeGeneric = "io.circe"              %% "circe-generic"     % V.circe
 

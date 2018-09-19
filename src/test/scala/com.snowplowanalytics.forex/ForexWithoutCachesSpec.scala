@@ -12,6 +12,9 @@
  */
 package com.snowplowanalytics.forex
 
+// cats
+import cats.effect.IO
+
 // Specs2
 import org.specs2.mutable.Specification
 // TestHelpers
@@ -23,7 +26,7 @@ import TestHelpers._
 class ForexWithoutCachesSpec extends Specification {
   "Setting both cache sizes to zero" should {
     "disable the use of caches" in {
-      val fxWithoutCache = Forex.getForex(ForexConfig(nowishCacheSize = 0, eodCacheSize = 0), oerConfig)
+      val fxWithoutCache = Forex.getForex[IO](ForexConfig(nowishCacheSize = 0, eodCacheSize = 0), oerConfig)
       fxWithoutCache.client.caches.eod.isEmpty
       fxWithoutCache.client.caches.nowish.isEmpty
     }
