@@ -15,13 +15,12 @@ package com.snowplowanalytics.forex
 // Specs2
 import org.specs2.mutable.Specification
 import org.specs2.specification.core.Fragment
-// TestHelpers
-import TestHelpers._
+
 // oerclient
 import oerclient.IllegalCurrency
 import oerclient.OerResponseError
-// Joda money
-import org.joda.money.Money
+
+import TestHelpers._
 
 /**
  *  Testing for unsupported currencies in joda money, e.g. bitcoin(BTC)

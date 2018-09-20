@@ -25,7 +25,6 @@ import cats.implicits._
 import cats.data.EitherT
 
 // circe
-import io.circe._
 import io.circe.parser.parse
 import io.circe.generic.JsonCodec
 

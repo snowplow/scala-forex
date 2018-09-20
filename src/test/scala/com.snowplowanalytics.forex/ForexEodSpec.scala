@@ -46,7 +46,6 @@ class ForexEodSpec extends Specification with DataTables {
       fx.rate(fromCurr)
         .to(toCurr)
         .eod(ZonedDateTime.parse(date, DateTimeFormatter.ISO_OFFSET_DATE_TIME))
-        .map(_ must beRight((m: Money) => m.getAmount.toString mustEqual exp))
-        .unsafeRunSync()
+        .unsafeRunSync() must beRight((m: Money) => m.getAmount.toString mustEqual exp)
     }
 }

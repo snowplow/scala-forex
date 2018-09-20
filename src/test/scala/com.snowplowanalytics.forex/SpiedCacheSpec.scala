@@ -13,9 +13,11 @@
 package com.snowplowanalytics.forex
 
 // Java
-import java.lang.Thread
-import java.math.BigDecimal
 import java.time.{ZoneId, ZonedDateTime}
+
+// Scala
+import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext
 
 // cats
 import cats.effect.IO
@@ -42,6 +44,8 @@ class SpiedCacheSpec extends Specification with Mockito {
   val spiedFxWith5NowishSecs =
     Forex.getForex[IO](fxConfigWith5NowishSecs, oerConfig, Some(spiedNowishCache), Some(spiedEodCache))
 
+  implicit val timer = IO.timer(ExecutionContext.global)
+
   /**
    * nowish cache with 5-sec memory
    */
@@ -58,7 +62,7 @@ class SpiedCacheSpec extends Specification with Mockito {
         valueFromCache <- spiedNowishCache.get(("CAD", "GBP"))
         test1 = valueFromCache must be equalTo valueFromFirstHttpRequest
 
-        _ <- IO(Thread.sleep(6000))
+        _ <- IO.sleep(6.seconds)
         // nowish will get the value over HTTP request, which will replace the previous value in the cache
         _ <- spiedFxWith5NowishSecs.rate("CAD").to("GBP").nowish
 

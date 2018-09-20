@@ -35,35 +35,36 @@ import com.snowplowanalytics.lrumap.LruMap
 object ForexClient {
 
   /**
+   * Creates a client with a cache and sensible default ForexConfig
+   */
+  def getClient[F[_]: Sync](clientConfig: OerClientConfig): F[ForexClient[F]] =
+    getClient[F](ForexConfig(), clientConfig)
+
+  /**
    * Getter for clients, creating the caches as defined in the config
    */
-  def getClient[F[_]: Sync](config: ForexConfig, clientConfig: ForexClientConfig): F[ForexClient[F]] =
-    clientConfig match {
-      case oerClientConfig: OerClientConfig =>
-        val nowishCacheF =
-          if (config.nowishCacheSize > 0)
-            LruMap.create[F, NowishCacheKey, NowishCacheValue](config.nowishCacheSize).map(_.some)
-          else Sync[F].pure(Option.empty[NowishCache[F]])
+  def getClient[F[_]: Sync](config: ForexConfig, clientConfig: OerClientConfig): F[ForexClient[F]] = {
+    val nowishCacheF =
+      if (config.nowishCacheSize > 0)
+        LruMap.create[F, NowishCacheKey, NowishCacheValue](config.nowishCacheSize).map(_.some)
+      else Sync[F].pure(Option.empty[NowishCache[F]])
 
-        val eodCacheF =
-          if (config.eodCacheSize > 0)
-            LruMap.create[F, EodCacheKey, EodCacheValue](config.eodCacheSize).map(_.some)
-          else Sync[F].pure(Option.empty[EodCache[F]])
+    val eodCacheF =
+      if (config.eodCacheSize > 0)
+        LruMap.create[F, EodCacheKey, EodCacheValue](config.eodCacheSize).map(_.some)
+      else Sync[F].pure(Option.empty[EodCache[F]])
 
-        (nowishCacheF, eodCacheF).mapN {
-          case (nowish, eod) =>
-            new OerClient[F](config, oerClientConfig, nowishCache = nowish, eodCache = eod)
-        }
-      case _ => throw NoSuchClientException("This client is not supported by scala-forex currently")
+    (nowishCacheF, eodCacheF).mapN {
+      case (nowish, eod) =>
+        new OerClient[F](config, clientConfig, nowishCache = nowish, eodCache = eod)
     }
+  }
 
   def getClient[F[_]: Sync](config: ForexConfig,
-                            clientConfig: ForexClientConfig,
+                            clientConfig: OerClientConfig,
                             nowishCache: Option[NowishCache[F]],
-                            eodCache: Option[EodCache[F]]): ForexClient[F] = clientConfig match {
-    case oerConfig: OerClientConfig => new OerClient[F](config, oerConfig, nowishCache, eodCache)
-    case _                          => throw new IllegalArgumentException("Unknown ForexClientConfig")
-  }
+                            eodCache: Option[EodCache[F]]): ForexClient[F] =
+    new OerClient[F](config, clientConfig, nowishCache, eodCache)
 }
 
 abstract class ForexClient[F[_]](val config: ForexConfig,

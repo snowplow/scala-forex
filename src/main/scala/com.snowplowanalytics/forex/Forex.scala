@@ -17,8 +17,6 @@ import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 import java.math.{BigDecimal, RoundingMode}
 
-import com.snowplowanalytics.lrumap.LruMap
-
 // cats
 import cats.effect.Sync
 import cats.implicits._
@@ -53,14 +51,14 @@ object Forex {
   /**
    * Getter for Forex object
    */
-  def getForex[F[_]: Sync](config: ForexConfig, clientConfig: ForexClientConfig): Forex[F] =
+  def getForex[F[_]: Sync](config: ForexConfig, clientConfig: OerClientConfig): Forex[F] =
     new Forex[F](config, clientConfig)
 
   /**
    * Getter for Forex object with user defined caches
    */
   def getForex[F[_]: Sync](config: ForexConfig,
-                           clientConfig: ForexClientConfig,
+                           clientConfig: OerClientConfig,
                            nowish: Option[NowishCache[F]],
                            eod: Option[EodCache[F]]): Forex[F] =
     new Forex[F](config, clientConfig, nowishCache = nowish, eodCache = eod)
@@ -78,7 +76,7 @@ object Forex {
  * @param eodCache - user defined eodCache
  */
 case class Forex[F[_]: Sync](config: ForexConfig,
-                             clientConfig: ForexClientConfig,
+                             clientConfig: OerClientConfig,
                              nowishCache: Option[NowishCache[F]] = None,
                              eodCache: Option[EodCache[F]]       = None) {
 
@@ -174,9 +172,8 @@ case class ForexLookupWhen[F[_]: Sync](conversionAmount: Double, fromCurr: Strin
    * @return Money representation in target currency or OerResponseError object if API request failed
    */
   def now: F[Either[OerResponseError, Money]] = {
-    val timeStamp = ZonedDateTime.now
-    val fromF     = EitherT(fx.client.getLiveCurrencyValue(fromCurr))
-    val toF       = EitherT(fx.client.getLiveCurrencyValue(toCurr))
+    val fromF = EitherT(fx.client.getLiveCurrencyValue(fromCurr))
+    val toF   = EitherT(fx.client.getLiveCurrencyValue(toCurr))
 
     fromF
       .product(toF)
@@ -189,12 +186,12 @@ case class ForexLookupWhen[F[_]: Sync](conversionAmount: Double, fromCurr: Strin
           // because only <baseCurrency, toCurr> were added earlier
           fx.client.nowishCache
             .filter(_ => fromCurr != fx.config.baseCurrency)
-            .traverse(cache => cache.put((fromCurr, toCurr), (timeStamp, rate)))
+            .traverse(cache => Sync[F].delay(ZonedDateTime.now).map(dateTime => (cache, dateTime)))
+            .flatMap(_.traverse { case (cache, timeStamp) => cache.put((fromCurr, toCurr), (timeStamp, rate)) })
             .map(_ => returnMoneyOrJodaError(rate))
       }
       .leftMap(error => returnApiError(error))
       .value
-
   }
 
   /**

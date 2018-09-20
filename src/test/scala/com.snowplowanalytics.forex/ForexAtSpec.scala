@@ -40,7 +40,7 @@ class ForexAtSpec extends Specification {
 
   "GBP to CAD with USD as base currency returning latest eod rate" should {
     "be > 0" in {
-      gbpToCadWithBaseUsd.map(_ must beRight((m: Money) => m.isPositive)).unsafeRunSync()
+      gbpToCadWithBaseUsd.unsafeRunSync() must beRight((m: Money) => m.isPositive)
     }
   }
 
@@ -51,7 +51,7 @@ class ForexAtSpec extends Specification {
 
   "GBP to CAD with GBP as base currency returning latest eod" should {
     "be > 0" in {
-      gbpToCadWithBaseGbp.map(_ must beRight((m: Money) => m.isPositive)).unsafeRunSync()
+      gbpToCadWithBaseGbp.unsafeRunSync() must beRight((m: Money) => m.isPositive)
     }
   }
 
@@ -62,7 +62,7 @@ class ForexAtSpec extends Specification {
 
   "CNY to GBP with USD as base currency returning latest eod rate" should {
     "be > 0" in {
-      cnyOverGbpHistorical.map(_ must beRight((m: Money) => m.isPositive)).unsafeRunSync()
+      cnyOverGbpHistorical.unsafeRunSync() must beRight((m: Money) => m.isPositive)
     }
   }
 
