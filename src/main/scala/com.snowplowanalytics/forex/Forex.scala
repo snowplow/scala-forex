@@ -17,13 +17,12 @@ import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 import java.math.{BigDecimal, RoundingMode}
 
+import com.snowplowanalytics.lrumap.LruMap
+
 // cats
 import cats.effect.Sync
-import cats.{Applicative, Functor}
-import cats.syntax.apply._
-import cats.syntax.applicative._
-import cats.syntax.functor._
-import cats.syntax.flatMap._
+import cats.implicits._
+import cats.data.{EitherT, OptionT}
 
 // Joda
 import org.joda.money._
@@ -62,8 +61,8 @@ object Forex {
    */
   def getForex[F[_]: Sync](config: ForexConfig,
                            clientConfig: ForexClientConfig,
-                           nowish: MaybeNowishCache,
-                           eod: MaybeEodCache): Forex[F] =
+                           nowish: Option[NowishCache[F]],
+                           eod: Option[EodCache[F]]): Forex[F] =
     new Forex[F](config, clientConfig, nowishCache = nowish, eodCache = eod)
 }
 
@@ -80,11 +79,11 @@ object Forex {
  */
 case class Forex[F[_]: Sync](config: ForexConfig,
                              clientConfig: ForexClientConfig,
-                             nowishCache: MaybeNowishCache = None,
-                             eodCache: MaybeEodCache       = None) {
+                             nowishCache: Option[NowishCache[F]] = None,
+                             eodCache: Option[EodCache[F]]       = None) {
 
   // For now, we are hard-wired to the OER Client library
-  val client = ForexClient.getClient[F](config, clientConfig, nowish = nowishCache, eod = eodCache)
+  val client: ForexClient[F] = ForexClient.getClient[F](config, clientConfig, nowishCache, eodCache)
 
   def rate: ForexLookupTo[F] =
     ForexLookupTo(1, config.baseCurrency, this)
@@ -176,30 +175,25 @@ case class ForexLookupWhen[F[_]: Sync](conversionAmount: Double, fromCurr: Strin
    */
   def now: F[Either[OerResponseError, Money]] = {
     val timeStamp = ZonedDateTime.now
-    val fromF     = fx.client.getLiveCurrencyValue(fromCurr)
-    val toF       = fx.client.getLiveCurrencyValue(toCurr)
+    val fromF     = EitherT(fx.client.getLiveCurrencyValue(fromCurr))
+    val toF       = EitherT(fx.client.getLiveCurrencyValue(toCurr))
 
-    (fromF, toF).mapN { (from, to) =>
-      if (from.isRight && to.isRight) {
-        // API request succeeds
-        val baseOverFrom       = from.right.get
-        val baseOverTo         = to.right.get
-        val fromCurrIsBaseCurr = fromCurr == fx.config.baseCurrency
-        val rate               = Forex.getForexRate(fromCurrIsBaseCurr, baseOverFrom, baseOverTo)
-        // Note that if `fromCurr` is not the same as the base currency,
-        // then we need to add the <fromCurr, toCurr> pair into the cache in particular,
-        // because only <baseCurrency, toCurr> were added earlier
-        val action = if (fx.client.caches.nowish.isDefined && fromCurr != fx.config.baseCurrency) {
-          val Some(cache) = fx.client.caches.nowish
-          Sync[F].delay(cache.put((fromCurr, toCurr), (timeStamp, rate)))
-        } else Sync[F].unit
-
-        action.map(_ => returnMoneyOrJodaError(rate))
-      } else {
-        // API request fails
-        returnApiError(from.left.get).pure[F]
+    fromF
+      .product(toF)
+      .flatMapF {
+        case (fromRate, toRate) =>
+          val fromCurrIsBaseCurr = fromCurr == fx.config.baseCurrency
+          val rate               = Forex.getForexRate(fromCurrIsBaseCurr, fromRate, toRate)
+          // Note that if `fromCurr` is not the same as the base currency,
+          // then we need to add the <fromCurr, toCurr> pair into the cache in particular,
+          // because only <baseCurrency, toCurr> were added earlier
+          fx.client.nowishCache
+            .filter(_ => fromCurr != fx.config.baseCurrency)
+            .traverse(cache => cache.put((fromCurr, toCurr), (timeStamp, rate)))
+            .map(_ => returnMoneyOrJodaError(rate))
       }
-    }.flatten
+      .leftMap(error => returnApiError(error))
+      .value
 
   }
 
@@ -211,38 +205,24 @@ case class ForexLookupWhen[F[_]: Sync](conversionAmount: Double, fromCurr: Strin
    * @return Money representation in target currency or OerResponseError object if API request failed
    */
   def nowish: F[Either[OerResponseError, Money]] =
-    fx.client.caches.nowish match {
-      case Some(cache) => {
-        val nowishTime = ZonedDateTime.now.minusSeconds(fx.config.nowishSecs)
-        cache.get((fromCurr, toCurr)) match {
-          // from:to found in LRU cache
-          case Some(tpl) =>
-            val (timeStamp, exchangeRate) = tpl
-            if (nowishTime.isBefore(timeStamp) || nowishTime.equals(timeStamp)) {
-              // the timestamp in the cache is within the allowed range
-              returnMoneyOrJodaError(exchangeRate).pure[F]
-            } else {
-              now
-            }
-          // from:to not found in LRU
-          case None =>
-            cache.get((toCurr, fromCurr)) match {
-              // to:from found in LRU
-              case Some(tpl) => {
-                val (time, rate) = tpl
-                returnMoneyOrJodaError(new BigDecimal(1).divide(rate, Forex.commonScale, RoundingMode.HALF_EVEN))
-                  .pure[F]
-              }
-              // Neither direction found in LRU
-              case None => {
-                now
-              }
-            }
-        }
+    OptionT
+      .fromOption[F](fx.client.nowishCache)
+      .flatMap(cache => lookupNowishCache(fromCurr, toCurr))
+      .withFilter {
+        case (time, _) =>
+          val nowishTime = ZonedDateTime.now.minusSeconds(fx.config.nowishSecs.toLong)
+          nowishTime.isBefore(time) || nowishTime.equals(time)
       }
-      // If cache is disabled, nowish lookup will perform exactly the same as now()
-      case None => now
-    }
+      .map { case (_, rate) => returnMoneyOrJodaError(rate) }
+      .getOrElseF(now)
+
+  private def lookupNowishCache(fromCurr: String, toCurr: String): OptionT[F, NowishCacheValue] = {
+    val oneWay = OptionT(fx.client.nowishCache.flatTraverse(cache => cache.get((fromCurr, toCurr))))
+    val otherWay = OptionT(fx.client.nowishCache.flatTraverse(cache => cache.get((toCurr, fromCurr))))
+      .map { case (time, rate) => (time, inverseRate(rate)) }
+
+    oneWay.orElse(otherWay)
+  }
 
   /**
    * Gets the latest end-of-day rate prior to the event or post to the event
@@ -262,58 +242,48 @@ case class ForexLookupWhen[F[_]: Sync](conversionAmount: Double, fromCurr: Strin
    * @return Money representation in target currency or OerResponseError object if API request failed
    */
   def eod(eodDate: ZonedDateTime): F[Either[OerResponseError, Money]] =
-    fx.client.caches.eod match {
-      case Some(cache) => {
-        cache.get((fromCurr, toCurr, eodDate)) match {
-          // from->to is found in the cache
-          case Some(rate) =>
-            returnMoneyOrJodaError(rate).pure[F]
-          // from->to not found in the cache
-          case None =>
-            cache.get((toCurr, fromCurr, eodDate)) match {
-              // to->from found in the cache
-              case Some(exchangeRate) =>
-                returnMoneyOrJodaError(
-                  new BigDecimal(1).divide(exchangeRate, Forex.commonScale, RoundingMode.HALF_EVEN)).pure[F]
-              // neither from->to nor to->from found in the cache
-              case None =>
-                getHistoricalRate(eodDate)
-            }
-        }
-      }
-      case None => getHistoricalRate(eodDate)
-    }
+    OptionT
+      .fromOption[F](fx.client.eodCache)
+      .flatMap(cache => lookupEodCache(fromCurr, toCurr, eodDate))
+      .map(rate => returnMoneyOrJodaError(rate))
+      .getOrElseF(getHistoricalRate(eodDate))
+
+  private def lookupEodCache(fromCurr: String, toCurr: String, eodDate: ZonedDateTime): OptionT[F, BigDecimal] = {
+    val oneWay = OptionT(fx.client.eodCache.flatTraverse(cache => cache.get((fromCurr, toCurr, eodDate))))
+    val otherWay = OptionT(fx.client.eodCache.flatTraverse(cache => cache.get((toCurr, fromCurr, eodDate))))
+      .map(inverseRate)
+
+    oneWay.orElse(otherWay)
+  }
+
+  private def inverseRate(rate: BigDecimal): BigDecimal =
+    new BigDecimal(1).divide(rate, Forex.commonScale, RoundingMode.HALF_EVEN)
 
   /**
    * Helper method to get the historical forex rate between two currencies on a given date,
    * @return Money in target currency representation or error message if the date given is invalid
    */
   private def getHistoricalRate(date: ZonedDateTime): F[Either[OerResponseError, Money]] = {
-    val fromF = fx.client.getHistoricalCurrencyValue(fromCurr, date)
-    val toF   = fx.client.getHistoricalCurrencyValue(toCurr, date)
+    val fromF = EitherT(fx.client.getHistoricalCurrencyValue(fromCurr, date))
+    val toF   = EitherT(fx.client.getHistoricalCurrencyValue(toCurr, date))
 
-    (fromF, toF).mapN { (from, to) =>
-      if (from.isRight && to.isRight) {
-        // API request succeeds
-        val baseOverFrom       = from.right.get
-        val baseOverTo         = to.right.get
-        val fromCurrIsBaseCurr = fromCurr == fx.config.baseCurrency
-        val rate               = Forex.getForexRate(fromCurrIsBaseCurr, baseOverFrom, baseOverTo)
-        // Note that if `fromCurr` is not the same as the base currency,
-        // then we need to add the <fromCurr, toCurr> pair into the cache in particular,
-        // because only <baseCurrency, toCurr> were added earlier
-        val action = if (fx.client.caches.eod.isDefined && fromCurr != fx.config.baseCurrency) {
-          val Some(cache) = fx.client.caches.eod
-          Sync[F].delay(cache.put((fromCurr, toCurr, date), rate))
-        } else Sync[F].unit
-
-        action.map(_ => returnMoneyOrJodaError(rate))
-      } else {
-        // API request fails
-        returnApiError(from.left.get).pure[F]
+    fromF
+      .product(toF)
+      .flatMapF {
+        case (fromRate, toRate) =>
+          // API request succeeds
+          val fromCurrIsBaseCurr = fromCurr == fx.config.baseCurrency
+          val rate               = Forex.getForexRate(fromCurrIsBaseCurr, fromRate, toRate)
+          // Note that if `fromCurr` is not the same as the base currency,
+          // then we need to add the <fromCurr, toCurr> pair into the cache in particular,
+          // because only <baseCurrency, toCurr> were added earlier
+          fx.client.eodCache
+            .filter(_ => fromCurr != fx.config.baseCurrency)
+            .traverse_(cache => cache.put((fromCurr, toCurr, date), rate))
+            .map(_ => returnMoneyOrJodaError(rate))
       }
-    }.flatten
-
+      .leftMap(error => returnApiError(error))
+      .value
   }
 
   /**
@@ -338,26 +308,24 @@ case class ForexLookupWhen[F[_]: Sync](conversionAmount: Double, fromCurr: Strin
    * if either of the currency is not supported by Joda Money
    */
   private def returnMoneyOrJodaError(rate: BigDecimal): Either[OerResponseError, Money] =
-    if (fromCurrencyUnit.isRight && toCurrencyUnit.isRight) {
-      // Money in a given amount
-      val moneyInSourceCurrency = BigMoney.of(fromCurrencyUnit.right.get, conversionAmt)
-      // prevent weird JodaTime exception when converting equal currencies
-      if (fromCurrencyUnit.right.get == toCurrencyUnit.right.get) {
-        Right(moneyInSourceCurrency.toMoney(RoundingMode.HALF_EVEN))
-      } else {
-        Right(moneyInSourceCurrency.convertedTo(toCurrencyUnit.right.get, rate).toMoney(RoundingMode.HALF_EVEN))
+    fromCurrencyUnit
+      .product(toCurrencyUnit)
+      .map {
+        case (fromCurrency, toCurrency) =>
+          val moneyInSourceCurrency = BigMoney.of(fromCurrency, conversionAmt)
+
+          if (fromCurrency == toCurrency)
+            moneyInSourceCurrency.toMoney(RoundingMode.HALF_EVEN)
+          else
+            moneyInSourceCurrency.convertedTo(toCurrency, rate).toMoney(RoundingMode.HALF_EVEN)
       }
-    } else {
-      var errMessage = "The exchange rate of [" + fromCurr + "]:[" + toCurr + "] " +
-        "is " + rate + ". However, "
-      if (fromCurrencyUnit.isLeft) {
-        errMessage += fromCurrencyUnit.left.get.errorMessage
+      .leftMap { _ =>
+        var errMessage = "The exchange rate of [" + fromCurr + "]:[" + toCurr + "] " +
+          "is " + rate + ". However, "
+        errMessage += fromCurrencyUnit.fold(_.errorMessage, _ => "")
+        errMessage += toCurrencyUnit.fold(_.errorMessage, _   => "")
+        OerResponseError(errMessage, IllegalCurrency)
       }
-      if (toCurrencyUnit.isLeft) {
-        errMessage += toCurrencyUnit.left.get.errorMessage
-      }
-      Left(OerResponseError(errMessage, IllegalCurrency))
-    }
 
   /**
    * This method is called if API requests fail
@@ -365,15 +333,11 @@ case class ForexLookupWhen[F[_]: Sync](conversionAmount: Double, fromCurr: Strin
    * @return OerResponseError object which states the failure information
    * and also illegal currency info if there is any illegal currency
    */
-  private def returnApiError(errObject: OerResponseError): Either[OerResponseError, Money] = {
+  private def returnApiError(errObject: OerResponseError): OerResponseError = {
     var errMsg = ""
-    if (fromCurrencyUnit.isLeft) {
-      errMsg += fromCurrencyUnit.left.get.errorMessage
-    }
-    if (toCurrencyUnit.isLeft) {
-      errMsg += toCurrencyUnit.left.get.errorMessage
-    }
+    errMsg += fromCurrencyUnit.fold(_.errorMessage, _ => "")
+    errMsg += toCurrencyUnit.fold(_.errorMessage, _   => "")
     errMsg += errObject.errorMessage
-    Left(OerResponseError(errMsg, errObject.errorType))
+    OerResponseError(errMsg, errObject.errorType)
   }
 }
