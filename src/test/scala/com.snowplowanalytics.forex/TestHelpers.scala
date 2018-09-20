@@ -17,8 +17,6 @@ import cats.effect.IO
 
 // oerclient
 import oerclient._
-// LRUCache
-import com.twitter.util.LruMap
 
 /**
  * All tests can have access to the same Forex object

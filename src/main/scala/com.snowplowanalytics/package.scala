@@ -15,8 +15,13 @@ package com.snowplowanalytics
 // Java
 import java.time.ZonedDateTime
 import java.math.BigDecimal
-// LRUCache
-import com.twitter.util.SynchronizedLruMap
+
+// cats
+import cats.effect.Sync
+
+// LruMap
+import com.snowplowanalytics.lrumap.LruMap
+
 // oerclient
 import forex.oerclient.OerResponseError
 
@@ -38,9 +43,6 @@ package object forex {
   /**
    * The two LRU caches we use
    */
-  type NowishCache = SynchronizedLruMap[NowishCacheKey, NowishCacheValue]
-  type EodCache    = SynchronizedLruMap[EodCacheKey, EodCacheValue]
-
-  type MaybeNowishCache = Option[NowishCache]
-  type MaybeEodCache    = Option[EodCache]
+  type NowishCache[F[_]] = LruMap[F, NowishCacheKey, NowishCacheValue]
+  type EodCache[F[_]]    = LruMap[F, EodCacheKey, EodCacheValue]
 }

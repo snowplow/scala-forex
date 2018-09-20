@@ -19,13 +19,15 @@ import java.time.{ZoneId, ZonedDateTime}
 
 // cats
 import cats.effect.IO
+import cats.syntax.apply._
+
+// LruMap
+import com.snowplowanalytics.lrumap.LruMap
 
 // Specs2
 import org.specs2.mutable.Specification
 // Mockito
 import org.specs2.mock.Mockito
-// LRUCache
-import com.twitter.util.SynchronizedLruMap
 // TestHelpers
 import TestHelpers._
 
@@ -33,9 +35,10 @@ import TestHelpers._
  * Testing cache behaviours
  */
 class SpiedCacheSpec extends Specification with Mockito {
-  val spiedNowishCache = spy(new SynchronizedLruMap[NowishCacheKey, NowishCacheValue](config.nowishCacheSize))
-  val spiedEodCache    = spy(new SynchronizedLruMap[EodCacheKey, EodCacheValue](config.eodCacheSize))
-  val spiedFx          = Forex.getForex[IO](config, oerConfig, Some(spiedNowishCache), Some(spiedEodCache))
+  val spiedNowishCache = spy(
+    LruMap.create[IO, NowishCacheKey, NowishCacheValue](config.nowishCacheSize).unsafeRunSync())
+  val spiedEodCache = spy(LruMap.create[IO, EodCacheKey, EodCacheValue](config.eodCacheSize).unsafeRunSync())
+  val spiedFx       = Forex.getForex[IO](config, oerConfig, Some(spiedNowishCache), Some(spiedEodCache))
   val spiedFxWith5NowishSecs =
     Forex.getForex[IO](fxConfigWith5NowishSecs, oerConfig, Some(spiedNowishCache), Some(spiedEodCache))
 
@@ -48,11 +51,12 @@ class SpiedCacheSpec extends Specification with Mockito {
         // call nowish, update the cache with key("CAD","GBP") and corresponding value
         _ <- spiedFxWith5NowishSecs.rate("CAD").to("GBP").nowish
         // get the value from the first HTPP request
-        valueFromFirstHttpRequest = spiedNowishCache(("CAD", "GBP"))
+        valueFromFirstHttpRequest <- spiedNowishCache.get(("CAD", "GBP"))
         // call nowish within 5 secs will get the value from the cache which is the same as valueFromFirstHttpRequest
         _ <- spiedFxWith5NowishSecs.rate("CAD").to("GBP").nowish
 
-        test1 = spiedNowishCache must haveValue(valueFromFirstHttpRequest)
+        valueFromCache <- spiedNowishCache.get(("CAD", "GBP"))
+        test1 = valueFromCache must be equalTo valueFromFirstHttpRequest
 
         _ <- IO(Thread.sleep(6000))
         // nowish will get the value over HTTP request, which will replace the previous value in the cache
@@ -61,7 +65,8 @@ class SpiedCacheSpec extends Specification with Mockito {
         // value will be different from previous value -
         // even if the monetary value is the same, the
         // timestamp will be different
-        test2 = spiedNowishCache must haveValue(valueFromFirstHttpRequest).not
+        newValueFromCache <- spiedNowishCache.get(("CAD", "GBP"))
+        test2 = newValueFromCache mustNotEqual valueFromFirstHttpRequest
       } yield test1 and test2
 
       action.unsafeRunSync()
@@ -81,8 +86,9 @@ class SpiedCacheSpec extends Specification with Mockito {
         .rate("CAD")
         .to("GBP")
         .eod(date)
-        .map { _ =>
-          there was one(spiedEodCache).get(("CAD", "GBP", date)) and (spiedEodCache must haveKey(("CAD", "GBP", date)))
+        .productR(spiedEodCache.get(("CAD", "GBP", date)))
+        .map { valueFromCache =>
+          there was two(spiedEodCache).get(("CAD", "GBP", date)) and (valueFromCache must beSome)
         }
         .unsafeRunSync()
     }

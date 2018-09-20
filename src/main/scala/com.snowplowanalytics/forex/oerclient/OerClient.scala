@@ -21,13 +21,7 @@ import java.math.{BigDecimal => JBigDecimal}
 
 // cats
 import cats.effect.Sync
-import cats.instances.option._
-import cats.syntax.applicative._
-import cats.syntax.functor._
-import cats.syntax.flatMap._
-import cats.syntax.traverse._
-import cats.syntax.either._
-import cats.syntax.option._
+import cats.implicits._
 import cats.data.EitherT
 
 // circe
@@ -47,8 +41,8 @@ import io.circe.generic.JsonCodec
 class OerClient[F[_]: Sync](
   config: ForexConfig,
   oerConfig: OerClientConfig,
-  nowishCache: MaybeNowishCache = None,
-  eodCache: MaybeEodCache       = None
+  nowishCache: Option[NowishCache[F]] = None,
+  eodCache: Option[EodCache[F]]       = None
 ) extends ForexClient[F](config, nowishCache, eodCache) {
 
   /** Base URL to OER API */
@@ -100,7 +94,7 @@ class OerClient[F[_]: Sync](
         // to target currency and user-defined base currency
         case DeveloperAccount =>
           val usdOverBase = response.rates(config.baseCurrency)
-          Sync[F].delay(response.rates.foreach {
+          response.rates.toList.traverse_ {
             case (currencyName, usdOverCurr) =>
               val keyPair = (config.baseCurrency, currencyName)
               // flag indicating if the base currency has been set to USD
@@ -109,16 +103,16 @@ class OerClient[F[_]: Sync](
                 Forex.getForexRate(fromCurrIsBaseCurr, usdOverBase.bigDecimal, usdOverCurr.bigDecimal)
               val valPair = (ZonedDateTime.now, baseOverCurr)
               cache.put(keyPair, valPair)
-          })
+          }
         // For Enterprise and Unlimited users, OER allows them to configure the base currencies.
         // So the exchange rate returned from the API is between target currency and the base currency they defined.
         case _ =>
-          Sync[F].delay(response.rates.foreach {
+          response.rates.toList.traverse_ {
             case (currencyName, currencyValue) =>
               val keyPair = (config.baseCurrency, currencyName)
               val valPair = (ZonedDateTime.now, currencyValue.bigDecimal)
               cache.put(keyPair, valPair)
-          })
+          }
       }
     }
     cacheAction.map { _ =>
@@ -219,7 +213,6 @@ class OerClient[F[_]: Sync](
           parse(errorString)
             .flatMap(_.hcursor.downField("message").as[String])
             .leftMap(e => OerResponseError(e.getMessage, OtherErrors))
-            .right
             .flatMap(message => Left(OerResponseError(message, OtherErrors)))
         } else {
           parse(scala.io.Source.fromInputStream(httpUrlConn.getInputStream).mkString)
