@@ -20,7 +20,7 @@ case class OerClientConfig(
    */
   appId: String,
   accountLevel: AccountType // Account type of the user
-) extends ForexClientConfig
+)
 
 /**
  * There are three types of accounts supported by OER API.
