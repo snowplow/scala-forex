@@ -26,10 +26,10 @@ lazy val root = project.in(file("."))
     libraryDependencies ++= Seq(
       Dependencies.Libraries.jodaConvert,
       Dependencies.Libraries.jodaMoney,
-      Dependencies.Libraries.collUtil,
       Dependencies.Libraries.catsEffect,
       Dependencies.Libraries.circeParser,
       Dependencies.Libraries.circeGeneric,
+      Dependencies.Libraries.lruMap,
       Dependencies.Libraries.specs2Core,
       Dependencies.Libraries.specs2Mock
     )

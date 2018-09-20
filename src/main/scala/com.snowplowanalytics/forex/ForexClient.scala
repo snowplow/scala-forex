@@ -13,16 +13,19 @@
 package com.snowplowanalytics.forex
 
 // Java
-import java.math.BigDecimal
 import java.time.ZonedDateTime
 
 // cats
 import cats.effect.Sync
+import cats.syntax.apply._
+import cats.syntax.functor._
+import cats.syntax.option._
 
 // OpenExchangeRate client
 import oerclient._
-// LRUCache
-import com.twitter.util.SynchronizedLruMap
+
+// LruMap
+import com.snowplowanalytics.lrumap.LruMap
 
 /**
  * Companion object for ForexClient class
@@ -32,48 +35,40 @@ import com.twitter.util.SynchronizedLruMap
 object ForexClient {
 
   /**
-   * Getter for clients with specified caches(optional)
+   * Getter for clients, creating the caches as defined in the config
    */
-  def getClient[F[_]: Sync](config: ForexConfig,
-                            clientConfig: ForexClientConfig,
-                            nowish: MaybeNowishCache = None,
-                            eod: MaybeEodCache       = None): ForexClient[F] =
+  def getClient[F[_]: Sync](config: ForexConfig, clientConfig: ForexClientConfig): F[ForexClient[F]] =
     clientConfig match {
       case oerClientConfig: OerClientConfig =>
-        new OerClient[F](config, oerClientConfig, nowishCache = nowish, eodCache = eod)
+        val nowishCacheF =
+          if (config.nowishCacheSize > 0)
+            LruMap.create[F, NowishCacheKey, NowishCacheValue](config.nowishCacheSize).map(_.some)
+          else Sync[F].pure(Option.empty[NowishCache[F]])
+
+        val eodCacheF =
+          if (config.eodCacheSize > 0)
+            LruMap.create[F, EodCacheKey, EodCacheValue](config.eodCacheSize).map(_.some)
+          else Sync[F].pure(Option.empty[EodCache[F]])
+
+        (nowishCacheF, eodCacheF).mapN {
+          case (nowish, eod) =>
+            new OerClient[F](config, oerClientConfig, nowishCache = nowish, eodCache = eod)
+        }
       case _ => throw NoSuchClientException("This client is not supported by scala-forex currently")
     }
+
+  def getClient[F[_]: Sync](config: ForexConfig,
+                            clientConfig: ForexClientConfig,
+                            nowishCache: Option[NowishCache[F]],
+                            eodCache: Option[EodCache[F]]): ForexClient[F] = clientConfig match {
+    case oerConfig: OerClientConfig => new OerClient[F](config, oerConfig, nowishCache, eodCache)
+    case _                          => throw new IllegalArgumentException("Unknown ForexClientConfig")
+  }
 }
 
-abstract class ForexClient[F[_]](config: ForexConfig,
-                                 nowishCache: MaybeNowishCache = None,
-                                 eodCache: MaybeEodCache       = None) {
-
-  // Assemble our caches
-  object caches {
-
-    // LRU cache for nowish request, with (source currency, target currency) as the key
-    // and (date time, exchange rate) as the value
-    val nowish =
-      if (nowishCache.isDefined) {
-        nowishCache
-      } else if (config.nowishCacheSize > 0) {
-        Some(new SynchronizedLruMap[NowishCacheKey, NowishCacheValue](config.nowishCacheSize))
-      } else {
-        None
-      }
-
-    // LRU cache for historical request, with (source currency, target currency, date time) as the key
-    // and exchange rate as the value
-    val eod =
-      if (eodCache.isDefined) {
-        eodCache
-      } else if (config.eodCacheSize > 0) {
-        Some(new SynchronizedLruMap[EodCacheKey, EodCacheValue](config.eodCacheSize))
-      } else {
-        None
-      }
-  }
+abstract class ForexClient[F[_]](val config: ForexConfig,
+                                 val nowishCache: Option[NowishCache[F]] = None,
+                                 val eodCache: Option[EodCache[F]]       = None) {
 
   /**
    * Get the latest exchange rate from a given currency
