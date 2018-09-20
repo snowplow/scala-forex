@@ -16,9 +16,6 @@ package com.snowplowanalytics
 import java.time.ZonedDateTime
 import java.math.BigDecimal
 
-// cats
-import cats.effect.Sync
-
 // LruMap
 import com.snowplowanalytics.lrumap.LruMap
 

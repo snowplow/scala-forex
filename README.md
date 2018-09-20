@@ -87,7 +87,7 @@ Case class with defaults:
 case class OerClientConfig(
   appId: String,            
   accountLevel: AccountType
-) extends ForexClientConfig
+)
 ```
 
 To go through each in turn:

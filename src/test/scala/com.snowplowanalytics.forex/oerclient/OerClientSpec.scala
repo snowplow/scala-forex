@@ -17,12 +17,9 @@ package oerclient
 import java.math.BigDecimal
 import java.time.ZonedDateTime
 
-// cats
-import cats.data.EitherT
-
 // Specs2
 import org.specs2.mutable.Specification
-// TestHelpers
+
 import TestHelpers._
 
 /** Testing methods for Open exchange rate client */
