@@ -366,7 +366,7 @@ With Open Exchange Rates' Unlimited and Enterprise accounts, Scala Forex can spe
 
 ## 6. Copyright and license
 
-Scala Forex is copyright 2013-2016 Snowplow Analytics Ltd.
+Scala Forex is copyright 2013-2018 Snowplow Analytics Ltd.
 
 Licensed under the [Apache License, Version 2.0][license] (the "License");
 you may not use this software except in compliance with the License.
