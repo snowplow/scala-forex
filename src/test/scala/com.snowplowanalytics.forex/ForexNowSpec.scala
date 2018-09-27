@@ -29,52 +29,49 @@ class ForexNowSpec extends Specification {
   /**
    * Trade 10000 USD to JPY at live exchange rate
    */
-  val tradeInYenNow = fx.convert(10000).to(CurrencyUnit.JPY).now
+  val tradeInYenNow = fx.flatMap(_.convert(10000).to(CurrencyUnit.JPY).now)
 
   "convert 10000 USD dollars to Yen now" should {
     "be > 10000" in {
       tradeInYenNow
-        .map(_ must beRight((m: Money) => m.isGreaterThan(Money.of(CurrencyUnit.JPY, 10000, RoundingMode.HALF_EVEN))))
-        .unsafeRunSync()
+        .unsafeRunSync() must beRight(
+        (m: Money) => m.isGreaterThan(Money.of(CurrencyUnit.JPY, 10000, RoundingMode.HALF_EVEN)))
     }
   }
 
   /**
    * GBP -> SGD with USD as base currency
    */
-  val gbpToSgdWithBaseUsd = fx.rate(CurrencyUnit.GBP).to("SGD").now
+  val gbpToSgdWithBaseUsd = fx.flatMap(_.rate(CurrencyUnit.GBP).to(CurrencyUnit.of("SGD")).now)
 
   "GBP to SGD with base currency USD live exchange rate" should {
     "be greater than 1 SGD" in {
       gbpToSgdWithBaseUsd
-        .map(_ must beRight((m: Money) => m.isGreaterThan(Money.of(CurrencyUnit.of("SGD"), 1))))
-        .unsafeRunSync()
+        .unsafeRunSync() must beRight((m: Money) => m.isGreaterThan(Money.of(CurrencyUnit.of("SGD"), 1)))
     }
   }
 
   /**
    * GBP -> SGD with GBP as base currency
    */
-  val gbpToSgdWithBaseGbp = fxWithBaseGBP.rate.to("SGD").now
+  val gbpToSgdWithBaseGbp = fxWithBaseGBP.flatMap(_.rate.to(CurrencyUnit.of("SGD")).now)
 
   "GBP to SGD with base currency GBP live exchange rate" should {
     "be greater than 1 SGD" in {
       gbpToSgdWithBaseGbp
-        .map(_ must beRight((m: Money) => m.isGreaterThan(Money.of(CurrencyUnit.of("SGD"), 1))))
-        .unsafeRunSync()
+        .unsafeRunSync() must beRight((m: Money) => m.isGreaterThan(Money.of(CurrencyUnit.of("SGD"), 1)))
     }
   }
 
   /**
    * GBP with GBP as base currency
    */
-  val gbpToGbpWithBaseGbp = fxWithBaseGBP.rate.to("GBP").now
+  val gbpToGbpWithBaseGbp = fxWithBaseGBP.flatMap(_.rate.to(CurrencyUnit.GBP).now)
 
   "Do not throw JodaTime exception on converting identical currencies" should {
     "be equal 1 GBP" in {
       gbpToGbpWithBaseGbp
-        .map(_ must beRight((m: Money) => m.isEqual(Money.of(CurrencyUnit.of("GBP"), 1))))
-        .unsafeRunSync()
+        .unsafeRunSync() must beRight((m: Money) => m.isEqual(Money.of(CurrencyUnit.of("GBP"), 1)))
     }
   }
 }
