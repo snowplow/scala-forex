@@ -12,23 +12,18 @@
  */
 package com.snowplowanalytics.forex
 
+// Joda
+import org.joda.money.CurrencyUnit
+
 // cats
 import cats.effect.IO
 
-// oerclient
-import oerclient._
-
-/**
- * All tests can have access to the same Forex object
- */
 object TestHelpers {
-  val key                     = sys.env("OER_KEY") // Warning: this will give nasty errors if env var not exported
-  val config                  = ForexConfig() // ForexConfig object with default values
-  val fxConfigWith5NowishSecs = ForexConfig(nowishSecs = 5) // ForexConfig object with 5 nowishSecs
-  val oerConfig               = OerClientConfig(key, DeveloperAccount) // with default base currency USD
-  val fx                      = Forex.getForex[IO](config, oerConfig) // Forex object with USD as base currency
-  val forexConfig             = ForexConfig(nowishCacheSize = 0, eodCacheSize = 0)
-  val fxWithoutCache          = Forex.getForex[IO](forexConfig, oerConfig) // Forex object with caches disabled
-  val confWithBaseGBP         = OerClientConfig(key, EnterpriseAccount) // set base currency to GBP
-  val fxWithBaseGBP           = Forex.getForex[IO](ForexConfig(baseCurrency = "GBP"), confWithBaseGBP) // Forex object with GBP as base currency
+  val key                     = sys.env.getOrElse("OER_KEY", throw new RuntimeException("Provide OER_KEY variable"))
+  val config                  = ForexConfig(key, DeveloperAccount) // ForexConfig object with default values
+  val fxConfigWith5NowishSecs = ForexConfig(key, DeveloperAccount, nowishSecs = 5) // ForexConfig object with 5 nowishSecs
+  val fx                      = Forex.getForex[IO](config) // Forex object with USD as base currency
+  val forexConfig             = ForexConfig(key, DeveloperAccount, nowishCacheSize = 0, eodCacheSize = 0)
+  val fxWithoutCache          = Forex.getForex[IO](forexConfig) // Forex object with caches disabled
+  val fxWithBaseGBP           = Forex.getForex[IO](ForexConfig(key, EnterpriseAccount, baseCurrency = CurrencyUnit.GBP)) // Forex object with GBP as base currency
 }

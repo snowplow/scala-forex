@@ -15,6 +15,9 @@ package com.snowplowanalytics.forex
 // Java
 import java.time.{ZoneId, ZonedDateTime}
 
+// Joda
+import org.joda.money.CurrencyUnit
+
 // Scala
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext
@@ -40,9 +43,10 @@ class SpiedCacheSpec extends Specification with Mockito {
   val spiedNowishCache = spy(
     LruMap.create[IO, NowishCacheKey, NowishCacheValue](config.nowishCacheSize).unsafeRunSync())
   val spiedEodCache = spy(LruMap.create[IO, EodCacheKey, EodCacheValue](config.eodCacheSize).unsafeRunSync())
-  val spiedFx       = Forex.getForex[IO](config, oerConfig, Some(spiedNowishCache), Some(spiedEodCache))
-  val spiedFxWith5NowishSecs =
-    Forex.getForex[IO](fxConfigWith5NowishSecs, oerConfig, Some(spiedNowishCache), Some(spiedEodCache))
+  val client        = ForexClient.getClient[IO](config, Some(spiedNowishCache), Some(spiedEodCache))
+
+  val spiedFx                = Forex[IO](config, client)
+  val spiedFxWith5NowishSecs = Forex[IO](fxConfigWith5NowishSecs, client)
 
   implicit val timer = IO.timer(ExecutionContext.global)
 
@@ -53,23 +57,23 @@ class SpiedCacheSpec extends Specification with Mockito {
     "return the value stored in the nowish cache and be overwritten after configured time by a new request" in {
       val action = for {
         // call nowish, update the cache with key("CAD","GBP") and corresponding value
-        _ <- spiedFxWith5NowishSecs.rate("CAD").to("GBP").nowish
+        _ <- spiedFxWith5NowishSecs.rate(CurrencyUnit.CAD).to(CurrencyUnit.GBP).nowish
         // get the value from the first HTPP request
-        valueFromFirstHttpRequest <- spiedNowishCache.get(("CAD", "GBP"))
+        valueFromFirstHttpRequest <- spiedNowishCache.get((CurrencyUnit.CAD, CurrencyUnit.GBP))
         // call nowish within 5 secs will get the value from the cache which is the same as valueFromFirstHttpRequest
-        _ <- spiedFxWith5NowishSecs.rate("CAD").to("GBP").nowish
+        _ <- spiedFxWith5NowishSecs.rate(CurrencyUnit.CAD).to(CurrencyUnit.GBP).nowish
 
-        valueFromCache <- spiedNowishCache.get(("CAD", "GBP"))
+        valueFromCache <- spiedNowishCache.get((CurrencyUnit.CAD, CurrencyUnit.GBP))
         test1 = valueFromCache must be equalTo valueFromFirstHttpRequest
 
         _ <- IO.sleep(6.seconds)
         // nowish will get the value over HTTP request, which will replace the previous value in the cache
-        _ <- spiedFxWith5NowishSecs.rate("CAD").to("GBP").nowish
+        _ <- spiedFxWith5NowishSecs.rate(CurrencyUnit.CAD).to(CurrencyUnit.GBP).nowish
 
         // value will be different from previous value -
         // even if the monetary value is the same, the
         // timestamp will be different
-        newValueFromCache <- spiedNowishCache.get(("CAD", "GBP"))
+        newValueFromCache <- spiedNowishCache.get((CurrencyUnit.CAD, CurrencyUnit.GBP))
         test2 = newValueFromCache mustNotEqual valueFromFirstHttpRequest
       } yield test1 and test2
 
@@ -87,12 +91,12 @@ class SpiedCacheSpec extends Specification with Mockito {
   "Eod query on CAD->GBP" should {
     "call get method on eod cache and the cache should have (CAD, GBP) entry after" in {
       spiedFx
-        .rate("CAD")
-        .to("GBP")
+        .rate(CurrencyUnit.CAD)
+        .to(CurrencyUnit.GBP)
         .eod(date)
-        .productR(spiedEodCache.get(("CAD", "GBP", date)))
+        .productR(spiedEodCache.get((CurrencyUnit.CAD, CurrencyUnit.GBP, date)))
         .map { valueFromCache =>
-          there was two(spiedEodCache).get(("CAD", "GBP", date)) and (valueFromCache must beSome)
+          there was two(spiedEodCache).get((CurrencyUnit.CAD, CurrencyUnit.GBP, date)) and (valueFromCache must beSome)
         }
         .unsafeRunSync()
     }

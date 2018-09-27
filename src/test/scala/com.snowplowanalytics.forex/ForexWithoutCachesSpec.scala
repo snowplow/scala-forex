@@ -17,8 +17,6 @@ import cats.effect.IO
 
 // Specs2
 import org.specs2.mutable.Specification
-// TestHelpers
-import TestHelpers._
 
 /**
  * Testing that setting cache size to zero will disable the use of cache
@@ -26,9 +24,10 @@ import TestHelpers._
 class ForexWithoutCachesSpec extends Specification {
   "Setting both cache sizes to zero" should {
     "disable the use of caches" in {
-      val fxWithoutCache = Forex.getForex[IO](ForexConfig(nowishCacheSize = 0, eodCacheSize = 0), oerConfig)
-      fxWithoutCache.client.eodCache.isEmpty
-      fxWithoutCache.client.nowishCache.isEmpty
+      val fxWithoutCache =
+        Forex.getForex[IO](ForexConfig(TestHelpers.key, DeveloperAccount, nowishCacheSize = 0, eodCacheSize = 0))
+      fxWithoutCache.unsafeRunSync().client.eodCache.isEmpty
+      fxWithoutCache.unsafeRunSync().client.nowishCache.isEmpty
     }
   }
 

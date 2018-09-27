@@ -17,7 +17,7 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
 // Joda-Money
-import org.joda.money.Money
+import org.joda.money.{CurrencyUnit, Money}
 
 // Specs2
 import org.specs2.mutable.Specification
@@ -37,15 +37,14 @@ class ForexEodSpec extends Specification with DataTables {
 
   // Table values obtained from OER API
   def e1 =
-    "SOURCE CURRENCY" || "TARGET CURRENCY" | "DATE"                      | "EXPECTED OUTPUT" |
-      "USD"           !! "GBP"             ! "2011-03-13T13:12:01+00:00" ! "0.62" |
-      "USD"           !! "AED"             ! "2011-03-13T01:13:04+00:00" ! "3.67" |
-      "USD"           !! "CAD"             ! "2011-03-13T22:13:01+00:00" ! "0.98" |
-      "GBP"           !! "USD"             ! "2011-03-13T11:45:34+00:00" ! "1.60" |
-      "GBP"           !! "SGD"             ! "2008-03-13T00:01:01+00:00" ! "2.80" |> { (fromCurr, toCurr, date, exp) =>
-      fx.rate(fromCurr)
-        .to(toCurr)
-        .eod(ZonedDateTime.parse(date, DateTimeFormatter.ISO_OFFSET_DATE_TIME))
-        .unsafeRunSync() must beRight((m: Money) => m.getAmount.toString mustEqual exp)
+    "SOURCE CURRENCY"  || "TARGET CURRENCY"      | "DATE"                      | "EXPECTED OUTPUT" |
+      CurrencyUnit.USD !! CurrencyUnit.GBP       ! "2011-03-13T13:12:01+00:00" ! "0.62" |
+      CurrencyUnit.USD !! CurrencyUnit.of("AED") ! "2011-03-13T01:13:04+00:00" ! "3.67" |
+      CurrencyUnit.USD !! CurrencyUnit.CAD       ! "2011-03-13T22:13:01+00:00" ! "0.98" |
+      CurrencyUnit.GBP !! CurrencyUnit.USD       ! "2011-03-13T11:45:34+00:00" ! "1.60" |
+      CurrencyUnit.GBP !! CurrencyUnit.of("SGD") ! "2008-03-13T00:01:01+00:00" ! "2.80" |> {
+      (fromCurr, toCurr, date, exp) =>
+        fx.flatMap(_.rate(fromCurr).to(toCurr).eod(ZonedDateTime.parse(date, DateTimeFormatter.ISO_OFFSET_DATE_TIME)))
+          .unsafeRunSync() must beRight((m: Money) => m.getAmount.toString mustEqual exp)
     }
 }

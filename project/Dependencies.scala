@@ -37,7 +37,6 @@ object Dependencies {
     // Scala
     val catsEffect   = "org.typelevel"         %% "cats-effect"       % V.catsEffect
     val circeParser  = "io.circe"              %% "circe-parser"      % V.circe
-    val circeGeneric = "io.circe"              %% "circe-generic"     % V.circe
     val lruMap       = "com.snowplowanalytics" %% "scala-lru-map"     % V.lruMap
 
     // Scala (test only)

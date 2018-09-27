@@ -16,7 +16,7 @@ package com.snowplowanalytics.forex
 import java.time.{ZoneId, ZonedDateTime}
 
 // Joda
-import org.joda.money.Money
+import org.joda.money.{CurrencyUnit, Money}
 
 // Specs2
 import org.specs2.mutable.Specification
@@ -34,7 +34,7 @@ class ForexAtSpec extends Specification {
    */
   val tradeDate = ZonedDateTime.of(2011, 3, 13, 11, 39, 27, 567, ZoneId.of("America/New_York"))
 
-  val gbpToCadWithBaseUsd = fx.rate("GBP").to("CAD").at(tradeDate)
+  val gbpToCadWithBaseUsd = fx.flatMap(_.rate(CurrencyUnit.GBP).to(CurrencyUnit.CAD).at(tradeDate))
 
   val cadMoney = gbpToCadWithBaseUsd
 
@@ -47,7 +47,7 @@ class ForexAtSpec extends Specification {
   /**
    * GBP-> CAD with GBP as base currency
    */
-  val gbpToCadWithBaseGbp = fxWithBaseGBP.rate.to("CAD").at(tradeDate)
+  val gbpToCadWithBaseGbp = fxWithBaseGBP.flatMap(_.rate.to(CurrencyUnit.CAD).at(tradeDate))
 
   "GBP to CAD with GBP as base currency returning latest eod" should {
     "be > 0" in {
@@ -58,7 +58,7 @@ class ForexAtSpec extends Specification {
   /**
    * CNY -> GBP with USD as base currency
    */
-  val cnyOverGbpHistorical = fx.rate("CNY").to("GBP").at(tradeDate)
+  val cnyOverGbpHistorical = fx.flatMap(_.rate(CurrencyUnit.of("CNY")).to(CurrencyUnit.GBP).at(tradeDate))
 
   "CNY to GBP with USD as base currency returning latest eod rate" should {
     "be > 0" in {
