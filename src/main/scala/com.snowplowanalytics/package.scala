@@ -16,6 +16,9 @@ package com.snowplowanalytics
 import java.time.ZonedDateTime
 import java.math.BigDecimal
 
+// Joda
+import org.joda.money.CurrencyUnit
+
 // LruMap
 import com.snowplowanalytics.lrumap.LruMap
 
@@ -27,11 +30,11 @@ package object forex {
   /**
    * The key and value for each cache entry
    */
-  type NowishCacheKey   = Tuple2[String, String]            // source currency , target currency
-  type NowishCacheValue = Tuple2[ZonedDateTime, BigDecimal] // timestamp, exchange rate
+  type NowishCacheKey   = (CurrencyUnit, CurrencyUnit) // source currency , target currency
+  type NowishCacheValue = (ZonedDateTime, BigDecimal)  // timestamp, exchange rate
 
-  type EodCacheKey   = Tuple3[String, String, ZonedDateTime] // source currency, target currency, timestamp
-  type EodCacheValue = BigDecimal                            // exchange rate
+  type EodCacheKey   = (CurrencyUnit, CurrencyUnit, ZonedDateTime) // source currency, target currency, timestamp
+  type EodCacheValue = BigDecimal                                  // exchange rate
 
   // The API request either returns exchange rates in BigDecimal representation
   // or OerResponseError if the request failed

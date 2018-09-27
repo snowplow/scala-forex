@@ -29,41 +29,38 @@ class ForexNowishSpec extends Specification {
   /**
    * CAD -> GBP with base currency USD
    */
-  val cadOverGbpNowish = fx.rate("CAD").to(CurrencyUnit.GBP).nowish
+  val cadOverGbpNowish = fx.flatMap(_.rate(CurrencyUnit.CAD).to(CurrencyUnit.GBP).nowish)
 
   "CAD to GBP with USD as base currency returning near-live rate" should {
     "be smaller than 1 pound" in {
       cadOverGbpNowish
-        .map(_ must beRight((m: Money) => m.isLessThan(Money.of(CurrencyUnit.GBP, 1))))
-        .unsafeRunSync()
+        .unsafeRunSync() must beRight((m: Money) => m.isLessThan(Money.of(CurrencyUnit.GBP, 1)))
     }
   }
 
   /**
    * GBP -> JPY with base currency USD
    */
-  val gbpToJpyWithBaseUsd = fx.rate(CurrencyUnit.GBP).to(CurrencyUnit.of("JPY")).nowish
+  val gbpToJpyWithBaseUsd = fx.flatMap(_.rate(CurrencyUnit.GBP).to(CurrencyUnit.JPY).nowish)
 
   "GBP to JPY with USD as base currency returning near-live rate" should {
     "be greater than 1 Yen" in {
       gbpToJpyWithBaseUsd
-        .map(_ must beRight((m: Money) =>
-          m.isGreaterThan(BigMoney.of(CurrencyUnit.of("JPY"), 1).toMoney(RoundingMode.HALF_EVEN))))
-        .unsafeRunSync()
+        .unsafeRunSync() must beRight(
+        (m: Money) => m.isGreaterThan(BigMoney.of(CurrencyUnit.JPY, 1).toMoney(RoundingMode.HALF_EVEN)))
     }
   }
 
   /**
    * GBP -> JPY with base currency GBP
    */
-  val gbpToJpyWithBaseGbp = fxWithBaseGBP.rate.to(CurrencyUnit.of("JPY")).nowish
+  val gbpToJpyWithBaseGbp = fxWithBaseGBP.flatMap(_.rate.to(CurrencyUnit.JPY).nowish)
 
   "GBP to JPY with GBP as base currency returning near-live rate" should {
     "be greater than 1 Yen" in {
       gbpToJpyWithBaseGbp
-        .map(_ must beRight((m: Money) =>
-          m.isGreaterThan(BigMoney.of(CurrencyUnit.of("JPY"), 1).toMoney(RoundingMode.HALF_EVEN))))
-        .unsafeRunSync()
+        .unsafeRunSync() must beRight(
+        (m: Money) => m.isGreaterThan(BigMoney.of(CurrencyUnit.of("JPY"), 1).toMoney(RoundingMode.HALF_EVEN)))
     }
   }
 }
