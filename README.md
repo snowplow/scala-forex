@@ -7,7 +7,7 @@
 
 ## 1. Introduction
 
-Scala Forex is a high-performance Scala library for performing exchange rate lookups and currency conversions, using [Joda-Money][joda-money] and [Joda-Time][joda-time].
+Scala Forex is a high-performance Scala library for performing exchange rate lookups and currency conversions, using [Joda-Money][joda-money].
 
 It includes configurable LRU (Least Recently Used) caches to minimize calls to the API; this makes the library usable in high-volume environments such as Hadoop and Storm.
 
@@ -23,7 +23,7 @@ There are three types of accounts supported by OER API, Unlimited, Enterprise an
 
 ### 2.2 Installation
 
-The latest version of Scala Forex is 0.5.0, which is cross-built against 2.10.x and 2.11.x.
+The latest version of Scala Forex is 0.5.0, which is cross-built against 2.11.x and 2.12.x.
 
 If you're using SBT, add the following lines to your build file:
 
@@ -44,28 +44,35 @@ The Scala Forex supports two types of usage:
 
 Both usage types support live, near-live or historical (end-of-day) exchange rates.
 
+For all code samples below we are assuming the following imports:
+```scala
+import org.joda.money.CurrencyUnit
+import cats.effect.IO
+import com.snowplowanalytics.forex._
+```
+
 ### 3.1 Configuration
 
-Scala Forex is configured via two case classes:
-
-1. `ForexConfig` contains general configuration
-2. `OerClientConfig` contains Open Exchange Rates-specific configuration
-
-#### 3.1.1 ForexConfig
-
-Case class with defaults:
+Scala Forex is configured via `ForexConfig` case class. Except `appId` and `accountLevel` fields, it provides
+some sensible defaults.
 
 ```scala
 case class ForexConfig(
+  appId: String,
+  accountLevel: AccountType,
   nowishCacheSize: Int       = 13530,
   nowishSecs: Int            = 300,  
   eodCacheSize: Int          = 405900,  
   getNearestDay: EodRounding = EodRoundDown,
-  baseCurrency: String       = "USD"  
+  baseCurrency: CurrencyUnit = CurrencyUnit.USD  
 )
 ```
 
 To go through each in turn:
+
+1. `appId` is the API key you get from OER.
+
+2. `accountLevel` is the type of OER account you have. Possible values are `UnlimitedAccount`, `EnterpriseAccount`, and `DeveloperAccount`.
 
 1. `nowishCacheSize` is the size configuration for near-live(nowish) lookup cache, it can be disabled by setting its value to 0. The key to nowish cache is a currency pair so the size of the cache equals to the number of pairs of currencies available.
 
@@ -77,50 +84,43 @@ To go through each in turn:
 
 5. `baseCurrency` can be configured to different currencies by the users.
 
-For an explanation for the default values please see section **4.4 Explanation of defaults** below.
-
-#### 3.1.2 OerClientConfig
-
-Case class with defaults:
-
-```scala
-case class OerClientConfig(
-  appId: String,            
-  accountLevel: AccountType
-) extends ForexClientConfig
-```
-
-To go through each in turn:
-
-1. `appId` is the unique key for the user's account
-2. `accountLevel` is the account type provided by the user which should obviously be consistent with the app ID.
-There are three types of account levels, users should provide the exact account type name to configure the OER Client:
-  1. UnlimitedAccount
-  2. EnterpriseAccount
-  3. DeveloperAccount
+For an explanation for the default values please see section **5.4 Explanation of defaults** below.
 
 ### 3.2 Rate lookup
 
-For the required imports, please see section **4.2 REPL setup** below.
+Unless specified otherwise, assume `forex` value is initialized as:
+```scala
+val config: ForexConfig = ForexConfig("YOUR_API_KEY", DeveloperAccount)
+val forex: IO[Forex] = Forex.getForex[IO](config)
+```
+
+`Forex.getForex[IO]` returns `IO[Forex]` instead of `Forex`, because creation of the underlying caches is
+a side effect. You can `flatMap` over the result (or use a for-comprehension, as seen below).
+All examples below return `IO[Either[OerResponseError], Money]`, which means they are not executed.
+You will need to run `unsafeRunSync` on them to retrieve the result.
 
 #### 3.2.1 Live rate
 
-Lookup a live rate _(no cacheing available)_:
+Lookup a live rate _(no caching available)_:
 
 ```scala
 // USD => JPY
-val fx = Forex(ForexConfig(), OerClientConfig(appId, DeveloperAccount))
-val usd2jpy = fx.rate.to("JPY").now   // => Right(JPY 105)           
+val usd2jpy = for {
+  fx     <- forex
+  result <- fx.rate.to(CurrencyUnit.JPY).now
+} yield result       
 ```
 
 #### 3.2.2 Near-live rate
 
-Lookup a near-live rate _(cacheing available)_:
+Lookup a near-live rate _(caching available)_:
 
 ```scala
 // JPY => GBP
-val fx = Forex(ForexConfig(), OerClientConfig(appId, DeveloperAccount))
-val jpy2gbp = fx.rate("JPY").to("GBP").nowish   // => Right(GBP 0.01)
+val jpy2gbp = for {
+  fx     <- forex
+  result <- fx.rate(CurrencyUnit.JPY).to(CurrencyUnit.GBP).nowish
+} yield result
 ```
 
 #### 3.2.3 Near-live rate without cache
@@ -129,85 +129,91 @@ Lookup a near-live rate (_uses cache selectively_):
 
 ```scala
 // JPY => GBP
-val fx = Forex(ForexConfig(nowishCacheSize = 0), OerClientConfig(appId, DeveloperAccount))
-val jpy2gbp = fx.rate("JPY").to("GBP").nowish   // => Right(GBP 0.01)
+val jpy2gbp = for {
+  fx     <- Forex.getForex[IO](ForexConfig("YOU_API_KEY", DeveloperAccount, nowishCacheSize = 0))
+  result <- fx.rate(CurrencyUnit.JPY).to(CurrencyUnit.GBP).nowish
+} yield result
 ```
 
 #### 3.2.4 Latest-prior EOD rate
 
-Lookup the latest EOD (end-of-date) rate prior to your event _(cacheing available)_:
+Lookup the latest EOD (end-of-date) rate prior to your event _(caching available)_:
 
 ```scala
-import org.joda.time.{DateTime, DateTimeZone}
+import java.time.{ZonedDateTime, ZoneId}
 
-// USD => JPY at the end of 12/03/2011
-val fx = Forex(ForexConfig(), OerClientConfig(appId, DeveloperAccount)) // round down to previous day by default
-val tradeDate = new DateTime(2011, 3, 13, 11, 39, 27, 567, DateTimeZone.forID("America/New_York"))
-val usd2yen = fx.rate.to("JPY").at(tradeDate)   // => Right(JPY 82)
+// USD => JPY at the end of 13/03/2011
+val tradeDate = ZonedDateTime.of(2011, 3, 13, 11, 39, 27, 567, ZoneId.of("America/New_York"))
+val usd2jpy = for {
+  fx     <- forex
+  result <- fx.rate.to(CurrencyUnit.JPY).at(tradeDate)
+} yield result
 ```
 
 #### 3.2.5 Latest-post EOD rate
 
-Lookup the latest EOD (end-of-date) rate post to your event _(cacheing available)_:
+Lookup the latest EOD (end-of-date) rate post to your event _(caching available)_:
 
 ```scala
-import org.joda.time.{DateTime, DateTimeZone}
-import com.snowplowanalytics.forex.EodRoundUp
-
 // USD => JPY at the end of 13/03/2011
-val fx = Forex(ForexConfig(getNearestDay = EodRoundUp), OerClientConfig(appId, DeveloperAccount))
-val tradeDate = new DateTime(2011, 3, 13, 11, 39, 27, 567, DateTimeZone.forID("America/New_York"))
-val usd2yen = fx.rate.to("JPY").at(tradeDate)   // => Right(JPY 82)
+val tradeDate = ZonedDateTime.of(2011, 3, 13, 11, 39, 27, 567, ZoneId.of("America/New_York"))
+val usd2jpy = for {
+  fx     <- Forex.getClient[IO](ForexConfig("YOU_API_KEY", DeveloperAccount, getNearestDay = EodRoundUp))
+  result <- fx.rate.to(CurrencyUnit.JPY).at(tradeDate)
+} yield result
 ```
 
 #### 3.2.6 Specific EOD rate
 
-Lookup the EOD rate for a specific date _(cacheing available)_:
+Lookup the EOD rate for a specific date _(caching available)_:
 
 ```scala
-import org.joda.time.DateTime
-
 // GBP => JPY at the end of 13/03/2011
-val fx = Forex(ForexConfig(baseCurrency="GBP"), OerClientConfig(appId, EnterpriseAccount)) // Your app ID should be an Enterprise account
-val eodDate = new DateTime(2011, 3, 13, 0, 0)
-val gbp2jpy = fx.rate.to("JPY").eod(eodDate)   // => Right(JPY 131)
+val tradeDate = ZonedDateTime.of(2011, 3, 13, 0, 0, 0, 0, ZoneId.of("America/New_York"))
+val gbp2jpy = for { 
+  fx     <- Forex.getClient[IO](ForexConfig("YOU_API_KEY", EnterpriseAccount, baseCurrency= CurrencyUnit.GBP))
+  result <- fx.rate.to(CurrencyUnit.JPY).eod(eodDate)
+} yield result
 ```
 
 #### 3.2.7 Specific EOD rate without cache
 
-Lookup the EOD rate for a specific date _(no cacheing)_:
+Lookup the EOD rate for a specific date _(no caching)_:
 
 ```scala
-import org.joda.time.DateTime
-
 // GBP => JPY at the end of 13/03/2011
-val fx = Forex(ForexConfig(eodCacheSize = 0, baseCurrency="GBP"), OerClientConfig(appId, EnterpriseAccount)) // Your app ID should be an Enterprise account
-val eodDate = new DateTime(2011, 3, 13, 0, 0)
-val gbp2jpy = fx.rate.to("JPY").eod(eodDate)   // => Right(JPY 131)
+val tradeDate = ZonedDateTime.of(2011, 3, 13, 0, 0, 0, 0, ZoneId.of("America/New_York"))
+val gbp2jpy = for { 
+  fx     <- Forex.getClient[IO](ForexConfig("YOU_API_KEY", EnterPriseAccount,
+              baseCurrency= CurrencyUnit.GBP, eodCacheSize = 0))
+  result <- fx.rate.to(CurrencyUnit.JPY).eod(eodDate)
+} yield result
 ```
 
 ### 3.3 Currency conversion
 
-For the required imports, please see section **4.2 REPL setup** below.
-
 #### 3.3.1 Live rate
 
-Conversion using the live exchange rate _(no cacheing available)_:
+Conversion using the live exchange rate _(no caching available)_:
 
 ```scala
 // 9.99 USD => EUR
-val fx = Forex(ForexConfig(), OerClientConfig(appId, DeveloperAccount))
-val priceInEuros = fx.convert(9.99).to("EUR").now
+val priceInEuros = for {
+  fx     <- forex
+  result <- fx.convert(9.99).to(CurrencyUnit.EUR).now
+} yield result 
 ```
 
 #### 3.3.2 Near-live rate
 
-Conversion using a near-live exchange rate with 500 seconds nowishSecs _(cacheing available)_:
+Conversion using a near-live exchange rate with 500 seconds nowishSecs _(caching available)_:
 
 ```scala
 // 9.99 GBP => EUR
-val fx = Forex(ForexConfig(nowishSecs = 500), OerClientConfig(appId, DeveloperAccount))
-val priceInEuros = fx.convert(9.99, "GBP").to("EUR").nowish
+val priceInEuros = for {
+  fx     <- Forex.getForex[IO](ForexConfig("YOU_API_KEY", DeveloperAccount, nowishSecs = 500))
+  result <- fx.convert(9.99, CurrencyUnit.GBP).to(CurrencyUnit.EUR).nowish
+} yield result
 ```
 
 #### 3.3.3 Near-live rate without cache
@@ -217,70 +223,73 @@ Conversion using a live exchange rate with 500 seconds nowishSecs,
 this conversion will be done via HTTP request:
 
 ```scala
-
 // 9.99 GBP => EUR
-val fx = Forex(ForexConfig(nowishSecs = 500, nowishCacheSize = 0), OerClientConfig(appId, DeveloperAccount))
-val priceInEuros = fx.convert(9.99, "GBP").to("EUR").nowish
+val priceInEuros = for {
+  fx     <- Forex.getForex[IO](ForexConfig("YOUR_API_KEY", DeveloperAccount, nowishSecs = 500, nowishCacheSize = 0))
+  result <- fx.convert(9.99, CurrencyUnit.GBP).to(CurrencyUnit.EUR).nowish
+} yield result
 ```
 
 #### 3.3.4 Latest-prior EOD rate
 
-Conversion using the latest EOD (end-of-date) rate prior to your event _(cacheing available)_:
+Conversion using the latest EOD (end-of-date) rate prior to your event _(caching available)_:
 
 ```scala
-import org.joda.time.{DateTime, DateTimeZone}
-
 // 10000 GBP => JPY at the end of 12/03/2011
-val fx = Forex(ForexConfig(), OerClientConfig(appId, DeveloperAccount))
-val tradeDate = new DateTime(2011, 3, 13, 11, 39, 27, 567, DateTimeZone.forID("America/New_York"))
-val tradeInYen = fx.convert(10000, "GBP").to("JPY").at(tradeDate)                   
+val tradeDate = ZonedDateTime.of(2011, 3, 13, 11, 39, 27, 567, ZoneId.of("America/New_York"))
+val tradeInYen = for {
+  fx     <- forex
+  result <- fx.convert(10000, CurrencyUnit.GBP).to(CurrencyUnit.JPY).at(tradeDate)
+} yield result
 ```
 
 #### 3.3.5 Latest-post EOD rate
 
-Lookup the latest EOD (end-of-date) rate following your event _(cacheing available)_:
+Lookup the latest EOD (end-of-date) rate following your event _(caching available)_:
 
 ```scala
-import org.joda.time.{DateTime, DateTimeZone}
-import com.snowplowanalytics.forex.EodRoundUp
-
 // 10000 GBP => JPY at the end of 13/03/2011
-val fx = Forex(ForexConfig(getNearestDay = EodRoundUp), OerClientConfig(appId, DeveloperAccount))
-val tradeDate = new DateTime(2011, 3, 13, 11, 39, 27, 567, DateTimeZone.forID("America/New_York"))
-val usd2yen = fx.convert(10000, "GBP").to("JPY").at(tradeDate)
+val tradeDate = ZonedDateTime.of(2011, 3, 13, 11, 39, 27, 567, ZoneId.of("America/New_York"))
+val usd2jpy = for {
+  fx     <- Forex.getForex[IO](ForexConvig("YOU_API_KEY", DeveloperAccount, getNearestDay = EodRoundUp))
+  result <- fx.convert(10000, CurrencyUnit.GBP).to(CurrencyUnit.JPY).at(tradeDate)
+} yield result
 ```
 
 #### 3.3.6 Specific EOD rate
 
-Conversion using the EOD rate for a specific date _(cacheing available)_:
+Conversion using the EOD rate for a specific date _(caching available)_:
 
 ```scala
-import org.joda.time.DateTime
-
 // 10000 GBP => JPY at the end of 13/03/2011
-val fx = Forex(ForexConfig(baseCurrency="GBP"), OerClientConfig(appId, DeveloperAccount))
-val eodDate = new DateTime(2011, 3, 13, 0, 0)
-val tradeInYen = fx.convert(10000).to("JPY").eod(eodDate)
+val eodDate = ZonedDateTime.of(2011, 3, 13, 11, 39, 27, 567, ZoneId.of("America/New_York"))
+val tradeInYen = for {
+  fx     <- Forex.getClient[IO](ForexConfig("YOU_API_KEY", DeveloperAccount, baseCurrency = CurrencyUnit.GBP))
+  result <- fx.convert(10000).to(CurrencyUnit.JPY).eod(eodDate)
+} yield result
 ```
 
 #### 3.3.7 Specific EOD rate without cache
 
-Conversion using the EOD rate for a specific date, _(no cacheing)_:
+Conversion using the EOD rate for a specific date, _(no caching)_:
 
 ```scala
-import org.joda.time.DateTime
-
 // 10000 GBP => JPY at the end of 13/03/2011
-val fx = Forex(ForexConfig(eodCacheSize = 0, baseCurrency="GBP"), OerClientConfig(appId, DeveloperAccount))
-val eodDate = new DateTime(2011, 3, 13, 0, 0)
-val tradeInYen = fx.convert(10000).to("JPY").eod(eodDate)
+val eodDate = ZonedDateTime.of(2011, 3, 13, 0, 0, 0, 0, ZoneId.of("America/New_York"))
+val tradeInYen = for {
+  fx     <- Forex.getClient[IO](ForexConfig("YOU_API_KEY", DeveloperAccount,
+              baseCurrency = CurrencyUnit.GBP, eodCacheSize = 0))
+  result <- fx.convert(10000).to(CurrencyUnit.JPY).eod(eodDate)
+} yield result
 ```
 
 ### 3.4 Usage notes
 
 #### 3.4.1 LRU cache
 
-The `lruCache` value determines the maximum number of values to keep in the LRU cache, which the Client will check prior to making an API lookup. To disable the LRU cache, set its size to zero, i.e. `lruCache = 0`.
+The `eodCacheSize` and `nowishCacheSize` values determine the maximum number of values to keep in the LRU cache,
+which the Client will check prior to making an API lookup. To disable eithe LRU cache, set its size to zero,
+i.e. `eodCacheSize = 0`.
 
 #### 3.4.2 From currency selection
 
@@ -289,21 +298,7 @@ If not specified, `baseCurrency` is set to USD by default.
 
 ## 4. Development
 
-### 4.1 REPL setup
-
-To try out Scala Forex in the Scala REPL:
-
-```
-guest> sbt console
-...
-scala> val appId = "<<key>>"
-scala> import com.snowplowanalytics.forex.{Forex, ForexConfig}
-scala> import com.snowplowanalytics.forex.oerclient.{OerClientConfig, DeveloperAccount}  
-scala> val fx = Forex(ForexConfig(), OerClientConfig(appId, DeveloperAccount))
-scala> val usd2jpy = fx.rate.to("JPY").now
-```
-
-### 4.2 Running tests
+### 4.1 Running tests
 
 You **must** export your `OER_KEY` or else the test suite will fail. To run the test suite locally:
 
@@ -334,7 +329,7 @@ When `.eod(...)` is specified, the end-of-day rate for the **specified day** is 
 
 We recommend trying different LRU cache sizes to see what works best for you.
 
-Please note that the LRU cache implementation is **not** thread-safe ([see this note][twitter-lru-cache]). Switch it off if you are working with threads.
+Please note that the LRU cache implementation is **not** thread-safe. Switch it off if you are working with threads.
 
 ### 5.4 Explanation of defaults
 
@@ -366,7 +361,7 @@ With Open Exchange Rates' Unlimited and Enterprise accounts, Scala Forex can spe
 
 ## 6. Copyright and license
 
-Scala Forex is copyright 2013-2016 Snowplow Analytics Ltd.
+Scala Forex is copyright 2013-2018 Snowplow Analytics Ltd.
 
 Licensed under the [Apache License, Version 2.0][license] (the "License");
 you may not use this software except in compliance with the License.
@@ -380,11 +375,6 @@ limitations under the License.
 [oer-signup]: https://openexchangerates.org/signup?r=snowplow
 
 [joda-money]: http://www.joda.org/joda-money/
-[joda-time]: http://www.joda.org/joda-time/
-[twitter-lru-cache]: http://twitter.github.com/commons/apidocs/com/twitter/common/util/caching/LRUCache.html
-
-[jz4112]: https://github.com/jz4112
-[alexanderdean]: https://github.com/alexanderdean
 
 [travis]: https://travis-ci.org/snowplow/scala-forex
 [travis-image]: https://travis-ci.org/snowplow/scala-forex.png?branch=master

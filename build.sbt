@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2018 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -24,11 +24,11 @@ lazy val root = project.in(file("."))
   .settings(BuildSettings.formattingSettings)
   .settings(
     libraryDependencies ++= Seq(
-      Dependencies.Libraries.jodaTime,
       Dependencies.Libraries.jodaConvert,
       Dependencies.Libraries.jodaMoney,
-      Dependencies.Libraries.jackson,
-      Dependencies.Libraries.collUtil,
+      Dependencies.Libraries.catsEffect,
+      Dependencies.Libraries.circeParser,
+      Dependencies.Libraries.lruMap,
       Dependencies.Libraries.specs2Core,
       Dependencies.Libraries.specs2Mock
     )

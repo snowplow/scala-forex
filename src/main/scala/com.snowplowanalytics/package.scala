@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2018 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -13,11 +13,15 @@
 package com.snowplowanalytics
 
 // Java
+import java.time.ZonedDateTime
 import java.math.BigDecimal
+
 // Joda
-import org.joda.time._
-// LRUCache
-import com.twitter.util.SynchronizedLruMap
+import org.joda.money.CurrencyUnit
+
+// LruMap
+import com.snowplowanalytics.lrumap.LruMap
+
 // oerclient
 import forex.oerclient.OerResponseError
 
@@ -26,11 +30,11 @@ package object forex {
   /**
    * The key and value for each cache entry
    */
-  type NowishCacheKey   = Tuple2[String, String]       // source currency , target currency
-  type NowishCacheValue = Tuple2[DateTime, BigDecimal] // timestamp, exchange rate
+  type NowishCacheKey   = (CurrencyUnit, CurrencyUnit) // source currency , target currency
+  type NowishCacheValue = (ZonedDateTime, BigDecimal)  // timestamp, exchange rate
 
-  type EodCacheKey   = Tuple3[String, String, DateTime] // source currency, target currency, timestamp
-  type EodCacheValue = BigDecimal                       // exchange rate
+  type EodCacheKey   = (CurrencyUnit, CurrencyUnit, ZonedDateTime) // source currency, target currency, timestamp
+  type EodCacheValue = BigDecimal                                  // exchange rate
 
   // The API request either returns exchange rates in BigDecimal representation
   // or OerResponseError if the request failed
@@ -39,9 +43,6 @@ package object forex {
   /**
    * The two LRU caches we use
    */
-  type NowishCache = SynchronizedLruMap[NowishCacheKey, NowishCacheValue]
-  type EodCache    = SynchronizedLruMap[EodCacheKey, EodCacheValue]
-
-  type MaybeNowishCache = Option[NowishCache]
-  type MaybeEodCache    = Option[EodCache]
+  type NowishCache[F[_]] = LruMap[F, NowishCacheKey, NowishCacheValue]
+  type EodCache[F[_]]    = LruMap[F, EodCacheKey, EodCacheValue]
 }

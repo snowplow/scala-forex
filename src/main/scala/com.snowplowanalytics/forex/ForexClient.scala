@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2018 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -13,13 +13,22 @@
 package com.snowplowanalytics.forex
 
 // Java
-import java.math.BigDecimal
-// joda
-import org.joda.time._
+import java.time.ZonedDateTime
+
+// Joda
+import org.joda.money.CurrencyUnit
+
+// cats
+import cats.effect.Sync
+import cats.syntax.apply._
+import cats.syntax.functor._
+import cats.syntax.option._
+
 // OpenExchangeRate client
 import oerclient._
-// LRUCache
-import com.twitter.util.SynchronizedLruMap
+
+// LruMap
+import com.snowplowanalytics.lrumap.LruMap
 
 /**
  * Companion object for ForexClient class
@@ -29,64 +38,55 @@ import com.twitter.util.SynchronizedLruMap
 object ForexClient {
 
   /**
-   * Getter for clients with specified caches(optional)
+   * Creates a client with a cache and sensible default ForexConfig
    */
-  def getClient(config: ForexConfig,
-                clientConfig: ForexClientConfig,
-                nowish: MaybeNowishCache = None,
-                eod: MaybeEodCache       = None): ForexClient =
-    clientConfig match {
-      case oerClientConfig: OerClientConfig =>
-        new OerClient(config, oerClientConfig, nowishCache = nowish, eodCache = eod)
-      case _ => throw NoSuchClientException("This client is not supported by scala-forex currently")
+  def getClient[F[_]: Sync](appId: String, accountLevel: AccountType): F[ForexClient[F]] =
+    getClient[F](ForexConfig(appId = appId, accountLevel = accountLevel))
+
+  /**
+   * Getter for clients, creating the caches as defined in the config
+   */
+  def getClient[F[_]: Sync](config: ForexConfig): F[ForexClient[F]] = {
+    val nowishCacheF =
+      if (config.nowishCacheSize > 0)
+        LruMap.create[F, NowishCacheKey, NowishCacheValue](config.nowishCacheSize).map(_.some)
+      else Sync[F].pure(Option.empty[NowishCache[F]])
+
+    val eodCacheF =
+      if (config.eodCacheSize > 0)
+        LruMap.create[F, EodCacheKey, EodCacheValue](config.eodCacheSize).map(_.some)
+      else Sync[F].pure(Option.empty[EodCache[F]])
+
+    (nowishCacheF, eodCacheF).mapN {
+      case (nowish, eod) =>
+        new OerClient[F](config, nowishCache = nowish, eodCache = eod)
     }
+  }
+
+  def getClient[F[_]: Sync](config: ForexConfig,
+                            nowishCache: Option[NowishCache[F]],
+                            eodCache: Option[EodCache[F]]): ForexClient[F] =
+    new OerClient[F](config, nowishCache, eodCache)
 }
 
-abstract class ForexClient(config: ForexConfig, nowishCache: MaybeNowishCache = None, eodCache: MaybeEodCache = None) {
-
-  // Assemble our caches
-  object caches {
-
-    // LRU cache for nowish request, with (source currency, target currency) as the key
-    // and (date time, exchange rate) as the value
-    val nowish =
-      if (nowishCache.isDefined) {
-        nowishCache
-      } else if (config.nowishCacheSize > 0) {
-        Some(new SynchronizedLruMap[NowishCacheKey, NowishCacheValue](config.nowishCacheSize))
-      } else {
-        None
-      }
-
-    // LRU cache for historical request, with (source currency, target currency, date time) as the key
-    // and exchange rate as the value
-    val eod =
-      if (eodCache.isDefined) {
-        eodCache
-      } else if (config.eodCacheSize > 0) {
-        Some(new SynchronizedLruMap[EodCacheKey, EodCacheValue](config.eodCacheSize))
-      } else {
-        None
-      }
-  }
+abstract class ForexClient[F[_]](val config: ForexConfig,
+                                 val nowishCache: Option[NowishCache[F]] = None,
+                                 val eodCache: Option[EodCache[F]]       = None) {
 
   /**
    * Get the latest exchange rate from a given currency
    *
-   * @param currency
-   *            Desired currency
+   * @param currency Desired currency
    * @return result returned from API
    */
-  def getLiveCurrencyValue(currency: String): ApiRequestResult
+  def getLiveCurrencyValue(currency: CurrencyUnit): F[ApiRequestResult]
 
   /**
    * Get a historical exchange rate from a given currency and date
    *
-   * @param currency
-   *            Desired currency
-   * @param date
-   *            Date of desired rate
+   * @param currency Desired currency
+   * @param date Date of desired rate
    * @return result returned from API
    */
-  def getHistoricalCurrencyValue(currency: String, date: DateTime): ApiRequestResult
+  def getHistoricalCurrencyValue(currency: CurrencyUnit, date: ZonedDateTime): F[ApiRequestResult]
 }

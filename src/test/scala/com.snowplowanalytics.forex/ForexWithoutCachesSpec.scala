@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2018 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -12,10 +12,11 @@
  */
 package com.snowplowanalytics.forex
 
+// cats
+import cats.effect.IO
+
 // Specs2
 import org.specs2.mutable.Specification
-// TestHelpers
-import TestHelpers._
 
 /**
  * Testing that setting cache size to zero will disable the use of cache
@@ -23,9 +24,10 @@ import TestHelpers._
 class ForexWithoutCachesSpec extends Specification {
   "Setting both cache sizes to zero" should {
     "disable the use of caches" in {
-      val fxWithoutCache = Forex.getForex(ForexConfig(nowishCacheSize = 0, eodCacheSize = 0), oerConfig)
-      fxWithoutCache.client.caches.eod.isEmpty
-      fxWithoutCache.client.caches.nowish.isEmpty
+      val fxWithoutCache =
+        Forex.getForex[IO](ForexConfig(TestHelpers.key, DeveloperAccount, nowishCacheSize = 0, eodCacheSize = 0))
+      fxWithoutCache.unsafeRunSync().client.eodCache.isEmpty
+      fxWithoutCache.unsafeRunSync().client.nowishCache.isEmpty
     }
   }
 

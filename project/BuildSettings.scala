@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2018 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -27,9 +27,13 @@ object BuildSettings {
   // Basic settings for our app
   lazy val buildSettings = Seq[Setting[_]](
     organization          := "com.snowplowanalytics",
-    scalaVersion          := "2.11.12",
-    crossScalaVersions    := Seq("2.11.12"),
-    scalacOptions         := compilerOptions
+    scalaVersion          := "2.12.6",
+    crossScalaVersions    := Seq("2.11.12", "2.12.6"),
+    scalacOptions         := compilerOptions,
+
+    addCompilerPlugin(
+      "org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full
+    )
   )
 
   lazy val compilerOptions = Seq(
@@ -43,6 +47,7 @@ object BuildSettings {
     "-Yno-adapted-args",
     "-Ywarn-dead-code",
     "-Ywarn-numeric-widen",
+    "-Ypartial-unification",
     "-Xfuture",
     "-Xlint"
   )
