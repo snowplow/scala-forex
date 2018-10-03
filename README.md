@@ -4,6 +4,7 @@
 [![Maven Central][maven-image]][maven-link]
 [![License][license-image]][license]
 [![Join the chat at https://gitter.im/snowplow/scala-forex][gitter-image]][gitter-link]
+[![codecov](https://codecov.io/gh/snowplow/scala-forex/branch/master/graph/badge.svg)](https://codecov.io/gh/snowplow/scala-forex)
 
 ## 1. Introduction
 
