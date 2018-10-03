@@ -22,6 +22,11 @@ import bintray.BintrayKeys._
 // Scalafmt
 import org.scalafmt.sbt.ScalafmtPlugin.autoImport._
 
+// Docs
+import sbtunidoc.ScalaUnidocPlugin.autoImport._
+import com.typesafe.sbt.site.SitePlugin.autoImport._
+import com.typesafe.sbt.SbtGit.GitKeys._
+
 object BuildSettings {
 
   // Basic settings for our app
@@ -77,5 +82,11 @@ object BuildSettings {
 
   lazy val formattingSettings = Seq(
     scalafmtOnCompile := true
+  )
+
+  lazy val docsSettings = Seq(
+    addMappingsToSiteDir(mappings in (ScalaUnidoc, packageDoc), siteSubdirName in ScalaUnidoc),
+    gitRemoteRepo := "https://github.com/snowplow/scala-forex.git",
+    siteSubdirName := ""
   )
 }

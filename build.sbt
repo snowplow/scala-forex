@@ -14,6 +14,7 @@
  */
 
 lazy val root = project.in(file("."))
+  .enablePlugins(ScalaUnidocPlugin, GhpagesPlugin)
   .settings(
     name        := "scala-forex",
     version     := "0.5.0",
@@ -22,6 +23,7 @@ lazy val root = project.in(file("."))
   .settings(BuildSettings.buildSettings)
   .settings(BuildSettings.publishSettings)
   .settings(BuildSettings.formattingSettings)
+  .settings(BuildSettings.docsSettings)
   .settings(
     libraryDependencies ++= Seq(
       Dependencies.Libraries.jodaConvert,
