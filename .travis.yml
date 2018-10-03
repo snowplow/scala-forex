@@ -12,7 +12,7 @@ env:
   - secure: hDo2jt06gx02utmCMb548NEeTAtIgTg53SYL+rPydhryCZHzQISPHlHB/SDKATlalYU6nP+1zz9gANA1HVgN83BaAzI82CoBcsBvVSAw+MKYMDbdf3yoEpe0DJyzibscu57nb7rvi+Xswse93mib1wkdy4eOXB1L0YwKW6dlxB0=
   - secure: xtx+EvI6UKAndt1/9pay+YA+6QG8TylETGQemDMGENTp2er/u013CPTZRrJu7znRiQdPamI8hPsy1GRGKt7cCoyFIv5MWtMOodNVcxbhDbl7z3j5mcKIp2RJmv1XaL0nJnltnIJj0P0ohA4BVzpi9jthaj+WzI9O6OIKRyuIvdU=
 script:
-  - sbt test
+  - sbt ++$TRAVIS_SCALA_VERSION test
 deploy:
   skip_cleanup: true
   provider: script

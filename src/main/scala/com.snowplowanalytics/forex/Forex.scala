@@ -18,7 +18,7 @@ import java.time.temporal.ChronoUnit
 import java.math.{BigDecimal, RoundingMode}
 
 // Scala
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 // cats
 import cats.effect.Sync
@@ -281,6 +281,9 @@ case class ForexLookupWhen[F[_]: Sync](conversionAmount: Double,
       else
         Try(moneyInSourceCurrency.convertedTo(toCurr, rate).toMoney(RoundingMode.HALF_EVEN))
 
-    moneyTry.toEither.leftMap(e => OerResponseError(e.getMessage, OtherErrors))
+    moneyTry match {
+      case Success(m) => Right(m)
+      case Failure(e) => Left(OerResponseError(e.getMessage, OtherErrors))
+    }
   }
 }
