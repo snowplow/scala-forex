@@ -12,13 +12,11 @@
  */
 package com.snowplowanalytics.forex
 
-// Java
 import java.math.RoundingMode
-// Specs2
-import org.specs2.mutable.Specification
-// Joda
+
 import org.joda.money._
-// TestHelpers
+import org.specs2.mutable.Specification
+
 import TestHelpers._
 
 /**

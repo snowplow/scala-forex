@@ -12,17 +12,13 @@
  */
 package com.snowplowanalytics.forex
 
-// Java
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
-// Joda-Money
 import org.joda.money.{CurrencyUnit, Money}
-
-// Specs2
 import org.specs2.mutable.Specification
 import org.specs2.matcher.DataTables
-// TestHelpers
+
 import TestHelpers._
 
 /**

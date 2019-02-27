@@ -12,19 +12,13 @@
  */
 package com.snowplowanalytics.forex
 
-// Java
 import java.time.{ZoneId, ZonedDateTime}
 
-// Joda
 import org.joda.money.CurrencyUnit
-
-// Specs2
 import org.specs2.mutable.Specification
-// TestHelpers
+
 import TestHelpers._
-// oerclient
-import oerclient.OerResponseError
-import oerclient.ResourcesNotAvailable
+import oerclient.{OerResponseError, ResourcesNotAvailable}
 
 /**
  *  Testing for exceptions caused by invalid dates

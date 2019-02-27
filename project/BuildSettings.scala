@@ -34,27 +34,9 @@ object BuildSettings {
     organization          := "com.snowplowanalytics",
     scalaVersion          := "2.12.7",
     crossScalaVersions    := Seq("2.11.12", "2.12.7"),
-    scalacOptions         := compilerOptions,
-
     addCompilerPlugin(
       "org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full
     )
-  )
-
-  lazy val compilerOptions = Seq(
-    "-deprecation",
-    "-encoding", "UTF-8",
-    "-feature",
-    "-language:existentials",
-    "-language:higherKinds",
-    "-language:implicitConversions",
-    "-unchecked",
-    "-Yno-adapted-args",
-    "-Ywarn-dead-code",
-    "-Ywarn-numeric-widen",
-    "-Ypartial-unification",
-    "-Xfuture",
-    "-Xlint"
   )
 
   // Publish settings

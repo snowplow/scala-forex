@@ -12,11 +12,8 @@
  */
 package com.snowplowanalytics.forex
 
-// Joda
-import org.joda.money.CurrencyUnit
-
-// cats
 import cats.effect.IO
+import org.joda.money.CurrencyUnit
 
 object TestHelpers {
   val key                     = sys.env.getOrElse("OER_KEY", throw new RuntimeException("Provide OER_KEY variable"))

@@ -12,28 +12,20 @@
  */
 package com.snowplowanalytics.forex
 
-// Java
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 import java.math.{BigDecimal, RoundingMode}
 
-// Scala
 import scala.util.{Failure, Success, Try}
 
-// cats
 import cats.effect.Sync
 import cats.implicits._
 import cats.data.{EitherT, OptionT}
-
-// Joda
 import org.joda.money._
 
-// OerClient
-import com.snowplowanalytics.forex.oerclient._
+import oerclient._
 
-/**
- * Companion object to get Forex object
- */
+/** Companion object to get Forex object */
 object Forex {
 
   /**
@@ -43,7 +35,11 @@ object Forex {
   val commonScale = 6
 
   /** Helper method to get the ratio of from:to in BigDecimal type */
-  def getForexRate(fromCurrIsBaseCurr: Boolean, baseOverFrom: BigDecimal, baseOverTo: BigDecimal): BigDecimal =
+  def getForexRate(
+    fromCurrIsBaseCurr: Boolean,
+    baseOverFrom: BigDecimal,
+    baseOverTo: BigDecimal
+  ): BigDecimal =
     if (!fromCurrIsBaseCurr) {
       val fromOverBase = new BigDecimal(1).divide(baseOverFrom, Forex.commonScale, RoundingMode.HALF_EVEN)
       fromOverBase.multiply(baseOverTo)
@@ -68,8 +64,7 @@ object Forex {
  */
 case class Forex[F[_]](config: ForexConfig, client: ForexClient[F]) {
 
-  def rate: ForexLookupTo[F] =
-    ForexLookupTo(1, config.baseCurrency, config, client)
+  def rate: ForexLookupTo[F] = ForexLookupTo(1, config.baseCurrency, config, client)
 
   /**
    * Starts building a fluent interface, performs currency look up from *source* currency.
@@ -111,10 +106,12 @@ case class Forex[F[_]](config: ForexConfig, client: ForexClient[F]) {
  * @param config Forex config
  * @param client Passed down client that does actual work
  */
-case class ForexLookupTo[F[_]](conversionAmount: Double,
-                               fromCurr: CurrencyUnit,
-                               config: ForexConfig,
-                               client: ForexClient[F]) {
+case class ForexLookupTo[F[_]](
+  conversionAmount: Double,
+  fromCurr: CurrencyUnit,
+  config: ForexConfig,
+  client: ForexClient[F]
+) {
 
   /**
    * Continue building the  target currency to the desired one
@@ -134,19 +131,20 @@ case class ForexLookupTo[F[_]](conversionAmount: Double,
  * @param config Forex config
  * @param client Passed down client that does actual work
  */
-case class ForexLookupWhen[F[_]: Sync](conversionAmount: Double,
-                                       fromCurr: CurrencyUnit,
-                                       toCurr: CurrencyUnit,
-                                       config: ForexConfig,
-                                       client: ForexClient[F]) {
+case class ForexLookupWhen[F[_]: Sync](
+  conversionAmount: Double,
+  fromCurr: CurrencyUnit,
+  toCurr: CurrencyUnit,
+  config: ForexConfig,
+  client: ForexClient[F]
+) {
   // convert `conversionAmt` into BigDecimal representation for its later usage in BigMoney
   val conversionAmt = new BigDecimal(conversionAmount)
-  // convert `fromCurr` and `toCurr` in string representations to CurrencyUnit representations
 
   /**
    * Performs live currency lookup/conversion
-   *
-   * @return Money representation in target currency or OerResponseError object if API request failed
+   * @return Money representation in target currency or OerResponseError object if API request
+   * failed
    */
   def now: F[Either[OerResponseError, Money]] = {
     val fromF = EitherT(client.getLiveCurrencyValue(fromCurr))
@@ -175,13 +173,13 @@ case class ForexLookupWhen[F[_]: Sync](conversionAmount: Double,
    * A cached version of the live exchange rate is used
    * if a cache exists and the timestamp of that exchange rate is less than or equal to "nowishSecs" old.
    * Otherwise a new lookup is performed.
-   *
-   * @return Money representation in target currency or OerResponseError object if API request failed
+   * @return Money representation in target currency or OerResponseError object if API request
+   * failed
    */
   def nowish: F[Either[OerResponseError, Money]] =
     OptionT
       .fromOption[F](client.nowishCache)
-      .flatMap(cache => lookupNowishCache(fromCurr, toCurr))
+      .flatMap(_ => lookupNowishCache(fromCurr, toCurr))
       .withFilter {
         case (time, _) =>
           val nowishTime = ZonedDateTime.now.minusSeconds(config.nowishSecs.toLong)
@@ -190,7 +188,10 @@ case class ForexLookupWhen[F[_]: Sync](conversionAmount: Double,
       .map { case (_, rate) => returnMoneyOrJodaError(rate) }
       .getOrElseF(now)
 
-  private def lookupNowishCache(fromCurr: CurrencyUnit, toCurr: CurrencyUnit): OptionT[F, NowishCacheValue] = {
+  private def lookupNowishCache(
+    fromCurr: CurrencyUnit,
+    toCurr: CurrencyUnit
+  ): OptionT[F, NowishCacheValue] = {
     val oneWay = OptionT(client.nowishCache.flatTraverse(cache => cache.get((fromCurr, toCurr))))
     val otherWay = OptionT(client.nowishCache.flatTraverse(cache => cache.get((toCurr, fromCurr))))
       .map { case (time, rate) => (time, inverseRate(rate)) }
@@ -200,8 +201,8 @@ case class ForexLookupWhen[F[_]: Sync](conversionAmount: Double,
 
   /**
    * Gets the latest end-of-day rate prior to the event or post to the event
-   *
-   * @return Money representation in target currency or OerResponseError object if API request failed
+   * @return Money representation in target currency or OerResponseError object if API request
+   * failed
    */
   def at(tradeDate: ZonedDateTime): F[Either[OerResponseError, Money]] = {
     val latestEod = if (config.getNearestDay == EodRoundUp) {
@@ -214,19 +215,21 @@ case class ForexLookupWhen[F[_]: Sync](conversionAmount: Double,
 
   /**
    * Gets the end-of-day rate for the specified date
-   *
-   * @return Money representation in target currency or OerResponseError object if API request failed
+   * @return Money representation in target currency or OerResponseError object if API request
+   * failed
    */
   def eod(eodDate: ZonedDateTime): F[Either[OerResponseError, Money]] =
     OptionT
       .fromOption[F](client.eodCache)
-      .flatMap(cache => lookupEodCache(fromCurr, toCurr, eodDate))
+      .flatMap(_ => lookupEodCache(fromCurr, toCurr, eodDate))
       .map(rate => returnMoneyOrJodaError(rate))
       .getOrElseF(getHistoricalRate(eodDate))
 
-  private def lookupEodCache(fromCurr: CurrencyUnit,
-                             toCurr: CurrencyUnit,
-                             eodDate: ZonedDateTime): OptionT[F, BigDecimal] = {
+  private def lookupEodCache(
+    fromCurr: CurrencyUnit,
+    toCurr: CurrencyUnit,
+    eodDate: ZonedDateTime
+  ): OptionT[F, BigDecimal] = {
     val oneWay = OptionT(client.eodCache.flatTraverse(cache => cache.get((fromCurr, toCurr, eodDate))))
     val otherWay = OptionT(client.eodCache.flatTraverse(cache => cache.get((toCurr, fromCurr, eodDate))))
       .map(inverseRate)
@@ -239,7 +242,6 @@ case class ForexLookupWhen[F[_]: Sync](conversionAmount: Double,
 
   /**
    * Helper method to get the historical forex rate between two currencies on a given date,
-   *
    * @return Money in target currency representation or error message if the date given is invalid
    */
   private def getHistoricalRate(date: ZonedDateTime): F[Either[OerResponseError, Money]] = {
@@ -266,11 +268,11 @@ case class ForexLookupWhen[F[_]: Sync](conversionAmount: Double,
 
   /**
    * This method is called when the forex rate has been found in the API
-   *
    * @param rate The forex rate between source and target currency
    * @return Money representation in target currency if both currencies are supported by Joda Money
-   *         or OerResponseError with an error message containing the forex rate between the two currencies
-   *         if either of the currency is not supported by Joda Money
+   * or OerResponseError with an error message containing the forex rate between the two
+   * currencies
+   * if either of the currency is not supported by Joda Money
    */
   private def returnMoneyOrJodaError(rate: BigDecimal): Either[OerResponseError, Money] = {
     val moneyInSourceCurrency = BigMoney.of(fromCurr, conversionAmt)

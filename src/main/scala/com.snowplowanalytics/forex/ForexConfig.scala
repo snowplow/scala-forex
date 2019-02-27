@@ -39,7 +39,6 @@ object UnlimitedAccount extends AccountType
 
 /**
  * Configure class for Forex object
- *
  * @param appId Key for the api
  * @param accountLevel Type of the registered account
  * @param nowishCacheSize Cache for nowish look up

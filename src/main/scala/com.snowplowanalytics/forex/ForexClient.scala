@@ -12,23 +12,16 @@
  */
 package com.snowplowanalytics.forex
 
-// Java
 import java.time.ZonedDateTime
 
-// Joda
-import org.joda.money.CurrencyUnit
-
-// cats
 import cats.effect.Sync
 import cats.syntax.apply._
 import cats.syntax.functor._
 import cats.syntax.option._
+import org.joda.money.CurrencyUnit
 
-// OpenExchangeRate client
-import oerclient._
-
-// LruMap
 import com.snowplowanalytics.lrumap.LruMap
+import oerclient._
 
 /**
  * Companion object for ForexClient class
@@ -37,15 +30,11 @@ import com.snowplowanalytics.lrumap.LruMap
  */
 object ForexClient {
 
-  /**
-   * Creates a client with a cache and sensible default ForexConfig
-   */
+  /** Creates a client with a cache and sensible default ForexConfig */
   def getClient[F[_]: Sync](appId: String, accountLevel: AccountType): F[ForexClient[F]] =
     getClient[F](ForexConfig(appId = appId, accountLevel = accountLevel))
 
-  /**
-   * Getter for clients, creating the caches as defined in the config
-   */
+  /** Getter for clients, creating the caches as defined in the config */
   def getClient[F[_]: Sync](config: ForexConfig): F[ForexClient[F]] = {
     val nowishCacheF =
       if (config.nowishCacheSize > 0)
@@ -63,19 +52,21 @@ object ForexClient {
     }
   }
 
-  def getClient[F[_]: Sync](config: ForexConfig,
-                            nowishCache: Option[NowishCache[F]],
-                            eodCache: Option[EodCache[F]]): ForexClient[F] =
-    new OerClient[F](config, nowishCache, eodCache)
+  def getClient[F[_]: Sync](
+    config: ForexConfig,
+    nowishCache: Option[NowishCache[F]],
+    eodCache: Option[EodCache[F]]
+  ): ForexClient[F] = new OerClient[F](config, nowishCache, eodCache)
 }
 
-abstract class ForexClient[F[_]](val config: ForexConfig,
-                                 val nowishCache: Option[NowishCache[F]] = None,
-                                 val eodCache: Option[EodCache[F]]       = None) {
+abstract class ForexClient[F[_]](
+  val config: ForexConfig,
+  val nowishCache: Option[NowishCache[F]] = None,
+  val eodCache: Option[EodCache[F]]       = None
+) {
 
   /**
    * Get the latest exchange rate from a given currency
-   *
    * @param currency Desired currency
    * @return result returned from API
    */
@@ -83,7 +74,6 @@ abstract class ForexClient[F[_]](val config: ForexConfig,
 
   /**
    * Get a historical exchange rate from a given currency and date
-   *
    * @param currency Desired currency
    * @param date Date of desired rate
    * @return result returned from API

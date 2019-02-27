@@ -12,10 +12,7 @@
  */
 package com.snowplowanalytics.forex
 
-// cats
 import cats.effect.IO
-
-// Specs2
 import org.specs2.mutable.Specification
 
 /**

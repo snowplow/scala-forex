@@ -12,17 +12,12 @@
  */
 package com.snowplowanalytics
 
-// Java
 import java.time.ZonedDateTime
 import java.math.BigDecimal
 
-// Joda
 import org.joda.money.CurrencyUnit
 
-// LruMap
 import com.snowplowanalytics.lrumap.LruMap
-
-// oerclient
 import forex.oerclient.OerResponseError
 
 package object forex {

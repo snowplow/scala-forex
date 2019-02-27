@@ -12,28 +12,18 @@
  */
 package com.snowplowanalytics.forex
 
-// Java
 import java.time.{ZoneId, ZonedDateTime}
 
-// Joda
-import org.joda.money.CurrencyUnit
-
-// Scala
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext
 
-// cats
 import cats.effect.IO
 import cats.syntax.apply._
-
-// LruMap
-import com.snowplowanalytics.lrumap.LruMap
-
-// Specs2
-import org.specs2.mutable.Specification
-// Mockito
+import org.joda.money.CurrencyUnit
 import org.specs2.mock.Mockito
-// TestHelpers
+import org.specs2.mutable.Specification
+
+import com.snowplowanalytics.lrumap.LruMap
 import TestHelpers._
 
 /**

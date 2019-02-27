@@ -13,38 +13,30 @@
 package com.snowplowanalytics.forex
 package oerclient
 
-// Java
 import java.net.URL
 import java.net.HttpURLConnection
 import java.time.{LocalDateTime, ZoneId, ZonedDateTime}
 import java.math.{BigDecimal => JBigDecimal}
 
-import io.circe.Decoder.Result
-
-// Scala
 import scala.util.Try
 
-// Joda
-import org.joda.money.CurrencyUnit
-
-// cats
 import cats.effect.Sync
 import cats.implicits._
 import cats.data.EitherT
-
-// circe
 import io.circe._
 import io.circe.parser.parse
+import org.joda.money.CurrencyUnit
 
 object OerClient {
   final case class OerResponse(rates: Map[CurrencyUnit, BigDecimal])
 
   // Encoder ignores Currencies that are not parsable by CurrencyUnit
   implicit val oerResponseDecoder = new Decoder[OerResponse] {
-    override def apply(c: HCursor): Result[OerResponse] = c.downField("rates").as[Map[String, BigDecimal]].map { map =>
-      OerResponse(
-        map.toList.mapFilter { case (key, value) => Try(CurrencyUnit.of(key)).toOption.map(_ -> value) }.toMap)
-    }
+    override def apply(c: HCursor): Decoder.Result[OerResponse] =
+      c.downField("rates").as[Map[String, BigDecimal]].map { map =>
+        OerResponse(
+          map.toList.mapFilter { case (key, value) => Try(CurrencyUnit.of(key)).toOption.map(_ -> value) }.toMap)
+      }
   }
 
 }
@@ -83,7 +75,8 @@ class OerClient[F[_]: Sync](
   private val latest = "latest.json?app_id=" + config.appId + base
 
   /** The earliest date OER service is availble */
-  private val oerDataFrom = ZonedDateTime.of(LocalDateTime.of(1999, 1, 1, 0, 0), ZoneId.systemDefault)
+  private val oerDataFrom =
+    ZonedDateTime.of(LocalDateTime.of(1999, 1, 1, 0, 0), ZoneId.systemDefault)
 
   /**
    * Gets live currency value for the desired currency,
@@ -98,11 +91,13 @@ class OerClient[F[_]: Sync](
       response     <- EitherT(getResponseFromApi(latest))
       liveCurrency <- EitherT(extractLiveCurrency(response, currency))
     } yield liveCurrency
-
     action.value
   }
 
-  private def extractLiveCurrency(response: OerResponse, currency: CurrencyUnit): F[ApiRequestResult] = {
+  private def extractLiveCurrency(
+    response: OerResponse,
+    currency: CurrencyUnit
+  ): F[ApiRequestResult] = {
     val cacheAction = nowishCache.traverse { cache =>
       config.accountLevel match {
         // If the user is using Developer account,
@@ -123,7 +118,8 @@ class OerClient[F[_]: Sync](
               cache.put(keyPair, valPair)
           }
         // For Enterprise and Unlimited users, OER allows them to configure the base currencies.
-        // So the exchange rate returned from the API is between target currency and the base currency they defined.
+        // So the exchange rate returned from the API is between target currency and the base
+        // currency they defined.
         case _ =>
           response.rates.toList.traverse_ {
             case (currentCurrency, currencyValue) =>
@@ -160,7 +156,10 @@ class OerClient[F[_]: Sync](
    * @param date - The specific date we want to look up on
    * @return result returned from API
    */
-  def getHistoricalCurrencyValue(currency: CurrencyUnit, date: ZonedDateTime): F[ApiRequestResult] =
+  def getHistoricalCurrencyValue(
+    currency: CurrencyUnit,
+    date: ZonedDateTime
+  ): F[ApiRequestResult] =
     if (date.isBefore(oerDataFrom) || date.isAfter(ZonedDateTime.now)) {
       OerResponseError(s"Exchange rate unavailable on the date [$date]", ResourcesNotAvailable)
         .asLeft[JBigDecimal]
@@ -175,9 +174,11 @@ class OerClient[F[_]: Sync](
       action.value
     }
 
-  private def extractHistoricalCurrency(response: OerResponse,
-                                        currency: CurrencyUnit,
-                                        date: ZonedDateTime): F[ApiRequestResult] = {
+  private def extractHistoricalCurrency(
+    response: OerResponse,
+    currency: CurrencyUnit,
+    date: ZonedDateTime
+  ): F[ApiRequestResult] = {
     val cacheAction = eodCache.traverse { cache =>
       config.accountLevel match {
         // If the user is using Developer account,
@@ -191,10 +192,18 @@ class OerClient[F[_]: Sync](
             case (currentCurrency, usdOverCurr) =>
               val keyPair            = (config.baseCurrency, currentCurrency, date)
               val fromCurrIsBaseCurr = config.baseCurrency == CurrencyUnit.USD
-              cache.put(keyPair, Forex.getForexRate(fromCurrIsBaseCurr, usdOverBase.bigDecimal, usdOverCurr.bigDecimal))
+              cache.put(
+                keyPair,
+                Forex.getForexRate(
+                  fromCurrIsBaseCurr,
+                  usdOverBase.bigDecimal,
+                  usdOverCurr.bigDecimal
+                )
+              )
           })
         // For Enterprise and Unlimited users, OER allows them to configure the base currencies.
-        // So the exchange rate returned from the API is between target currency and the base currency they defined.
+        // So the exchange rate returned from the API is between target currency and the base
+        // currency they defined.
         case _ =>
           Sync[F].delay(response.rates.foreach {
             case (currentCurrency, currencyValue) =>
@@ -219,23 +228,24 @@ class OerClient[F[_]: Sync](
    * @return JSON node which contains currency information obtained from API
    * or OerResponseError object which carries the error message returned by the API
    */
-  private def getResponseFromApi(downloadPath: String): F[Either[OerResponseError, OerResponse]] = Sync[F].delay {
-    val url  = new URL(oerUrl + downloadPath)
-    val conn = url.openConnection
-    conn match {
-      case httpUrlConn: HttpURLConnection =>
-        if (httpUrlConn.getResponseCode >= 400) {
-          val errorString = scala.io.Source.fromInputStream(httpUrlConn.getErrorStream).mkString
-          parse(errorString)
-            .flatMap(_.hcursor.downField("message").as[String])
-            .leftMap(e => OerResponseError(e.getMessage, OtherErrors))
-            .flatMap(message => Left(OerResponseError(message, OtherErrors)))
-        } else {
-          parse(scala.io.Source.fromInputStream(httpUrlConn.getInputStream).mkString)
-            .flatMap(_.as[OerResponse])
-            .leftMap(e => OerResponseError(e.getMessage, OtherErrors))
-        }
-      case _ => throw new ClassCastException
+  private def getResponseFromApi(downloadPath: String): F[Either[OerResponseError, OerResponse]] =
+    Sync[F].delay {
+      val url  = new URL(oerUrl + downloadPath)
+      val conn = url.openConnection
+      conn match {
+        case httpUrlConn: HttpURLConnection =>
+          if (httpUrlConn.getResponseCode >= 400) {
+            val errorString = scala.io.Source.fromInputStream(httpUrlConn.getErrorStream).mkString
+            parse(errorString)
+              .flatMap(_.hcursor.downField("message").as[String])
+              .leftMap(e => OerResponseError(e.getMessage, OtherErrors))
+              .flatMap(message => Left(OerResponseError(message, OtherErrors)))
+          } else {
+            parse(scala.io.Source.fromInputStream(httpUrlConn.getInputStream).mkString)
+              .flatMap(_.as[OerResponse])
+              .leftMap(e => OerResponseError(e.getMessage, OtherErrors))
+          }
+        case _ => throw new ClassCastException
+      }
     }
-  }
 }

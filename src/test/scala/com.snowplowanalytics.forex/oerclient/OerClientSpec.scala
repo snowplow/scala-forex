@@ -13,14 +13,10 @@
 package com.snowplowanalytics.forex
 package oerclient
 
-// Java
 import java.math.BigDecimal
 import java.time.ZonedDateTime
 
-// Joda
 import org.joda.money.CurrencyUnit
-
-// Specs2
 import org.specs2.mutable.Specification
 
 import TestHelpers._
