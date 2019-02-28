@@ -18,7 +18,7 @@ object Dependencies {
   object V {
     // Java
     val jodaMoney   = "1.0.1"
-    val jodaConvert = "2.1.1"
+    val jodaConvert = "2.2.0"
 
     // Scala
     val catsEffect = "1.0.0"
