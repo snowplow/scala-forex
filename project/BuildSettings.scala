@@ -32,11 +32,8 @@ object BuildSettings {
   // Basic settings for our app
   lazy val buildSettings = Seq[Setting[_]](
     organization          := "com.snowplowanalytics",
-    scalaVersion          := "2.12.7",
-    crossScalaVersions    := Seq("2.11.12", "2.12.7"),
-    addCompilerPlugin(
-      "org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full
-    )
+    scalaVersion          := "2.12.8",
+    crossScalaVersions    := Seq("2.11.12", "2.12.8")
   )
 
   // Publish settings
