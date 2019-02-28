@@ -26,7 +26,7 @@ object Dependencies {
     val lruMap     = "0.2.0"
 
     // Scala (test only)
-    val specs2 = "4.3.4"
+    val specs2 = "4.4.1"
   }
 
   object Libraries {
