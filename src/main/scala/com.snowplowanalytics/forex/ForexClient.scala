@@ -20,7 +20,7 @@ import cats.syntax.functor._
 import cats.syntax.option._
 import org.joda.money.CurrencyUnit
 
-import com.snowplowanalytics.lrumap.LruMap
+import com.snowplowanalytics.lrumap.CreateLruMap
 import oerclient._
 
 /**
@@ -35,16 +35,25 @@ object ForexClient {
     getClient[F](ForexConfig(appId = appId, accountLevel = accountLevel))
 
   /** Getter for clients, creating the caches as defined in the config */
-  def getClient[F[_]: Sync](config: ForexConfig): F[ForexClient[F]] = {
+  def getClient[F[_]: Sync](
+    config: ForexConfig
+  )(
+    implicit CLM1: CreateLruMap[F, NowishCacheKey, NowishCacheValue],
+    CLM2: CreateLruMap[F, EodCacheKey, EodCacheValue]
+  ): F[ForexClient[F]] = {
     val nowishCacheF =
-      if (config.nowishCacheSize > 0)
-        LruMap.create[F, NowishCacheKey, NowishCacheValue](config.nowishCacheSize).map(_.some)
-      else Sync[F].pure(Option.empty[NowishCache[F]])
+      if (config.nowishCacheSize > 0) {
+        CLM1.create(config.nowishCacheSize).map(_.some)
+      } else {
+        Sync[F].pure(Option.empty[NowishCache[F]])
+      }
 
     val eodCacheF =
-      if (config.eodCacheSize > 0)
-        LruMap.create[F, EodCacheKey, EodCacheValue](config.eodCacheSize).map(_.some)
-      else Sync[F].pure(Option.empty[EodCache[F]])
+      if (config.eodCacheSize > 0) {
+        CLM2.create(config.eodCacheSize).map(_.some)
+      } else {
+        Sync[F].pure(Option.empty[EodCache[F]])
+      }
 
     (nowishCacheF, eodCacheF).mapN {
       case (nowish, eod) =>

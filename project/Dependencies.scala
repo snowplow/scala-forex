@@ -23,7 +23,7 @@ object Dependencies {
     // Scala
     val catsEffect = "1.2.0"
     val circe      = "0.11.1"
-    val lruMap     = "0.2.0"
+    val lruMap     = "0.3.0-M2"
 
     // Scala (test only)
     val specs2 = "4.4.1"
