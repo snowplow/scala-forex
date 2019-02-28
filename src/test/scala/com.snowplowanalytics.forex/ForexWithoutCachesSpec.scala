@@ -15,14 +15,15 @@ package com.snowplowanalytics.forex
 import cats.effect.IO
 import org.specs2.mutable.Specification
 
-/**
- * Testing that setting cache size to zero will disable the use of cache
- */
+/** Testing that setting cache size to zero will disable the use of cache */
 class ForexWithoutCachesSpec extends Specification {
+  args(skipAll = sys.env.get("OER_KEY").isEmpty)
+
+  val key = sys.env.getOrElse("OER_KEY", "")
+
   "Setting both cache sizes to zero" should {
     "disable the use of caches" in {
-      val fxWithoutCache =
-        Forex.getForex[IO](ForexConfig(TestHelpers.key, DeveloperAccount, nowishCacheSize = 0, eodCacheSize = 0))
+      val fxWithoutCache = Forex.getForex[IO](ForexConfig(key, DeveloperAccount, nowishCacheSize = 0, eodCacheSize = 0))
       fxWithoutCache.unsafeRunSync().client.eodCache.isEmpty
       fxWithoutCache.unsafeRunSync().client.nowishCache.isEmpty
     }

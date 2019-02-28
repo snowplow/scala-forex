@@ -14,22 +14,27 @@ package com.snowplowanalytics.forex
 
 import java.time.{ZoneId, ZonedDateTime}
 
+import cats.effect.IO
 import org.joda.money.CurrencyUnit
 import org.specs2.mutable.Specification
 
-import TestHelpers._
 import oerclient.{OerResponseError, ResourcesNotAvailable}
 
 /**
  *  Testing for exceptions caused by invalid dates
  */
 class UnsupportedEodSpec extends Specification {
+  args(skipAll = sys.env.get("OER_KEY").isEmpty)
+
+  val key = sys.env.getOrElse("OER_KEY", "")
+  val fx  = Forex.getForex[IO](ForexConfig(key, DeveloperAccount))
 
   "An end-of-date lookup in 1900" should {
     "throw an exception" in {
 
       /**
-       * 1900 is earlier than 1990 which is the earliest available date for looking up exchange rates
+       * 1900 is earlier than 1990 which is the earliest available date for looking up exchange
+       * rates
        */
       val date1900 = ZonedDateTime.of(1900, 3, 13, 0, 0, 0, 0, ZoneId.systemDefault)
       fx.flatMap(_.rate.to(CurrencyUnit.GBP).eod(date1900))
@@ -39,14 +44,12 @@ class UnsupportedEodSpec extends Specification {
     }
   }
 
-  "An end-of-date lookup in 2020" should {
+  "An end-of-date lookup in 2030" should {
     "throw an exception" in {
 
-      /**
-       * 2020 is in the future so it won't be available either
-       */
-      val date2020 = ZonedDateTime.of(2020, 3, 13, 0, 0, 0, 0, ZoneId.systemDefault)
-      fx.flatMap(_.rate.to(CurrencyUnit.GBP).eod(date2020))
+      /** 2030 is in the future so it won't be available either */
+      val date2030 = ZonedDateTime.of(2030, 3, 13, 0, 0, 0, 0, ZoneId.systemDefault)
+      fx.flatMap(_.rate.to(CurrencyUnit.GBP).eod(date2030))
         .unsafeRunSync() must beLike {
         case Left(OerResponseError(_, ResourcesNotAvailable)) => ok
       }

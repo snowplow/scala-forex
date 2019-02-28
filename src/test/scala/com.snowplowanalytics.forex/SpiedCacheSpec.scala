@@ -24,12 +24,15 @@ import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 
 import com.snowplowanalytics.lrumap.LruMap
-import TestHelpers._
 
-/**
- * Testing cache behaviours
- */
+/** Testing cache behaviours */
 class SpiedCacheSpec extends Specification with Mockito {
+  args(skipAll = sys.env.get("OER_KEY").isEmpty)
+
+  val key                     = sys.env.getOrElse("OER_KEY", "")
+  val config                  = ForexConfig(key, DeveloperAccount)
+  val fxConfigWith5NowishSecs = ForexConfig(key, DeveloperAccount, nowishSecs = 5)
+
   val spiedNowishCache = spy(
     LruMap.create[IO, NowishCacheKey, NowishCacheValue](config.nowishCacheSize).unsafeRunSync())
   val spiedEodCache = spy(LruMap.create[IO, EodCacheKey, EodCacheValue](config.eodCacheSize).unsafeRunSync())

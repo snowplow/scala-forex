@@ -15,11 +15,10 @@ package com.snowplowanalytics.forex
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
+import cats.effect.IO
 import org.joda.money.{CurrencyUnit, Money}
 import org.specs2.mutable.Specification
 import org.specs2.matcher.DataTables
-
-import TestHelpers._
 
 /**
  * Testing method for getting the end-of-date exchange rate
@@ -28,8 +27,12 @@ import TestHelpers._
  */
 class ForexEodSpec extends Specification with DataTables {
 
+  val key = sys.env.getOrElse("OER_KEY", "")
+  val fx  = Forex.getForex[IO](ForexConfig(key, DeveloperAccount))
+
   override def is =
-    "end-of-date lookup tests: forex rate between two currencies for a specific date is always the same" ! e1
+    skipAllIf(sys.env.get("OER_KEY").isEmpty) ^
+      "end-of-date lookup tests: forex rate between two currencies for a specific date is always the same" ! e1
 
   // Table values obtained from OER API
   def e1 =

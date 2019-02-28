@@ -16,13 +16,16 @@ package oerclient
 import java.math.BigDecimal
 import java.time.ZonedDateTime
 
+import cats.effect.IO
 import org.joda.money.CurrencyUnit
 import org.specs2.mutable.Specification
 
-import TestHelpers._
-
 /** Testing methods for Open exchange rate client */
 class OerClientSpec extends Specification {
+  args(skipAll = sys.env.get("OER_KEY").isEmpty)
+
+  val key = sys.env.getOrElse("OER_KEY", "")
+  val fx  = Forex.getForex[IO](ForexConfig(key, DeveloperAccount))
 
   "live currency value for USD" should {
     "always equal to 1" in {
@@ -32,16 +35,16 @@ class OerClientSpec extends Specification {
     }
   }
 
-  val gbpLiveRate = fx.flatMap(_.client.getLiveCurrencyValue(CurrencyUnit.GBP))
   "live currency value for GBP" should {
     "be less than 1" in {
+      val gbpLiveRate = fx.flatMap(_.client.getLiveCurrencyValue(CurrencyUnit.GBP))
       gbpLiveRate.unsafeRunSync() must beRight((d: BigDecimal) => d.doubleValue < 1)
     }
   }
 
-  val date = ZonedDateTime.parse("2008-01-01T01:01:01.123+09:00")
   "historical currency value for USD on 01/01/2008" should {
     "always equal to 1 as well" in {
+      val date = ZonedDateTime.parse("2008-01-01T01:01:01.123+09:00")
       fx.flatMap(_.client.getHistoricalCurrencyValue(CurrencyUnit.USD, date))
         .unsafeRunSync() must beRight(new BigDecimal(1))
     }

@@ -14,48 +14,42 @@ package com.snowplowanalytics.forex
 
 import java.math.RoundingMode
 
+import cats.effect.IO
 import org.joda.money._
 import org.specs2.mutable.Specification
 
-import TestHelpers._
-
-/**
- * Testing method for getting the approximate exchange rate
- */
+/** Testing method for getting the approximate exchange rate */
 class ForexNowishSpec extends Specification {
+  args(skipAll = sys.env.get("OER_KEY").isEmpty)
 
-  /**
-   * CAD -> GBP with base currency USD
-   */
-  val cadOverGbpNowish = fx.flatMap(_.rate(CurrencyUnit.CAD).to(CurrencyUnit.GBP).nowish)
+  val key = sys.env.getOrElse("OER_KEY", "")
+  val fx  = Forex.getForex[IO](ForexConfig(key, DeveloperAccount))
+  val fxWithBaseGBP =
+    Forex.getForex[IO](ForexConfig(key, EnterpriseAccount, baseCurrency = CurrencyUnit.GBP))
 
+  /** CAD -> GBP with base currency USD */
   "CAD to GBP with USD as base currency returning near-live rate" should {
     "be smaller than 1 pound" in {
+      val cadOverGbpNowish = fx.flatMap(_.rate(CurrencyUnit.CAD).to(CurrencyUnit.GBP).nowish)
       cadOverGbpNowish
         .unsafeRunSync() must beRight((m: Money) => m.isLessThan(Money.of(CurrencyUnit.GBP, 1)))
     }
   }
 
-  /**
-   * GBP -> JPY with base currency USD
-   */
-  val gbpToJpyWithBaseUsd = fx.flatMap(_.rate(CurrencyUnit.GBP).to(CurrencyUnit.JPY).nowish)
-
+  /** GBP -> JPY with base currency USD */
   "GBP to JPY with USD as base currency returning near-live rate" should {
     "be greater than 1 Yen" in {
+      val gbpToJpyWithBaseUsd = fx.flatMap(_.rate(CurrencyUnit.GBP).to(CurrencyUnit.JPY).nowish)
       gbpToJpyWithBaseUsd
         .unsafeRunSync() must beRight(
         (m: Money) => m.isGreaterThan(BigMoney.of(CurrencyUnit.JPY, 1).toMoney(RoundingMode.HALF_EVEN)))
     }
   }
 
-  /**
-   * GBP -> JPY with base currency GBP
-   */
-  val gbpToJpyWithBaseGbp = fxWithBaseGBP.flatMap(_.rate.to(CurrencyUnit.JPY).nowish)
-
+  /** GBP -> JPY with base currency GBP */
   "GBP to JPY with GBP as base currency returning near-live rate" should {
     "be greater than 1 Yen" in {
+      val gbpToJpyWithBaseGbp = fxWithBaseGBP.flatMap(_.rate.to(CurrencyUnit.JPY).nowish)
       gbpToJpyWithBaseGbp
         .unsafeRunSync() must beRight(
         (m: Money) => m.isGreaterThan(BigMoney.of(CurrencyUnit.of("JPY"), 1).toMoney(RoundingMode.HALF_EVEN)))
