@@ -21,7 +21,7 @@ object Dependencies {
     val jodaConvert = "2.2.0"
 
     // Scala
-    val catsEffect = "1.0.0"
+    val catsEffect = "1.2.0"
     val circe      = "0.10.0"
     val lruMap     = "0.2.0"
 
