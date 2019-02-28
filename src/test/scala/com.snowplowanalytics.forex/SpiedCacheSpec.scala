@@ -23,7 +23,7 @@ import org.joda.money.CurrencyUnit
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 
-import com.snowplowanalytics.lrumap.LruMap
+import com.snowplowanalytics.lrumap.CreateLruMap
 
 /** Testing cache behaviours */
 class SpiedCacheSpec extends Specification with Mockito {
@@ -34,9 +34,16 @@ class SpiedCacheSpec extends Specification with Mockito {
   val fxConfigWith5NowishSecs = ForexConfig(key, DeveloperAccount, nowishSecs = 5)
 
   val spiedNowishCache = spy(
-    LruMap.create[IO, NowishCacheKey, NowishCacheValue](config.nowishCacheSize).unsafeRunSync())
-  val spiedEodCache = spy(LruMap.create[IO, EodCacheKey, EodCacheValue](config.eodCacheSize).unsafeRunSync())
-  val client        = ForexClient.getClient[IO](config, Some(spiedNowishCache), Some(spiedEodCache))
+    CreateLruMap[IO, NowishCacheKey, NowishCacheValue]
+      .create(config.nowishCacheSize)
+      .unsafeRunSync()
+  )
+  val spiedEodCache = spy(
+    CreateLruMap[IO, EodCacheKey, EodCacheValue]
+      .create(config.eodCacheSize)
+      .unsafeRunSync()
+  )
+  val client = ForexClient.getClient[IO](config, Some(spiedNowishCache), Some(spiedEodCache))
 
   val spiedFx                = Forex[IO](config, client)
   val spiedFxWith5NowishSecs = Forex[IO](fxConfigWith5NowishSecs, client)
