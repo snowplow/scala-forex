@@ -31,6 +31,9 @@ lazy val root = project.in(file("."))
       Dependencies.Libraries.catsEffect,
       Dependencies.Libraries.circeParser,
       Dependencies.Libraries.lruMap,
+      Dependencies.Libraries.hammockCore,
+      Dependencies.Libraries.hammockHttp,
+      Dependencies.Libraries.hammockCirce,
       Dependencies.Libraries.specs2Core,
       Dependencies.Libraries.specs2Mock
     )

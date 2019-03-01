@@ -18,6 +18,8 @@ import cats.effect.IO
 import org.joda.money._
 import org.specs2.mutable.Specification
 
+import model._
+
 /** Testing method for getting the approximate exchange rate */
 class ForexNowishSpec extends Specification {
   args(skipAll = sys.env.get("OER_KEY").isEmpty)

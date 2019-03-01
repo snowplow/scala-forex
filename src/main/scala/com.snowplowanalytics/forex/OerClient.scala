@@ -11,35 +11,19 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.forex
-package oerclient
 
-import java.net.URL
-import java.net.HttpURLConnection
 import java.time.{LocalDateTime, ZoneId, ZonedDateTime}
 import java.math.{BigDecimal => JBigDecimal}
-
-import scala.util.Try
 
 import cats.effect.Sync
 import cats.implicits._
 import cats.data.EitherT
-import io.circe._
-import io.circe.parser.parse
 import org.joda.money.CurrencyUnit
 
-object OerClient {
-  final case class OerResponse(rates: Map[CurrencyUnit, BigDecimal])
-
-  // Encoder ignores Currencies that are not parsable by CurrencyUnit
-  implicit val oerResponseDecoder = new Decoder[OerResponse] {
-    override def apply(c: HCursor): Decoder.Result[OerResponse] =
-      c.downField("rates").as[Map[String, BigDecimal]].map { map =>
-        OerResponse(
-          map.toList.mapFilter { case (key, value) => Try(CurrencyUnit.of(key)).toOption.map(_ -> value) }.toMap)
-      }
-  }
-
-}
+import com.snowplowanalytics.lrumap.CreateLruMap
+import errors._
+import model._
+import responses._
 
 /**
  * Implements Json for Open Exchange Rates(http://openexchangerates.org)
@@ -47,16 +31,14 @@ object OerClient {
  * @param nowishCache - user defined nowishCache
  * @param eodCache - user defined eodCache
  */
-class OerClient[F[_]: Sync](
+case class OerClient[F[_]: Sync](
   config: ForexConfig,
-  nowishCache: Option[NowishCache[F]] = None,
-  eodCache: Option[EodCache[F]]       = None
-) extends ForexClient[F](config, nowishCache, eodCache) {
+  val nowishCache: Option[NowishCache[F]] = None,
+  val eodCache: Option[EodCache[F]]       = None,
+  transport: Transport[F]
+) {
 
-  import OerClient._
-
-  /** Base URL to OER API */
-  private val oerUrl = "http://openexchangerates.org/api/"
+  private val endpoint = "openexchangerates.org/api/"
 
   /** Sets the base currency in the url
    * according to the API, only Unlimited and Enterprise accounts
@@ -88,7 +70,7 @@ class OerClient[F[_]: Sync](
    */
   def getLiveCurrencyValue(currency: CurrencyUnit): F[ApiRequestResult] = {
     val action = for {
-      response     <- EitherT(getResponseFromApi(latest))
+      response     <- EitherT(transport.receive(endpoint, latest))
       liveCurrency <- EitherT(extractLiveCurrency(response, currency))
     } yield liveCurrency
     action.value
@@ -167,7 +149,7 @@ class OerClient[F[_]: Sync](
     } else {
       val historicalLink = buildHistoricalLink(date)
       val action = for {
-        response <- EitherT(getResponseFromApi(historicalLink))
+        response <- EitherT(transport.receive(endpoint, historicalLink))
         currency <- EitherT(extractHistoricalCurrency(response, currency, date))
       } yield currency
 
@@ -220,32 +202,50 @@ class OerClient[F[_]: Sync](
           .map(_.bigDecimal)
           .toRight(OerResponseError(s"Currency not found in the API, invalid currency $currency", IllegalCurrency)))
   }
+}
 
-  /**
-   * Helper method which returns the node containing
-   * a list of currency and rate pair.
-   * @param downloadPath - The URI link for the API request
-   * @return JSON node which contains currency information obtained from API
-   * or OerResponseError object which carries the error message returned by the API
-   */
-  private def getResponseFromApi(downloadPath: String): F[Either[OerResponseError, OerResponse]] =
-    Sync[F].delay {
-      val url  = new URL(oerUrl + downloadPath)
-      val conn = url.openConnection
-      conn match {
-        case httpUrlConn: HttpURLConnection =>
-          if (httpUrlConn.getResponseCode >= 400) {
-            val errorString = scala.io.Source.fromInputStream(httpUrlConn.getErrorStream).mkString
-            parse(errorString)
-              .flatMap(_.hcursor.downField("message").as[String])
-              .leftMap(e => OerResponseError(e.getMessage, OtherErrors))
-              .flatMap(message => Left(OerResponseError(message, OtherErrors)))
-          } else {
-            parse(scala.io.Source.fromInputStream(httpUrlConn.getInputStream).mkString)
-              .flatMap(_.as[OerResponse])
-              .leftMap(e => OerResponseError(e.getMessage, OtherErrors))
-          }
-        case _ => throw new ClassCastException
+/**
+ * Companion object for ForexClient class
+ * This class has one method for getting forex clients
+ * but for now there is only one client since we are only using OER
+ */
+object OerClient {
+
+  /** Creates a client with a cache and sensible default ForexConfig */
+  def getClient[F[_]: Sync](appId: String, accountLevel: AccountType): F[OerClient[F]] =
+    getClient[F](ForexConfig(appId = appId, accountLevel = accountLevel))
+
+  /** Getter for clients, creating the caches as defined in the config */
+  def getClient[F[_]: Sync](
+    config: ForexConfig
+  )(
+    implicit CLM1: CreateLruMap[F, NowishCacheKey, NowishCacheValue],
+    CLM2: CreateLruMap[F, EodCacheKey, EodCacheValue]
+  ): F[OerClient[F]] = {
+    val nowishCacheF =
+      if (config.nowishCacheSize > 0) {
+        CLM1.create(config.nowishCacheSize).map(_.some)
+      } else {
+        Sync[F].pure(Option.empty[NowishCache[F]])
       }
+
+    val eodCacheF =
+      if (config.eodCacheSize > 0) {
+        CLM2.create(config.eodCacheSize).map(_.some)
+      } else {
+        Sync[F].pure(Option.empty[EodCache[F]])
+      }
+
+    (nowishCacheF, eodCacheF).mapN {
+      case (nowish, eod) =>
+        new OerClient[F](config, nowishCache = nowish, eodCache = eod, Transport.httpTransport[F])
     }
+  }
+
+  def getClient[F[_]: Sync](
+    config: ForexConfig,
+    nowishCache: Option[NowishCache[F]],
+    eodCache: Option[EodCache[F]],
+    transport: Transport[F]
+  ): OerClient[F] = new OerClient[F](config, nowishCache, eodCache, transport)
 }

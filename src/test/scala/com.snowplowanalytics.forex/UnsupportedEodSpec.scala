@@ -18,7 +18,8 @@ import cats.effect.IO
 import org.joda.money.CurrencyUnit
 import org.specs2.mutable.Specification
 
-import oerclient.{OerResponseError, ResourcesNotAvailable}
+import errors._
+import model._
 
 /**
  *  Testing for exceptions caused by invalid dates

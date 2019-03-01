@@ -15,6 +15,8 @@ package com.snowplowanalytics.forex
 import cats.effect.IO
 import org.specs2.mutable.Specification
 
+import model._
+
 /** Testing that setting cache size to zero will disable the use of cache */
 class ForexWithoutCachesSpec extends Specification {
   args(skipAll = sys.env.get("OER_KEY").isEmpty)

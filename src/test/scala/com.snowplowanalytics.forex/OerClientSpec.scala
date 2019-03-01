@@ -11,7 +11,6 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.forex
-package oerclient
 
 import java.math.BigDecimal
 import java.time.ZonedDateTime
@@ -19,6 +18,8 @@ import java.time.ZonedDateTime
 import cats.effect.IO
 import org.joda.money.CurrencyUnit
 import org.specs2.mutable.Specification
+
+import model._
 
 /** Testing methods for Open exchange rate client */
 class OerClientSpec extends Specification {

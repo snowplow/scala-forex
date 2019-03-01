@@ -18,7 +18,7 @@ import java.math.BigDecimal
 import org.joda.money.CurrencyUnit
 
 import com.snowplowanalytics.lrumap.LruMap
-import forex.oerclient.OerResponseError
+import forex.errors._
 
 package object forex {
 
