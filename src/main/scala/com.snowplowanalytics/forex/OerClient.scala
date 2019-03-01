@@ -33,8 +33,8 @@ import responses._
  */
 case class OerClient[F[_]: Sync](
   config: ForexConfig,
-  val nowishCache: Option[NowishCache[F]] = None,
-  val eodCache: Option[EodCache[F]]       = None,
+  nowishCache: Option[NowishCache[F]] = None,
+  eodCache: Option[EodCache[F]]       = None,
   transport: Transport[F]
 ) {
 
