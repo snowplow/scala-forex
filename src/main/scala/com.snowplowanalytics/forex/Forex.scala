@@ -23,7 +23,8 @@ import cats.implicits._
 import cats.data.{EitherT, OptionT}
 import org.joda.money._
 
-import oerclient._
+import errors._
+import model._
 
 /** Companion object to get Forex object */
 object Forex {
@@ -48,7 +49,7 @@ object Forex {
     }
 
   def getForex[F[_]: Sync](config: ForexConfig): F[Forex[F]] =
-    ForexClient
+    OerClient
       .getClient[F](config)
       .map(client => Forex(config, client))
 }
@@ -62,7 +63,7 @@ object Forex {
  * @param config A configurator for Forex object
  * @param client Passed down client that does actual work
  */
-case class Forex[F[_]](config: ForexConfig, client: ForexClient[F]) {
+case class Forex[F[_]](config: ForexConfig, client: OerClient[F]) {
 
   def rate: ForexLookupTo[F] = ForexLookupTo(1, config.baseCurrency, config, client)
 
@@ -110,7 +111,7 @@ case class ForexLookupTo[F[_]](
   conversionAmount: Double,
   fromCurr: CurrencyUnit,
   config: ForexConfig,
-  client: ForexClient[F]
+  client: OerClient[F]
 ) {
 
   /**
@@ -136,7 +137,7 @@ case class ForexLookupWhen[F[_]: Sync](
   fromCurr: CurrencyUnit,
   toCurr: CurrencyUnit,
   config: ForexConfig,
-  client: ForexClient[F]
+  client: OerClient[F]
 ) {
   // convert `conversionAmt` into BigDecimal representation for its later usage in BigMoney
   val conversionAmt = new BigDecimal(conversionAmount)

@@ -20,6 +20,8 @@ import org.joda.money.{CurrencyUnit, Money}
 import org.specs2.mutable.Specification
 import org.specs2.matcher.DataTables
 
+import model._
+
 /**
  * Testing method for getting the end-of-date exchange rate
  * since historical forex rate is fixed, the actual look up result should be

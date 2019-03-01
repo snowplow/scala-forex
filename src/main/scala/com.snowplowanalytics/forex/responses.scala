@@ -11,34 +11,26 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.forex
-package oerclient
 
-/**
- * OER error states from the HTTP requests
- * @param errorMessage - error message from OER API
- * @param errorType - specific error type
- */
-case class OerResponseError(errorMessage: String, errorType: OerError)
+import scala.util.Try
 
-/**
- * User defined error types
- */
-sealed trait OerError
+import cats.instances.list._
+import cats.syntax.functorFilter._
+import io.circe._
+import org.joda.money.CurrencyUnit
 
-/**
- * Caused by invalid DateTime argument
- * i.e. either earlier than the earliest date OER service is available or later than currenct time
- */
-object ResourcesNotAvailable extends OerError
+object responses {
+  final case class OerResponse(rates: Map[CurrencyUnit, BigDecimal])
 
-/**
- * Currency not supported by API or
- * Joda Money or both
- */
-object IllegalCurrency extends OerError
-
-/**
- * Other possible error types e.g.
- * access permissions
- */
-object OtherErrors extends OerError
+  // Encoder ignores Currencies that are not parsable by CurrencyUnit
+  implicit val oerResponseDecoder: Decoder[OerResponse] = new Decoder[OerResponse] {
+    override def apply(c: HCursor): Decoder.Result[OerResponse] =
+      c.downField("rates").as[Map[String, BigDecimal]].map { map =>
+        OerResponse(
+          map.toList.mapFilter {
+            case (key, value) => Try(CurrencyUnit.of(key)).toOption.map(_ -> value)
+          }.toMap
+        )
+      }
+  }
+}

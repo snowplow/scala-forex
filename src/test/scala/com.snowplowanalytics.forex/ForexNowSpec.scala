@@ -18,6 +18,8 @@ import cats.effect.IO
 import org.joda.money._
 import org.specs2.mutable.Specification
 
+import model._
+
 /** Testing method for getting the live exchange rate */
 class ForexNowSpec extends Specification {
   args(skipAll = sys.env.get("OER_KEY").isEmpty)

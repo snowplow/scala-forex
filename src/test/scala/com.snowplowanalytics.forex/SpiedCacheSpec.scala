@@ -24,6 +24,7 @@ import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 
 import com.snowplowanalytics.lrumap.CreateLruMap
+import model._
 
 /** Testing cache behaviours */
 class SpiedCacheSpec extends Specification with Mockito {
@@ -43,7 +44,12 @@ class SpiedCacheSpec extends Specification with Mockito {
       .create(config.eodCacheSize)
       .unsafeRunSync()
   )
-  val client = ForexClient.getClient[IO](config, Some(spiedNowishCache), Some(spiedEodCache))
+  val client = OerClient.getClient[IO](
+    config,
+    Some(spiedNowishCache),
+    Some(spiedEodCache),
+    Transport.httpTransport[IO]
+  )
 
   val spiedFx                = Forex[IO](config, client)
   val spiedFxWith5NowishSecs = Forex[IO](fxConfigWith5NowishSecs, client)

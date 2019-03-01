@@ -32,16 +32,17 @@ object Dependencies {
 
   object Libraries {
     // Java
-    val jodaMoney    = "org.joda"              % "joda-money"         % V.jodaMoney
-    val jodaConvert  = "org.joda"              % "joda-convert"       % V.jodaConvert
+    val jodaMoney    = "org.joda"              % "joda-money"     % V.jodaMoney
+    val jodaConvert  = "org.joda"              % "joda-convert"   % V.jodaConvert
 
     // Scala
-    val catsEffect   = "org.typelevel"         %% "cats-effect"       % V.catsEffect
-    val circeParser  = "io.circe"              %% "circe-parser"      % V.circe
-    val lruMap       = "com.snowplowanalytics" %% "scala-lru-map"     % V.lruMap
+    val catsEffect   = "org.typelevel"         %% "cats-effect"   % V.catsEffect
+    val circeParser  = "io.circe"              %% "circe-parser"  % V.circe
+    val lruMap       = "com.snowplowanalytics" %% "scala-lru-map" % V.lruMap
+    val scalaj       = "org.scalaj"            %% "scalaj-http"   % V.scalaj
 
     // Scala (test only)
-    val specs2Core   = "org.specs2"            %% "specs2-core"       % V.specs2        % "test"
-    val specs2Mock   = "org.specs2"            %% "specs2-mock"       % V.specs2        % "test"
+    val specs2Core   = "org.specs2"            %% "specs2-core"   % V.specs2     % "test"
+    val specs2Mock   = "org.specs2"            %% "specs2-mock"   % V.specs2     % "test"
   }
 }
