@@ -43,7 +43,7 @@ object Transport {
    * Http Transport leveraging cats-effect's Sync.
    * @return a Sync Transport
    */
-  def httpTransport[F[_]: Sync]: Transport[F] = new Transport[F] {
+  implicit def httpTransport[F[_]: Sync]: Transport[F] = new Transport[F] {
 
     implicit val interpreter = ApacheInterpreter[F]
 
@@ -56,7 +56,7 @@ object Transport {
    * Unsafe http Transport to use in cases where you have to do side-effects (e.g. spark or beam).
    * @return an Eval Transport
    */
-  def unsafeHttpTransport: Transport[Eval] = new Transport[Eval] {
+  implicit def unsafeHttpTransport: Transport[Eval] = new Transport[Eval] {
 
     implicit val interpreter = ApacheInterpreter[IO]
 

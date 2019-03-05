@@ -30,7 +30,8 @@ import model._
 class ForexEodSpec extends Specification with DataTables {
 
   val key = sys.env.getOrElse("OER_KEY", "")
-  val fx  = Forex.getForex[IO](ForexConfig(key, DeveloperAccount))
+  val ioFx  = Forex.getForex[IO](ForexConfig(key, DeveloperAccount))
+  val evalFx  = Forex.unsafeGetForex(ForexConfig(key, DeveloperAccount))
 
   override def is =
     skipAllIf(sys.env.get("OER_KEY").isEmpty) ^
@@ -45,7 +46,16 @@ class ForexEodSpec extends Specification with DataTables {
       CurrencyUnit.GBP !! CurrencyUnit.USD       ! "2011-03-13T11:45:34+00:00" ! "1.60" |
       CurrencyUnit.GBP !! CurrencyUnit.of("SGD") ! "2008-03-13T00:01:01+00:00" ! "2.80" |> {
       (fromCurr, toCurr, date, exp) =>
-        fx.flatMap(_.rate(fromCurr).to(toCurr).eod(ZonedDateTime.parse(date, DateTimeFormatter.ISO_OFFSET_DATE_TIME)))
+        ioFx
+          .flatMap(_.rate(fromCurr)
+          .to(toCurr)
+          .eod(ZonedDateTime.parse(date, DateTimeFormatter.ISO_OFFSET_DATE_TIME)))
           .unsafeRunSync() must beRight((m: Money) => m.getAmount.toString mustEqual exp)
+        evalFx
+          .flatMap(_.rate(fromCurr)
+          .to(toCurr)
+          .eod(ZonedDateTime.parse(date, DateTimeFormatter.ISO_OFFSET_DATE_TIME)))
+          .value must beRight((m: Money) => m.getAmount.toString mustEqual exp)
     }
+
 }

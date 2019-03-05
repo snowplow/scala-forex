@@ -28,7 +28,8 @@ class UnsupportedEodSpec extends Specification {
   args(skipAll = sys.env.get("OER_KEY").isEmpty)
 
   val key = sys.env.getOrElse("OER_KEY", "")
-  val fx  = Forex.getForex[IO](ForexConfig(key, DeveloperAccount))
+  val ioFx = Forex.getForex[IO](ForexConfig(key, DeveloperAccount))
+  val evalFx = Forex.unsafeGetForex(ForexConfig(key, DeveloperAccount))
 
   "An end-of-date lookup in 1900" should {
     "throw an exception" in {
@@ -38,8 +39,10 @@ class UnsupportedEodSpec extends Specification {
        * rates
        */
       val date1900 = ZonedDateTime.of(1900, 3, 13, 0, 0, 0, 0, ZoneId.systemDefault)
-      fx.flatMap(_.rate.to(CurrencyUnit.GBP).eod(date1900))
-        .unsafeRunSync() must beLike {
+      ioFx.flatMap(_.rate.to(CurrencyUnit.GBP).eod(date1900)).unsafeRunSync() must beLike {
+        case Left(OerResponseError(_, ResourcesNotAvailable)) => ok
+      }
+      evalFx.flatMap(_.rate.to(CurrencyUnit.GBP).eod(date1900)).value must beLike {
         case Left(OerResponseError(_, ResourcesNotAvailable)) => ok
       }
     }
@@ -50,8 +53,10 @@ class UnsupportedEodSpec extends Specification {
 
       /** 2030 is in the future so it won't be available either */
       val date2030 = ZonedDateTime.of(2030, 3, 13, 0, 0, 0, 0, ZoneId.systemDefault)
-      fx.flatMap(_.rate.to(CurrencyUnit.GBP).eod(date2030))
-        .unsafeRunSync() must beLike {
+      ioFx.flatMap(_.rate.to(CurrencyUnit.GBP).eod(date2030)).unsafeRunSync() must beLike {
+        case Left(OerResponseError(_, ResourcesNotAvailable)) => ok
+      }
+      evalFx.flatMap(_.rate.to(CurrencyUnit.GBP).eod(date2030)).value must beLike {
         case Left(OerResponseError(_, ResourcesNotAvailable)) => ok
       }
     }

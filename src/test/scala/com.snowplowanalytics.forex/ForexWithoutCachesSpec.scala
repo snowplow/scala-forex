@@ -25,9 +25,14 @@ class ForexWithoutCachesSpec extends Specification {
 
   "Setting both cache sizes to zero" should {
     "disable the use of caches" in {
-      val fxWithoutCache = Forex.getForex[IO](ForexConfig(key, DeveloperAccount, nowishCacheSize = 0, eodCacheSize = 0))
-      fxWithoutCache.unsafeRunSync().client.eodCache.isEmpty
-      fxWithoutCache.unsafeRunSync().client.nowishCache.isEmpty
+      val ioFxWithoutCache = Forex.getForex[IO](
+        ForexConfig(key, DeveloperAccount, nowishCacheSize = 0, eodCacheSize = 0))
+      ioFxWithoutCache.unsafeRunSync().client.eodCache.isEmpty
+      ioFxWithoutCache.unsafeRunSync().client.nowishCache.isEmpty
+      val evalFxWithoutCache = Forex.unsafeGetForex(
+        ForexConfig(key, DeveloperAccount, nowishCacheSize = 0, eodCacheSize = 0))
+      evalFxWithoutCache.value.client.eodCache.isEmpty
+      evalFxWithoutCache.value.client.nowishCache.isEmpty
     }
   }
 

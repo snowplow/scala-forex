@@ -15,7 +15,7 @@ package com.snowplowanalytics.forex
 import java.time.{LocalDateTime, ZoneId, ZonedDateTime}
 import java.math.{BigDecimal => JBigDecimal}
 
-import cats.effect.Sync
+import cats.Monad
 import cats.implicits._
 import cats.data.EitherT
 import org.joda.money.CurrencyUnit
@@ -31,12 +31,11 @@ import responses._
  * @param nowishCache - user defined nowishCache
  * @param eodCache - user defined eodCache
  */
-case class OerClient[F[_]: Sync](
+case class OerClient[F[_]: Monad](
   config: ForexConfig,
   nowishCache: Option[NowishCache[F]] = None,
-  eodCache: Option[EodCache[F]]       = None,
-  transport: Transport[F]
-) {
+  eodCache: Option[EodCache[F]]       = None
+)(implicit T: Transport[F]) {
 
   private val endpoint = "openexchangerates.org/api/"
 
@@ -70,7 +69,7 @@ case class OerClient[F[_]: Sync](
    */
   def getLiveCurrencyValue(currency: CurrencyUnit): F[ApiRequestResult] = {
     val action = for {
-      response     <- EitherT(transport.receive(endpoint, latest))
+      response     <- EitherT(T.receive(endpoint, latest))
       liveCurrency <- EitherT(extractLiveCurrency(response, currency))
     } yield liveCurrency
     action.value
@@ -80,7 +79,7 @@ case class OerClient[F[_]: Sync](
     response: OerResponse,
     currency: CurrencyUnit
   ): F[ApiRequestResult] = {
-    val cacheAction = nowishCache.traverse { cache =>
+    val cacheActions = nowishCache.traverse { cache =>
       config.accountLevel match {
         // If the user is using Developer account,
         // then base currency returned from the API is USD.
@@ -111,7 +110,7 @@ case class OerClient[F[_]: Sync](
           }
       }
     }
-    cacheAction.map { _ =>
+    cacheActions.map { _ =>
       response.rates
         .get(currency)
         .map(_.bigDecimal)
@@ -149,7 +148,7 @@ case class OerClient[F[_]: Sync](
     } else {
       val historicalLink = buildHistoricalLink(date)
       val action = for {
-        response <- EitherT(transport.receive(endpoint, historicalLink))
+        response <- EitherT(T.receive(endpoint, historicalLink))
         currency <- EitherT(extractHistoricalCurrency(response, currency, date))
       } yield currency
 
@@ -170,7 +169,7 @@ case class OerClient[F[_]: Sync](
         // to target currency and user-defined base currency
         case DeveloperAccount =>
           val usdOverBase = response.rates(config.baseCurrency)
-          Sync[F].delay(response.rates.foreach {
+          response.rates.toList.traverse_ {
             case (currentCurrency, usdOverCurr) =>
               val keyPair            = (config.baseCurrency, currentCurrency, date)
               val fromCurrIsBaseCurr = config.baseCurrency == CurrencyUnit.USD
@@ -182,25 +181,25 @@ case class OerClient[F[_]: Sync](
                   usdOverCurr.bigDecimal
                 )
               )
-          })
+          }
         // For Enterprise and Unlimited users, OER allows them to configure the base currencies.
         // So the exchange rate returned from the API is between target currency and the base
         // currency they defined.
         case _ =>
-          Sync[F].delay(response.rates.foreach {
+          response.rates.toList.traverse_ {
             case (currentCurrency, currencyValue) =>
               val keyPair = (config.baseCurrency, currentCurrency, date)
               cache.put(keyPair, currencyValue.bigDecimal)
-          })
+          }
       }
     }
 
-    cacheAction.map(
-      _ =>
-        response.rates
-          .get(currency)
-          .map(_.bigDecimal)
-          .toRight(OerResponseError(s"Currency not found in the API, invalid currency $currency", IllegalCurrency)))
+    cacheAction.map { _ =>
+      response.rates
+        .get(currency)
+        .map(_.bigDecimal)
+        .toRight(OerResponseError(s"Currency not found in the API, invalid currency $currency", IllegalCurrency))
+    }
   }
 }
 
@@ -212,11 +211,17 @@ case class OerClient[F[_]: Sync](
 object OerClient {
 
   /** Creates a client with a cache and sensible default ForexConfig */
-  def getClient[F[_]: Sync](appId: String, accountLevel: AccountType): F[OerClient[F]] =
+  def getClient[F[_]: Monad: Transport](
+    appId: String,
+    accountLevel: AccountType
+  )(
+    implicit CLM1: CreateLruMap[F, NowishCacheKey, NowishCacheValue],
+    CLM2: CreateLruMap[F, EodCacheKey, EodCacheValue]
+  ): F[OerClient[F]] =
     getClient[F](ForexConfig(appId = appId, accountLevel = accountLevel))
 
   /** Getter for clients, creating the caches as defined in the config */
-  def getClient[F[_]: Sync](
+  def getClient[F[_]: Monad: Transport](
     config: ForexConfig
   )(
     implicit CLM1: CreateLruMap[F, NowishCacheKey, NowishCacheValue],
@@ -226,26 +231,25 @@ object OerClient {
       if (config.nowishCacheSize > 0) {
         CLM1.create(config.nowishCacheSize).map(_.some)
       } else {
-        Sync[F].pure(Option.empty[NowishCache[F]])
+        Monad[F].pure(Option.empty[NowishCache[F]])
       }
 
     val eodCacheF =
       if (config.eodCacheSize > 0) {
         CLM2.create(config.eodCacheSize).map(_.some)
       } else {
-        Sync[F].pure(Option.empty[EodCache[F]])
+        Monad[F].pure(Option.empty[EodCache[F]])
       }
 
     (nowishCacheF, eodCacheF).mapN {
       case (nowish, eod) =>
-        new OerClient[F](config, nowishCache = nowish, eodCache = eod, Transport.httpTransport[F])
+        new OerClient[F](config, nowishCache = nowish, eodCache = eod)
     }
   }
 
-  def getClient[F[_]: Sync](
+  def getClient[F[_]: Monad: Transport](
     config: ForexConfig,
     nowishCache: Option[NowishCache[F]],
-    eodCache: Option[EodCache[F]],
-    transport: Transport[F]
-  ): OerClient[F] = new OerClient[F](config, nowishCache, eodCache, transport)
+    eodCache: Option[EodCache[F]]
+  ): OerClient[F] = new OerClient[F](config, nowishCache, eodCache)
 }

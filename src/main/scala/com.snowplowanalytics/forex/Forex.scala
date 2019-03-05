@@ -18,9 +18,10 @@ import java.math.{BigDecimal, RoundingMode}
 
 import scala.util.{Failure, Success, Try}
 
+import cats.{Monad, Eval}
 import cats.effect.Sync
-import cats.implicits._
 import cats.data.{EitherT, OptionT}
+import cats.implicits._
 import org.joda.money._
 
 import errors._
@@ -29,14 +30,24 @@ import model._
 /** Companion object to get Forex object */
 object Forex {
 
+  def getForex[F[_]: Sync: ZonedClock](config: ForexConfig): F[Forex[F]] =
+    OerClient
+      .getClient[F](config)
+      .map(client => Forex(config, client))
+
+  def unsafeGetForex(config: ForexConfig)(implicit C: ZonedClock[Eval]): Eval[Forex[Eval]] =
+    OerClient
+      .getClient[Eval](config)
+      .map(client => Forex(config, client))
+
   /**
    * Fields for calculating currency rates conversions.
    * Usually the currency rate has 6 decimal places
    */
-  val commonScale = 6
+  protected[forex] val commonScale = 6
 
   /** Helper method to get the ratio of from:to in BigDecimal type */
-  def getForexRate(
+  protected[forex] def getForexRate(
     fromCurrIsBaseCurr: Boolean,
     baseOverFrom: BigDecimal,
     baseOverTo: BigDecimal
@@ -47,11 +58,6 @@ object Forex {
     } else {
       baseOverTo
     }
-
-  def getForex[F[_]: Sync](config: ForexConfig): F[Forex[F]] =
-    OerClient
-      .getClient[F](config)
-      .map(client => Forex(config, client))
 }
 
 /**
@@ -63,7 +69,7 @@ object Forex {
  * @param config A configurator for Forex object
  * @param client Passed down client that does actual work
  */
-case class Forex[F[_]](config: ForexConfig, client: OerClient[F]) {
+final case class Forex[F[_]: Monad: ZonedClock](config: ForexConfig, client: OerClient[F]) {
 
   def rate: ForexLookupTo[F] = ForexLookupTo(1, config.baseCurrency, config, client)
 
@@ -107,7 +113,7 @@ case class Forex[F[_]](config: ForexConfig, client: OerClient[F]) {
  * @param config Forex config
  * @param client Passed down client that does actual work
  */
-case class ForexLookupTo[F[_]](
+final case class ForexLookupTo[F[_]: Monad: ZonedClock](
   conversionAmount: Double,
   fromCurr: CurrencyUnit,
   config: ForexConfig,
@@ -119,7 +125,7 @@ case class ForexLookupTo[F[_]](
    * @param toCurr Target currency
    * @return ForexLookupWhen object which is final part of the fluent interface
    */
-  def to(toCurr: CurrencyUnit)(implicit F: Sync[F]): ForexLookupWhen[F] =
+  def to(toCurr: CurrencyUnit): ForexLookupWhen[F] =
     ForexLookupWhen(conversionAmount, fromCurr, toCurr, config, client)
 }
 
@@ -132,13 +138,13 @@ case class ForexLookupTo[F[_]](
  * @param config Forex config
  * @param client Passed down client that does actual work
  */
-case class ForexLookupWhen[F[_]: Sync](
+final case class ForexLookupWhen[F[_]: Monad](
   conversionAmount: Double,
   fromCurr: CurrencyUnit,
   toCurr: CurrencyUnit,
   config: ForexConfig,
   client: OerClient[F]
-) {
+)(implicit C: ZonedClock[F]) {
   // convert `conversionAmt` into BigDecimal representation for its later usage in BigMoney
   val conversionAmt = new BigDecimal(conversionAmount)
 
@@ -148,25 +154,24 @@ case class ForexLookupWhen[F[_]: Sync](
    * failed
    */
   def now: F[Either[OerResponseError, Money]] = {
-    val fromF = EitherT(client.getLiveCurrencyValue(fromCurr))
-    val toF   = EitherT(client.getLiveCurrencyValue(toCurr))
+    val product = for {
+      fromRate <- EitherT(client.getLiveCurrencyValue(fromCurr))
+      toRate <- EitherT(client.getLiveCurrencyValue(toCurr))
+    } yield (fromRate, toRate)
 
-    fromF
-      .product(toF)
-      .flatMapF {
-        case (fromRate, toRate) =>
-          val fromCurrIsBaseCurr = fromCurr == config.baseCurrency
-          val rate               = Forex.getForexRate(fromCurrIsBaseCurr, fromRate, toRate)
-          // Note that if `fromCurr` is not the same as the base currency,
-          // then we need to add the <fromCurr, toCurr> pair into the cache in particular,
-          // because only <baseCurrency, toCurr> were added earlier
-          client.nowishCache
-            .filter(_ => fromCurr != config.baseCurrency)
-            .traverse(cache => Sync[F].delay(ZonedDateTime.now).map(dateTime => (cache, dateTime)))
-            .flatMap(_.traverse { case (cache, timeStamp) => cache.put((fromCurr, toCurr), (timeStamp, rate)) })
-            .map(_ => returnMoneyOrJodaError(rate))
-      }
-      .value
+    (product.flatMapF {
+      case (fromRate, toRate) =>
+        val fromCurrIsBaseCurr = fromCurr == config.baseCurrency
+        val rate               = Forex.getForexRate(fromCurrIsBaseCurr, fromRate, toRate)
+        // Note that if `fromCurr` is not the same as the base currency,
+        // then we need to add the <fromCurr, toCurr> pair into the cache in particular,
+        // because only <baseCurrency, toCurr> were added earlier
+        client.nowishCache
+          .filter(_ => fromCurr != config.baseCurrency)
+          .traverse(cache => C.now().map(dateTime => (cache, dateTime)))
+          .flatMap(_.traverse { case (cache, timeStamp) => cache.put((fromCurr, toCurr), (timeStamp, rate)) })
+          .map(_ => returnMoneyOrJodaError(rate))
+    }).value
   }
 
   /**
@@ -177,17 +182,12 @@ case class ForexLookupWhen[F[_]: Sync](
    * @return Money representation in target currency or OerResponseError object if API request
    * failed
    */
-  def nowish: F[Either[OerResponseError, Money]] =
-    OptionT
-      .fromOption[F](client.nowishCache)
-      .flatMap(_ => lookupNowishCache(fromCurr, toCurr))
-      .withFilter {
-        case (time, _) =>
-          val nowishTime = ZonedDateTime.now.minusSeconds(config.nowishSecs.toLong)
-          nowishTime.isBefore(time) || nowishTime.equals(time)
-      }
-      .map { case (_, rate) => returnMoneyOrJodaError(rate) }
-      .getOrElseF(now)
+  def nowish: F[Either[OerResponseError, Money]] = (for {
+    (time, rate) <- lookupNowishCache(fromCurr, toCurr)
+    nowishTime <- OptionT.liftF(C.now().map(_.minusSeconds(config.nowishSecs.toLong)))
+    if (nowishTime.isBefore(time) || nowishTime.equals(time))
+    res = returnMoneyOrJodaError(rate)
+  } yield res).getOrElseF(now)
 
   private def lookupNowishCache(
     fromCurr: CurrencyUnit,
