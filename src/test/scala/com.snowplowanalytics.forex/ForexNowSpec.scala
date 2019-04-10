@@ -14,6 +14,7 @@ package com.snowplowanalytics.forex
 
 import java.math.RoundingMode
 
+import cats.Eval
 import cats.effect.IO
 import org.joda.money._
 import org.specs2.mutable.Specification
@@ -24,13 +25,13 @@ import model._
 class ForexNowSpec extends Specification {
   args(skipAll = sys.env.get("OER_KEY").isEmpty)
 
-  val key = sys.env.getOrElse("OER_KEY", "")
-  val ioFx  = Forex.getForex[IO](ForexConfig(key, DeveloperAccount))
+  val key  = sys.env.getOrElse("OER_KEY", "")
+  val ioFx = CreateForex[IO].create(ForexConfig(key, DeveloperAccount))
   val ioFxWithBaseGBP =
-    Forex.getForex[IO](ForexConfig(key, EnterpriseAccount, baseCurrency = CurrencyUnit.GBP))
-  val evalFx  = Forex.unsafeGetForex(ForexConfig(key, DeveloperAccount))
+    CreateForex[IO].create(ForexConfig(key, EnterpriseAccount, baseCurrency = CurrencyUnit.GBP))
+  val evalFx = CreateForex[Eval].create(ForexConfig(key, DeveloperAccount))
   val evalFxWithBaseGBP =
-    Forex.unsafeGetForex(ForexConfig(key, EnterpriseAccount, baseCurrency = CurrencyUnit.GBP))
+    CreateForex[Eval].create(ForexConfig(key, EnterpriseAccount, baseCurrency = CurrencyUnit.GBP))
 
   /** Trade 10000 USD to JPY at live exchange rate */
   "convert 10000 USD dollars to Yen now" should {
@@ -53,8 +54,7 @@ class ForexNowSpec extends Specification {
         (m: Money) => m.isGreaterThan(Money.of(CurrencyUnit.of("SGD"), 1)))
       val evalGbpToSgdWithBaseUsd =
         evalFx.flatMap(_.rate(CurrencyUnit.GBP).to(CurrencyUnit.of("SGD")).now)
-      evalGbpToSgdWithBaseUsd.value must beRight(
-        (m: Money) => m.isGreaterThan(Money.of(CurrencyUnit.of("SGD"), 1)))
+      evalGbpToSgdWithBaseUsd.value must beRight((m: Money) => m.isGreaterThan(Money.of(CurrencyUnit.of("SGD"), 1)))
     }
   }
 
@@ -65,8 +65,7 @@ class ForexNowSpec extends Specification {
       ioGbpToSgdWithBaseGbp.unsafeRunSync() must beRight(
         (m: Money) => m.isGreaterThan(Money.of(CurrencyUnit.of("SGD"), 1)))
       val evalGbpToSgdWithBaseGbp = evalFxWithBaseGBP.flatMap(_.rate.to(CurrencyUnit.of("SGD")).now)
-      evalGbpToSgdWithBaseGbp.value must beRight(
-        (m: Money) => m.isGreaterThan(Money.of(CurrencyUnit.of("SGD"), 1)))
+      evalGbpToSgdWithBaseGbp.value must beRight((m: Money) => m.isGreaterThan(Money.of(CurrencyUnit.of("SGD"), 1)))
     }
   }
 
@@ -74,11 +73,9 @@ class ForexNowSpec extends Specification {
   "Do not throw JodaTime exception on converting identical currencies" should {
     "be equal 1 GBP" in {
       val ioGbpToGbpWithBaseGbp = ioFxWithBaseGBP.flatMap(_.rate.to(CurrencyUnit.GBP).now)
-      ioGbpToGbpWithBaseGbp.unsafeRunSync() must beRight(
-        (m: Money) => m.isEqual(Money.of(CurrencyUnit.of("GBP"), 1)))
+      ioGbpToGbpWithBaseGbp.unsafeRunSync() must beRight((m: Money) => m.isEqual(Money.of(CurrencyUnit.of("GBP"), 1)))
       val evalGbpToGbpWithBaseGbp = evalFxWithBaseGBP.flatMap(_.rate.to(CurrencyUnit.GBP).now)
-      evalGbpToGbpWithBaseGbp.value must beRight(
-        (m: Money) => m.isEqual(Money.of(CurrencyUnit.of("GBP"), 1)))
+      evalGbpToGbpWithBaseGbp.value must beRight((m: Money) => m.isEqual(Money.of(CurrencyUnit.of("GBP"), 1)))
     }
   }
 }

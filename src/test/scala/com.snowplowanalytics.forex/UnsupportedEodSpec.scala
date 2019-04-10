@@ -14,6 +14,7 @@ package com.snowplowanalytics.forex
 
 import java.time.{ZoneId, ZonedDateTime}
 
+import cats.Eval
 import cats.effect.IO
 import org.joda.money.CurrencyUnit
 import org.specs2.mutable.Specification
@@ -27,9 +28,9 @@ import model._
 class UnsupportedEodSpec extends Specification {
   args(skipAll = sys.env.get("OER_KEY").isEmpty)
 
-  val key = sys.env.getOrElse("OER_KEY", "")
-  val ioFx = Forex.getForex[IO](ForexConfig(key, DeveloperAccount))
-  val evalFx = Forex.unsafeGetForex(ForexConfig(key, DeveloperAccount))
+  val key    = sys.env.getOrElse("OER_KEY", "")
+  val ioFx   = CreateForex[IO].create(ForexConfig(key, DeveloperAccount))
+  val evalFx = CreateForex[Eval].create(ForexConfig(key, DeveloperAccount))
 
   "An end-of-date lookup in 1900" should {
     "throw an exception" in {

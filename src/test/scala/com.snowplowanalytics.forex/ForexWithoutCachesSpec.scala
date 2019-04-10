@@ -12,6 +12,7 @@
  */
 package com.snowplowanalytics.forex
 
+import cats.Eval
 import cats.effect.IO
 import org.specs2.mutable.Specification
 
@@ -25,12 +26,12 @@ class ForexWithoutCachesSpec extends Specification {
 
   "Setting both cache sizes to zero" should {
     "disable the use of caches" in {
-      val ioFxWithoutCache = Forex.getForex[IO](
-        ForexConfig(key, DeveloperAccount, nowishCacheSize = 0, eodCacheSize = 0))
+      val ioFxWithoutCache =
+        CreateForex[IO].create(ForexConfig(key, DeveloperAccount, nowishCacheSize = 0, eodCacheSize = 0))
       ioFxWithoutCache.unsafeRunSync().client.eodCache.isEmpty
       ioFxWithoutCache.unsafeRunSync().client.nowishCache.isEmpty
-      val evalFxWithoutCache = Forex.unsafeGetForex(
-        ForexConfig(key, DeveloperAccount, nowishCacheSize = 0, eodCacheSize = 0))
+      val evalFxWithoutCache =
+        CreateForex[Eval].create(ForexConfig(key, DeveloperAccount, nowishCacheSize = 0, eodCacheSize = 0))
       evalFxWithoutCache.value.client.eodCache.isEmpty
       evalFxWithoutCache.value.client.nowishCache.isEmpty
     }

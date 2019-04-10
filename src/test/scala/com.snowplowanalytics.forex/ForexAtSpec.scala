@@ -14,6 +14,7 @@ package com.snowplowanalytics.forex
 
 import java.time.{ZoneId, ZonedDateTime}
 
+import cats.Eval
 import cats.effect.IO
 import org.joda.money.{CurrencyUnit, Money}
 import org.specs2.mutable.Specification
@@ -27,13 +28,13 @@ import model._
 class ForexAtSpec extends Specification {
   args(skipAll = sys.env.get("OER_KEY").isEmpty)
 
-  val key = sys.env.getOrElse("OER_KEY", "")
-  val ioFx  = Forex.getForex[IO](ForexConfig(key, DeveloperAccount))
+  val key  = sys.env.getOrElse("OER_KEY", "")
+  val ioFx = CreateForex[IO].create(ForexConfig(key, DeveloperAccount))
   val ioFxWithBaseGBP =
-    Forex.getForex[IO](ForexConfig(key, EnterpriseAccount, baseCurrency = CurrencyUnit.GBP))
-  val evalFx  = Forex.unsafeGetForex(ForexConfig(key, DeveloperAccount))
+    CreateForex[IO].create(ForexConfig(key, EnterpriseAccount, baseCurrency = CurrencyUnit.GBP))
+  val evalFx = CreateForex[Eval].create(ForexConfig(key, DeveloperAccount))
   val evalFxWithBaseGBP =
-    Forex.unsafeGetForex(ForexConfig(key, EnterpriseAccount, baseCurrency = CurrencyUnit.GBP))
+    CreateForex[Eval].create(ForexConfig(key, EnterpriseAccount, baseCurrency = CurrencyUnit.GBP))
 
   val tradeDate =
     ZonedDateTime.of(2011, 3, 13, 11, 39, 27, 567, ZoneId.of("America/New_York"))
