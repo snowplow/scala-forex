@@ -15,6 +15,7 @@ package com.snowplowanalytics.forex
 import java.math.BigDecimal
 import java.time.ZonedDateTime
 
+import cats.Eval
 import cats.effect.IO
 import org.joda.money.CurrencyUnit
 import org.specs2.mutable.Specification
@@ -25,16 +26,18 @@ import model._
 class OerClientSpec extends Specification {
   args(skipAll = sys.env.get("OER_KEY").isEmpty)
 
-  val key = sys.env.getOrElse("OER_KEY", "")
-  val ioFx = Forex.getForex[IO](ForexConfig(key, DeveloperAccount))
-  val evalFx = Forex.unsafeGetForex(ForexConfig(key, DeveloperAccount))
+  val key    = sys.env.getOrElse("OER_KEY", "")
+  val ioFx   = CreateForex[IO].create(ForexConfig(key, DeveloperAccount))
+  val evalFx = CreateForex[Eval].create(ForexConfig(key, DeveloperAccount))
 
   "live currency value for USD" should {
     "always equal to 1" in {
-      ioFx.map(_.client)
+      ioFx
+        .map(_.client)
         .flatMap(_.getLiveCurrencyValue(CurrencyUnit.USD))
         .unsafeRunSync() must beRight(new BigDecimal(1))
-      evalFx.map(_.client)
+      evalFx
+        .map(_.client)
         .flatMap(_.getLiveCurrencyValue(CurrencyUnit.USD))
         .value must beRight(new BigDecimal(1))
     }
@@ -52,10 +55,10 @@ class OerClientSpec extends Specification {
   "historical currency value for USD on 01/01/2008" should {
     "always equal to 1 as well" in {
       val date = ZonedDateTime.parse("2008-01-01T01:01:01.123+09:00")
-      ioFx.flatMap(_.client.getHistoricalCurrencyValue(CurrencyUnit.USD, date))
+      ioFx
+        .flatMap(_.client.getHistoricalCurrencyValue(CurrencyUnit.USD, date))
         .unsafeRunSync() must beRight(new BigDecimal(1))
-      evalFx.flatMap(_.client.getHistoricalCurrencyValue(CurrencyUnit.USD, date))
-        .value must beRight(new BigDecimal(1))
+      evalFx.flatMap(_.client.getHistoricalCurrencyValue(CurrencyUnit.USD, date)).value must beRight(new BigDecimal(1))
     }
   }
 }

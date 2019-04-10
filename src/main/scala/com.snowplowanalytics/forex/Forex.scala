@@ -18,7 +18,7 @@ import java.math.{BigDecimal, RoundingMode}
 
 import scala.util.{Failure, Success, Try}
 
-import cats.{Monad, Eval}
+import cats.{Eval, Monad}
 import cats.effect.Sync
 import cats.data.{EitherT, OptionT}
 import cats.implicits._
@@ -27,18 +27,31 @@ import org.joda.money._
 import errors._
 import model._
 
+trait CreateForex[F[_]] {
+  def create(config: ForexConfig): F[Forex[F]]
+}
+
+object CreateForex {
+  def apply[F[_]](implicit ev: CreateForex[F]) = ev
+
+  implicit def syncCreateForex[F[_]: Sync: ZonedClock]: CreateForex[F] = new CreateForex[F] {
+    def create(config: ForexConfig): F[Forex[F]] =
+      OerClient
+        .getClient[F](config)
+        .map(client => Forex(config, client))
+  }
+
+  implicit def evalCreateForex(implicit C: ZonedClock[Eval]): CreateForex[Eval] =
+    new CreateForex[Eval] {
+      def create(config: ForexConfig): Eval[Forex[Eval]] =
+        OerClient
+          .getClient[Eval](config)
+          .map(client => Forex(config, client))
+    }
+}
+
 /** Companion object to get Forex object */
 object Forex {
-
-  def getForex[F[_]: Sync: ZonedClock](config: ForexConfig): F[Forex[F]] =
-    OerClient
-      .getClient[F](config)
-      .map(client => Forex(config, client))
-
-  def unsafeGetForex(config: ForexConfig)(implicit C: ZonedClock[Eval]): Eval[Forex[Eval]] =
-    OerClient
-      .getClient[Eval](config)
-      .map(client => Forex(config, client))
 
   /**
    * Fields for calculating currency rates conversions.
@@ -156,7 +169,7 @@ final case class ForexLookupWhen[F[_]: Monad](
   def now: F[Either[OerResponseError, Money]] = {
     val product = for {
       fromRate <- EitherT(client.getLiveCurrencyValue(fromCurr))
-      toRate <- EitherT(client.getLiveCurrencyValue(toCurr))
+      toRate   <- EitherT(client.getLiveCurrencyValue(toCurr))
     } yield (fromRate, toRate)
 
     (product.flatMapF {

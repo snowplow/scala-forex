@@ -14,6 +14,7 @@ package com.snowplowanalytics.forex
 
 import java.math.RoundingMode
 
+import cats.Eval
 import cats.effect.IO
 import org.joda.money._
 import org.specs2.mutable.Specification
@@ -24,13 +25,13 @@ import model._
 class ForexNowishSpec extends Specification {
   args(skipAll = sys.env.get("OER_KEY").isEmpty)
 
-  val key = sys.env.getOrElse("OER_KEY", "")
-  val ioFx  = Forex.getForex[IO](ForexConfig(key, DeveloperAccount))
+  val key  = sys.env.getOrElse("OER_KEY", "")
+  val ioFx = CreateForex[IO].create(ForexConfig(key, DeveloperAccount))
   val ioFxWithBaseGBP =
-    Forex.getForex[IO](ForexConfig(key, EnterpriseAccount, baseCurrency = CurrencyUnit.GBP))
-  val evalFx  = Forex.unsafeGetForex(ForexConfig(key, DeveloperAccount))
+    CreateForex[IO].create(ForexConfig(key, EnterpriseAccount, baseCurrency = CurrencyUnit.GBP))
+  val evalFx = CreateForex[Eval].create(ForexConfig(key, DeveloperAccount))
   val evalFxWithBaseGBP =
-    Forex.unsafeGetForex(ForexConfig(key, EnterpriseAccount, baseCurrency = CurrencyUnit.GBP))
+    CreateForex[Eval].create(ForexConfig(key, EnterpriseAccount, baseCurrency = CurrencyUnit.GBP))
 
   /** CAD -> GBP with base currency USD */
   "CAD to GBP with USD as base currency returning near-live rate" should {
@@ -40,8 +41,7 @@ class ForexNowishSpec extends Specification {
         .unsafeRunSync() must beRight((m: Money) => m.isLessThan(Money.of(CurrencyUnit.GBP, 1)))
       val evalCadOverGbpNowish =
         evalFx.flatMap(_.rate(CurrencyUnit.CAD).to(CurrencyUnit.GBP).nowish)
-      evalCadOverGbpNowish
-        .value must beRight((m: Money) => m.isLessThan(Money.of(CurrencyUnit.GBP, 1)))
+      evalCadOverGbpNowish.value must beRight((m: Money) => m.isLessThan(Money.of(CurrencyUnit.GBP, 1)))
     }
   }
 
@@ -49,12 +49,12 @@ class ForexNowishSpec extends Specification {
   "GBP to JPY with USD as base currency returning near-live rate" should {
     "be greater than 1 Yen" in {
       val ioGbpToJpyWithBaseUsd = ioFx.flatMap(_.rate(CurrencyUnit.GBP).to(CurrencyUnit.JPY).nowish)
-      ioGbpToJpyWithBaseUsd.unsafeRunSync() must beRight((m: Money) =>
-        m.isGreaterThan(BigMoney.of(CurrencyUnit.JPY, 1).toMoney(RoundingMode.HALF_EVEN)))
+      ioGbpToJpyWithBaseUsd.unsafeRunSync() must beRight(
+        (m: Money) => m.isGreaterThan(BigMoney.of(CurrencyUnit.JPY, 1).toMoney(RoundingMode.HALF_EVEN)))
       val evalGbpToJpyWithBaseUsd =
         evalFx.flatMap(_.rate(CurrencyUnit.GBP).to(CurrencyUnit.JPY).nowish)
-      evalGbpToJpyWithBaseUsd.value must beRight((m: Money) =>
-        m.isGreaterThan(BigMoney.of(CurrencyUnit.JPY, 1).toMoney(RoundingMode.HALF_EVEN)))
+      evalGbpToJpyWithBaseUsd.value must beRight(
+        (m: Money) => m.isGreaterThan(BigMoney.of(CurrencyUnit.JPY, 1).toMoney(RoundingMode.HALF_EVEN)))
     }
   }
 
@@ -62,11 +62,11 @@ class ForexNowishSpec extends Specification {
   "GBP to JPY with GBP as base currency returning near-live rate" should {
     "be greater than 1 Yen" in {
       val ioGbpToJpyWithBaseGbp = ioFxWithBaseGBP.flatMap(_.rate.to(CurrencyUnit.JPY).nowish)
-      ioGbpToJpyWithBaseGbp.unsafeRunSync() must beRight((m: Money) =>
-        m.isGreaterThan(BigMoney.of(CurrencyUnit.of("JPY"), 1).toMoney(RoundingMode.HALF_EVEN)))
+      ioGbpToJpyWithBaseGbp.unsafeRunSync() must beRight(
+        (m: Money) => m.isGreaterThan(BigMoney.of(CurrencyUnit.of("JPY"), 1).toMoney(RoundingMode.HALF_EVEN)))
       val evalGbpToJpyWithBaseGbp = evalFxWithBaseGBP.flatMap(_.rate.to(CurrencyUnit.JPY).nowish)
-      evalGbpToJpyWithBaseGbp.value must beRight((m: Money) =>
-        m.isGreaterThan(BigMoney.of(CurrencyUnit.of("JPY"), 1).toMoney(RoundingMode.HALF_EVEN)))
+      evalGbpToJpyWithBaseGbp.value must beRight(
+        (m: Money) => m.isGreaterThan(BigMoney.of(CurrencyUnit.of("JPY"), 1).toMoney(RoundingMode.HALF_EVEN)))
     }
   }
 }
