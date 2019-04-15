@@ -1,3 +1,23 @@
+Version 0.7.0 (2019-xx-xx)
+--------------------------
+Introduce tagless final encoding (#158)
+Abstract over Forex creation (#161)
+Replace hammock by scalaj (#162)
+Introduce hammock (#156)
+Support cats.Id (#163)
+Add readme examples (#164)
+Bump Scala to 2.12.8 (#149)
+Bump scala-lru-map to 0.3.0 (#154)
+Bump circe to 0.11.1 (#152)
+Bump cats-effect to 1.2.0 (#151)
+Bump joda-convert to 2.2.0 (#150)
+Bump specs2 to 4.4.1 (#153)
+Bump SBT to 1.2.8 (#159)
+Remove Scala 2.11 (#157)
+Skip tests if the API key is absent (#148)
+Use sbt-tpolecat (#147)
+Extend copyright to 2019 (#160)
+
 Version 0.6.0 (2018-10-03)
 --------------------------
 Add code coverage reports (#144)
