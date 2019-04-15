@@ -13,13 +13,11 @@
 package com.snowplowanalytics.forex
 
 import cats.Eval
-import cats.free.Free
-import cats.effect.{IO, Sync}
-import hammock.{Hammock, HammockF, Method, Uri}
-import hammock.marshalling._
-import hammock.apache.ApacheInterpreter
-import hammock.circe.implicits._
+import cats.effect.Sync
+import cats.syntax.either._
 import io.circe.Decoder
+import io.circe.parser._
+import scalaj.http._
 
 import errors._
 import responses._
@@ -44,27 +42,18 @@ object Transport {
    * @return a Sync Transport
    */
   implicit def httpTransport[F[_]: Sync]: Transport[F] = new Transport[F] {
-
-    implicit val interpreter = ApacheInterpreter[F]
-
     def receive(endpoint: String, path: String): F[Either[OerResponseError, OerResponse]] =
-      buildRequest(endpoint, path)
-        .exec[F]
+      Sync[F].delay(buildRequest(endpoint, path))
   }
 
   /**
-   * Unsafe http Transport to use in cases where you have to do side-effects (e.g. spark or beam).
+   * Eval http Transport to use in cases where you have to do side-effects (e.g. spark or beam).
    * @return an Eval Transport
    */
-  implicit def unsafeHttpTransport: Transport[Eval] = new Transport[Eval] {
-
-    implicit val interpreter = ApacheInterpreter[IO]
-
+  implicit def evalHttpTransport: Transport[Eval] = new Transport[Eval] {
     def receive(endpoint: String, path: String): Eval[Either[OerResponseError, OerResponse]] =
       Eval.later {
         buildRequest(endpoint, path)
-          .exec[IO]
-          .unsafeRunSync()
       }
   }
 
@@ -74,11 +63,14 @@ object Transport {
   private def buildRequest(
     endpoint: String,
     path: String
-  ): Free[HammockF, Either[OerResponseError, OerResponse]] = {
-    val authority = Uri.Authority(None, Uri.Host.Other(endpoint + path), None)
-    val uri       = Uri(Some("http"), Some(authority))
-    Hammock
-      .request(Method.GET, uri, Map())
-      .as[Either[OerResponseError, OerResponse]]
-  }
+  ): Either[OerResponseError, OerResponse] =
+    for {
+      response <- Http("http://" + endpoint + path).asString.body.asRight
+      parsed <- parse(response)
+        .leftMap(e => OerResponseError(s"OER response is not JSON: ${e.getMessage}", OtherErrors))
+      decoded <- parsed
+        .as[Either[OerResponseError, OerResponse]]
+        .leftMap(_ => OerResponseError(s"OER response couldn't be decoded", OtherErrors))
+      res <- decoded
+    } yield res
 }
