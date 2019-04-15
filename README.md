@@ -24,7 +24,7 @@ There are three types of accounts supported by OER API, Unlimited, Enterprise an
 
 ### 2.2 Installation
 
-The latest version of Scala Forex is 0.6.0, which is built against 2.12.x.
+The latest version of Scala Forex is 0.7.0, which is built against 2.12.x.
 
 If you're using SBT, add the following lines to your build file:
 
@@ -38,7 +38,7 @@ Note the double percent (`%%`) between the group and artifactId. That'll ensure 
 
 ## 3. Usage
 
-The Scala Forex supports two types of usage:
+The Scala Forex library supports two types of usage:
 
 1. Exchange rate lookups
 2. Currency conversions
@@ -46,9 +46,9 @@ The Scala Forex supports two types of usage:
 Both usage types support live, near-live or historical (end-of-day) exchange rates.
 
 For all code samples below we are assuming the following imports:
+
 ```scala
 import org.joda.money.CurrencyUnit
-import cats.effect.IO
 import com.snowplowanalytics.forex._
 ```
 
@@ -75,13 +75,13 @@ To go through each in turn:
 
 2. `accountLevel` is the type of OER account you have. Possible values are `UnlimitedAccount`, `EnterpriseAccount`, and `DeveloperAccount`.
 
-1. `nowishCacheSize` is the size configuration for near-live(nowish) lookup cache, it can be disabled by setting its value to 0. The key to nowish cache is a currency pair so the size of the cache equals to the number of pairs of currencies available.
+1. `nowishCacheSize` is the size configuration for near-live (nowish) lookup cache, it can be disabled by setting its value to 0. The key to nowish cache is a currency pair so the size of the cache equals to the number of pairs of currencies available.
 
-2. `nowishSecs` is the time configuration for near-live lookup. Nowish call will use the exchange rates stored in nowish cache if its time stamp is less than or equal to `nowishSecs` old.
+2. `nowishSecs` is the time configuration for near-live lookup. A call to this cache will use the exchange rates stored in nowish cache if its time stamp is less than or equal to `nowishSecs` old.
 
-3. `eodCacheSize` is the size configuration for end-of-day(eod) lookup cache, it can be disabled by setting its value to 0. The key to eod cache is a tuple of currency pair and time stamp, so the size of eod cache equals to the number of currency pairs times the days which the cache will remember the data for.
+3. `eodCacheSize` is the size configuration for end-of-day (eod) lookup cache, it can be disabled by setting its value to 0. The key to eod cache is a tuple of currency pair and time stamp, so the size of eod cache equals to the number of currency pairs times the days which the cache will remember the data for.
 
-4. `getNearestDay` is the rounding configuration for latest eod(at) lookup. The lookup will be performed on the next day if the rounding mode is set to EodRoundUp, and on the previous day if EodRoundDown.
+4. `getNearestDay` is the rounding configuration for latest eod (at) lookup. The lookup will be performed on the next day if the rounding mode is set to EodRoundUp, and on the previous day if EodRoundDown.
 
 5. `baseCurrency` can be configured to different currencies by the users.
 
@@ -90,55 +90,76 @@ For an explanation for the default values please see section **5.4 Explanation o
 ### 3.2 Rate lookup
 
 Unless specified otherwise, assume `forex` value is initialized as:
+
 ```scala
 val config: ForexConfig = ForexConfig("YOUR_API_KEY", DeveloperAccount)
-val forex: IO[Forex] = Forex.getForex[IO](config)
+def fForex[F[_]: Sync]: F[Forex] = CreateForex[F].create(config)
 ```
 
-`Forex.getForex[IO]` returns `IO[Forex]` instead of `Forex`, because creation of the underlying caches is
-a side effect. You can `flatMap` over the result (or use a for-comprehension, as seen below).
-All examples below return `IO[Either[OerResponseError], Money]`, which means they are not executed.
-You will need to run `unsafeRunSync` on them to retrieve the result.
+`CreateForex[F].create` returns `F[Forex]` instead of `Forex`, because creation of the underlying
+caches is a side effect. You can `flatMap` over the result (or use a for-comprehension, as seen
+below). All examples below return `F[Either[OerResponseError, Money]]`, which means they are not
+executed.
+
+If you don't care about side effects, we also provide instance of `Forex` for `cats.Eval` and
+`cats.Id`:
+
+```scala
+val evalForex: Eval[Forex] = CreateForex[Eval].create(config)
+val idForex: Forex = CreateForex[Id].create(config)
+```
+
+For distributed applications, such as Spark or Beam apps, where lazy values might be an issue, you may want to use the `Id` instance.
 
 #### 3.2.1 Live rate
 
-Lookup a live rate _(no caching available)_:
+Look up a live rate _(no caching available)_:
 
 ```scala
 // USD => JPY
-val usd2jpy = for {
-  fx     <- forex
+val usd2jpyF: F[Either[OerResponseError, Money]] = for {
+  fx     <- fForex
   result <- fx.rate.to(CurrencyUnit.JPY).now
 } yield result
+
+// using Eval
+val usd2jpyE: Eval[Either[OerResponseError, Money]] = for {
+  fx     <- evalForex
+  result <- fx.rate.to(CurrencyUnit.JPY).now
+} yield result
+
+// using Id
+val usd2jpyI: Either[OerResponseError, Money] =
+  idForex.rate.to(CurrencyUnit.JPY).now
 ```
 
 #### 3.2.2 Near-live rate
 
-Lookup a near-live rate _(caching available)_:
+Look up a near-live rate _(caching available)_:
 
 ```scala
 // JPY => GBP
 val jpy2gbp = for {
-  fx     <- forex
+  fx     <- fForex
   result <- fx.rate(CurrencyUnit.JPY).to(CurrencyUnit.GBP).nowish
 } yield result
 ```
 
 #### 3.2.3 Near-live rate without cache
 
-Lookup a near-live rate (_uses cache selectively_):
+Look up a near-live rate (_uses cache selectively_):
 
 ```scala
 // JPY => GBP
 val jpy2gbp = for {
-  fx     <- Forex.getForex[IO](ForexConfig("YOU_API_KEY", DeveloperAccount, nowishCacheSize = 0))
+  fx     <- CreateForex[IO].create(ForexConfig("YOU_API_KEY", DeveloperAccount, nowishCacheSize = 0))
   result <- fx.rate(CurrencyUnit.JPY).to(CurrencyUnit.GBP).nowish
 } yield result
 ```
 
 #### 3.2.4 Latest-prior EOD rate
 
-Lookup the latest EOD (end-of-date) rate prior to your event _(caching available)_:
+Look up the latest EOD (end-of-date) rate prior to your event _(caching available)_:
 
 ```scala
 import java.time.{ZonedDateTime, ZoneId}
@@ -146,14 +167,14 @@ import java.time.{ZonedDateTime, ZoneId}
 // USD => JPY at the end of 13/03/2011
 val tradeDate = ZonedDateTime.of(2011, 3, 13, 11, 39, 27, 567, ZoneId.of("America/New_York"))
 val usd2jpy = for {
-  fx     <- forex
+  fx     <- fForex
   result <- fx.rate.to(CurrencyUnit.JPY).at(tradeDate)
 } yield result
 ```
 
 #### 3.2.5 Latest-post EOD rate
 
-Lookup the latest EOD (end-of-date) rate post to your event _(caching available)_:
+Look up the latest EOD (end-of-date) rate post to your event _(caching available)_:
 
 ```scala
 // USD => JPY at the end of 13/03/2011
@@ -166,7 +187,7 @@ val usd2jpy = for {
 
 #### 3.2.6 Specific EOD rate
 
-Lookup the EOD rate for a specific date _(caching available)_:
+Look up the EOD rate for a specific date _(caching available)_:
 
 ```scala
 // GBP => JPY at the end of 13/03/2011
@@ -179,7 +200,7 @@ val gbp2jpy = for {
 
 #### 3.2.7 Specific EOD rate without cache
 
-Lookup the EOD rate for a specific date _(no caching)_:
+Look up the EOD rate for a specific date _(no caching)_:
 
 ```scala
 // GBP => JPY at the end of 13/03/2011
@@ -207,12 +228,12 @@ val priceInEuros = for {
 
 #### 3.3.2 Near-live rate
 
-Conversion using a near-live exchange rate with 500 seconds nowishSecs _(caching available)_:
+Conversion using a near-live exchange rate with 500 seconds `nowishSecs` _(caching available)_:
 
 ```scala
 // 9.99 GBP => EUR
 val priceInEuros = for {
-  fx     <- Forex.getForex[IO](ForexConfig("YOU_API_KEY", DeveloperAccount, nowishSecs = 500))
+  fx     <- CreateForex[IO].create(ForexConfig("YOU_API_KEY", DeveloperAccount, nowishSecs = 500))
   result <- fx.convert(9.99, CurrencyUnit.GBP).to(CurrencyUnit.EUR).nowish
 } yield result
 ```
@@ -220,13 +241,13 @@ val priceInEuros = for {
 #### 3.3.3 Near-live rate without cache
 
 Note that this will be a live rate conversion if cache is not available.
-Conversion using a live exchange rate with 500 seconds nowishSecs,
+Conversion using a live exchange rate with 500 seconds `nowishSecs`,
 this conversion will be done via HTTP request:
 
 ```scala
 // 9.99 GBP => EUR
 val priceInEuros = for {
-  fx     <- Forex.getForex[IO](ForexConfig("YOUR_API_KEY", DeveloperAccount, nowishSecs = 500, nowishCacheSize = 0))
+  fx     <- CreateForex[IO].create(ForexConfig("YOUR_API_KEY", DeveloperAccount, nowishSecs = 500, nowishCacheSize = 0))
   result <- fx.convert(9.99, CurrencyUnit.GBP).to(CurrencyUnit.EUR).nowish
 } yield result
 ```
@@ -252,7 +273,7 @@ Lookup the latest EOD (end-of-date) rate following your event _(caching availabl
 // 10000 GBP => JPY at the end of 13/03/2011
 val tradeDate = ZonedDateTime.of(2011, 3, 13, 11, 39, 27, 567, ZoneId.of("America/New_York"))
 val usd2jpy = for {
-  fx     <- Forex.getForex[IO](ForexConfig("Your API key / app id", DeveloperAccount, getNearestDay = EodRoundUp))
+  fx     <- CreateForex[IO].create(ForexConfig("Your API key / app id", DeveloperAccount, getNearestDay = EodRoundUp))
   result <- fx.convert(10000, CurrencyUnit.GBP).to(CurrencyUnit.JPY).at(tradeDate)
 } yield result
 ```
@@ -289,7 +310,7 @@ val tradeInYen = for {
 #### 3.4.1 LRU cache
 
 The `eodCacheSize` and `nowishCacheSize` values determine the maximum number of values to keep in the LRU cache,
-which the Client will check prior to making an API lookup. To disable eithe LRU cache, set its size to zero,
+which the Client will check prior to making an API lookup. To disable either LRU cache, set its size to zero,
 i.e. `eodCacheSize = 0`.
 
 #### 3.4.2 From currency selection
@@ -301,7 +322,7 @@ If not specified, `baseCurrency` is set to USD by default.
 
 ### 4.1 Running tests
 
-You **must** export your `OER_KEY` or else the test suite will fail. To run the test suite locally:
+You **must** export your `OER_KEY` or else the tests will be skipped. To run the test suite locally:
 
 ```
 $ export OER_KEY=<<key>>
@@ -360,7 +381,11 @@ We selected USD for the base currency because this is the OER default as well.
 
 With Open Exchange Rates' Unlimited and Enterprise accounts, Scala Forex can specify the base currency to use when looking up exchange rates; Developer-level accounts will always retrieve rates against USD, so a rate lookup from e.g. GBY to EUR will require two conversions (GBY -> USD -> EUR). For this reason, we recommend Unlimited and Enterprise-level accounts for slightly more accurate non-USD-related lookups.
 
-## 6. Copyright and license
+## 6. Documentation
+
+The Scaladoc pages for this library can be found [here][scaladoc-pages].
+
+## 7. Copyright and license
 
 Scala Forex is copyright 2013-2019 Snowplow Analytics Ltd.
 
@@ -388,3 +413,5 @@ limitations under the License.
 
 [gitter-image]: https://badges.gitter.im/snowplow/scala-forex.svg
 [gitter-link]: https://gitter.im/snowplow/scala-forex?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
+
+[scaladoc-pages]: http://snowplow.github.io/scala-forex/
