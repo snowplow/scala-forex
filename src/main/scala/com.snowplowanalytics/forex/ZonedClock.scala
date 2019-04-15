@@ -14,7 +14,7 @@ package com.snowplowanalytics.forex
 
 import java.time.ZonedDateTime
 
-import cats.Eval
+import cats.{Eval, Id}
 import cats.effect.Sync
 
 trait ZonedClock[F[_]] {

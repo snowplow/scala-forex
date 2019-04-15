@@ -12,7 +12,7 @@
  */
 package com.snowplowanalytics.forex
 
-import cats.Eval
+import cats.{Eval, Id}
 import cats.effect.Sync
 import cats.syntax.either._
 import io.circe.Decoder
@@ -55,6 +55,15 @@ object Transport {
       Eval.later {
         buildRequest(endpoint, path)
       }
+  }
+
+  /**
+   * Id http Transport to use in cases where you don't care about side-effects.
+   * @return an Id Transport
+   */
+  implicit def idHttpTransport: Transport[Id] = new Transport[Id] {
+    def receive(endpoint: String, path: String): Id[Either[OerResponseError, OerResponse]] =
+      buildRequest(endpoint, path)
   }
 
   implicit def eitherDecoder: Decoder[Either[OerResponseError, OerResponse]] =
