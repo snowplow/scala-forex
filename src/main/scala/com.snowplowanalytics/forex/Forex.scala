@@ -18,7 +18,7 @@ import java.math.{BigDecimal, RoundingMode}
 
 import scala.util.{Failure, Success, Try}
 
-import cats.{Eval, Monad}
+import cats.{Eval, Id, Monad}
 import cats.effect.Sync
 import cats.data.{EitherT, OptionT}
 import cats.implicits._
@@ -46,6 +46,14 @@ object CreateForex {
       def create(config: ForexConfig): Eval[Forex[Eval]] =
         OerClient
           .getClient[Eval](config)
+          .map(client => Forex(config, client))
+    }
+
+  implicit def idCreateForex(implicit C: ZonedClock[Id]): CreateForex[Id] =
+    new CreateForex[Id] {
+      def create(config: ForexConfig): Id[Forex[Id]] =
+        OerClient
+          .getClient[Id](config)
           .map(client => Forex(config, client))
     }
 }

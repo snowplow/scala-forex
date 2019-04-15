@@ -14,7 +14,7 @@ package com.snowplowanalytics.forex
 
 import java.time.ZonedDateTime
 
-import cats.Eval
+import cats.{Eval, Id}
 import cats.effect.Sync
 
 trait ZonedClock[F[_]] {
@@ -26,7 +26,11 @@ object ZonedClock {
     def now(): F[ZonedDateTime] = Sync[F].delay(ZonedDateTime.now)
   }
 
-  implicit def unsafeZonedClock: ZonedClock[Eval] = new ZonedClock[Eval] {
-    def now(): Eval[ZonedDateTime] = Eval.now(ZonedDateTime.now)
+  implicit def evalZonedClock: ZonedClock[Eval] = new ZonedClock[Eval] {
+    def now(): Eval[ZonedDateTime] = Eval.later(ZonedDateTime.now)
+  }
+
+  implicit def idZonedClock: ZonedClock[Id] = new ZonedClock[Id] {
+    def now(): Id[ZonedDateTime] = ZonedDateTime.now
   }
 }
