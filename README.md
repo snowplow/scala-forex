@@ -46,9 +46,9 @@ The Scala Forex supports two types of usage:
 Both usage types support live, near-live or historical (end-of-day) exchange rates.
 
 For all code samples below we are assuming the following imports:
+
 ```scala
 import org.joda.money.CurrencyUnit
-import cats.effect.IO
 import com.snowplowanalytics.forex._
 ```
 
@@ -90,15 +90,24 @@ For an explanation for the default values please see section **5.4 Explanation o
 ### 3.2 Rate lookup
 
 Unless specified otherwise, assume `forex` value is initialized as:
+
 ```scala
 val config: ForexConfig = ForexConfig("YOUR_API_KEY", DeveloperAccount)
-val forex: IO[Forex] = Forex.getForex[IO](config)
+def fForex[F[_]: Sync]: F[Forex] = CreateForex[F].create(config)
 ```
 
-`Forex.getForex[IO]` returns `IO[Forex]` instead of `Forex`, because creation of the underlying caches is
-a side effect. You can `flatMap` over the result (or use a for-comprehension, as seen below).
-All examples below return `IO[Either[OerResponseError], Money]`, which means they are not executed.
-You will need to run `unsafeRunSync` on them to retrieve the result.
+`CreateForex[F].create` returns `F[Forex]` instead of `Forex`, because creation of the underlying
+caches is a side effect. You can `flatMap` over the result (or use a for-comprehension, as seen
+below). All examples below return `F[Either[OerResponseError, Money]]`, which means they are not
+executed.
+
+If you don't care about side effects, we also provide instance of `Forex` for `cats.Eval` and
+`cats.Id`:
+
+```scala
+val evalForex: Eval[Forex] = CreateForex[Eval].create(config)
+val idForex: Forex = CreateForex[Id].create(config)
+```
 
 #### 3.2.1 Live rate
 
@@ -106,10 +115,20 @@ Lookup a live rate _(no caching available)_:
 
 ```scala
 // USD => JPY
-val usd2jpy = for {
-  fx     <- forex
+val usd2jpyF: F[Either[OerResponseError, Money]] = for {
+  fx     <- fForex
   result <- fx.rate.to(CurrencyUnit.JPY).now
 } yield result
+
+// using Eval
+val usd2jpyE: Eval[Either[OerResponseError, Money]] = for {
+  fx     <- evalForex
+  result <- fx.rate.to(CurrencyUnit.JPY).now
+} yield result
+
+// using Id
+val usd2jpyI: Either[OerResponseError, Money] =
+  idForex.rate.to(CurrencyUnit.JPY).now
 ```
 
 #### 3.2.2 Near-live rate
@@ -119,7 +138,7 @@ Lookup a near-live rate _(caching available)_:
 ```scala
 // JPY => GBP
 val jpy2gbp = for {
-  fx     <- forex
+  fx     <- fForex
   result <- fx.rate(CurrencyUnit.JPY).to(CurrencyUnit.GBP).nowish
 } yield result
 ```
@@ -131,7 +150,7 @@ Lookup a near-live rate (_uses cache selectively_):
 ```scala
 // JPY => GBP
 val jpy2gbp = for {
-  fx     <- Forex.getForex[IO](ForexConfig("YOU_API_KEY", DeveloperAccount, nowishCacheSize = 0))
+  fx     <- CreateForex[IO].create(ForexConfig("YOU_API_KEY", DeveloperAccount, nowishCacheSize = 0))
   result <- fx.rate(CurrencyUnit.JPY).to(CurrencyUnit.GBP).nowish
 } yield result
 ```
@@ -146,7 +165,7 @@ import java.time.{ZonedDateTime, ZoneId}
 // USD => JPY at the end of 13/03/2011
 val tradeDate = ZonedDateTime.of(2011, 3, 13, 11, 39, 27, 567, ZoneId.of("America/New_York"))
 val usd2jpy = for {
-  fx     <- forex
+  fx     <- fForex
   result <- fx.rate.to(CurrencyUnit.JPY).at(tradeDate)
 } yield result
 ```
@@ -212,7 +231,7 @@ Conversion using a near-live exchange rate with 500 seconds nowishSecs _(caching
 ```scala
 // 9.99 GBP => EUR
 val priceInEuros = for {
-  fx     <- Forex.getForex[IO](ForexConfig("YOU_API_KEY", DeveloperAccount, nowishSecs = 500))
+  fx     <- CreateForex[IO].create(ForexConfig("YOU_API_KEY", DeveloperAccount, nowishSecs = 500))
   result <- fx.convert(9.99, CurrencyUnit.GBP).to(CurrencyUnit.EUR).nowish
 } yield result
 ```
@@ -226,7 +245,7 @@ this conversion will be done via HTTP request:
 ```scala
 // 9.99 GBP => EUR
 val priceInEuros = for {
-  fx     <- Forex.getForex[IO](ForexConfig("YOUR_API_KEY", DeveloperAccount, nowishSecs = 500, nowishCacheSize = 0))
+  fx     <- CreateForex[IO].create(ForexConfig("YOUR_API_KEY", DeveloperAccount, nowishSecs = 500, nowishCacheSize = 0))
   result <- fx.convert(9.99, CurrencyUnit.GBP).to(CurrencyUnit.EUR).nowish
 } yield result
 ```
@@ -252,7 +271,7 @@ Lookup the latest EOD (end-of-date) rate following your event _(caching availabl
 // 10000 GBP => JPY at the end of 13/03/2011
 val tradeDate = ZonedDateTime.of(2011, 3, 13, 11, 39, 27, 567, ZoneId.of("America/New_York"))
 val usd2jpy = for {
-  fx     <- Forex.getForex[IO](ForexConfig("Your API key / app id", DeveloperAccount, getNearestDay = EodRoundUp))
+  fx     <- CreateForex[IO].create(ForexConfig("Your API key / app id", DeveloperAccount, getNearestDay = EodRoundUp))
   result <- fx.convert(10000, CurrencyUnit.GBP).to(CurrencyUnit.JPY).at(tradeDate)
 } yield result
 ```
