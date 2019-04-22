@@ -92,7 +92,7 @@ object Forex {
  */
 final case class Forex[F[_]: Monad: ZonedClock](config: ForexConfig, client: OerClient[F]) {
 
-  def rate: ForexLookupTo[F] = ForexLookupTo(1, config.baseCurrency, config, client)
+  def rate: ForexLookupTo[F] = convert(1d, config.baseCurrency)
 
   /**
    * Starts building a fluent interface, performs currency look up from *source* currency.
@@ -100,8 +100,14 @@ final case class Forex[F[_]: Monad: ZonedClock](config: ForexConfig, client: Oer
    * @param currency Source currency
    * @return ForexLookupTo object which is the part of the fluent interface
    */
-  def rate(currency: CurrencyUnit): ForexLookupTo[F] =
-    ForexLookupTo(1, currency, config, client)
+  def rate(currency: CurrencyUnit): ForexLookupTo[F] = convert(1d, currency)
+
+  /**
+   * Starts building a currency conversion for the supplied amount, using the currency specified in config
+   * @param amount The amount of currency to be converted
+   * @return a ForexLookupTo, part of the currency conversion fluent interface
+   */
+  def convert(amount: Double): ForexLookupTo[F] = convert(amount, config.baseCurrency)
 
   /**
    * Starts building a currency conversion from the supplied currency, for the supplied amount.
@@ -110,16 +116,7 @@ final case class Forex[F[_]: Monad: ZonedClock](config: ForexConfig, client: Oer
    * @return a ForexLookupTo, part of the currency conversion fluent interface.
    */
   def convert(amount: Double, currency: CurrencyUnit): ForexLookupTo[F] =
-    convert(amount, currency)
-
-  /**
-   * Starts building a currency conversion for the supplied amount, using the currency specified in config
-   * @param amount The amount of currency to be converted
-   * @return a ForexLookupTo, part of the currency conversion fluent interface
-   */
-  def convert(amount: Double): ForexLookupTo[F] =
-    ForexLookupTo(amount, config.baseCurrency, config, client)
-
+    ForexLookupTo(amount, currency, config, client)
 }
 
 /**

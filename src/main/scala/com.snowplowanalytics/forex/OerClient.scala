@@ -31,7 +31,7 @@ import responses._
  * @param nowishCache - user defined nowishCache
  * @param eodCache - user defined eodCache
  */
-case class OerClient[F[_]: Monad](
+final case class OerClient[F[_]: Monad](
   config: ForexConfig,
   nowishCache: Option[NowishCache[F]] = None,
   eodCache: Option[EodCache[F]]       = None

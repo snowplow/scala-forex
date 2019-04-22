@@ -39,8 +39,16 @@ class ForexNowSpec extends Specification {
       val ioTradeInYenNow = ioFx.flatMap(_.convert(10000).to(CurrencyUnit.JPY).now)
       ioTradeInYenNow.unsafeRunSync() must beRight(
         (m: Money) => m.isGreaterThan(Money.of(CurrencyUnit.JPY, 10000, RoundingMode.HALF_EVEN)))
+      val ioTradeInYenNow2 = ioFx
+        .flatMap(_.convert(10000, CurrencyUnit.USD).to(CurrencyUnit.JPY).now)
+      ioTradeInYenNow2.unsafeRunSync() must beRight(
+        (m: Money) => m.isGreaterThan(Money.of(CurrencyUnit.JPY, 10000, RoundingMode.HALF_EVEN)))
       val evalTradeInYenNow = evalFx.flatMap(_.convert(10000).to(CurrencyUnit.JPY).now)
       evalTradeInYenNow.value must beRight(
+        (m: Money) => m.isGreaterThan(Money.of(CurrencyUnit.JPY, 10000, RoundingMode.HALF_EVEN)))
+      val evalTradeInYenNow2 = evalFx
+        .flatMap(_.convert(10000, CurrencyUnit.USD).to(CurrencyUnit.JPY).now)
+      evalTradeInYenNow2.value must beRight(
         (m: Money) => m.isGreaterThan(Money.of(CurrencyUnit.JPY, 10000, RoundingMode.HALF_EVEN)))
     }
   }
