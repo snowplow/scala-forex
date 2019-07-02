@@ -36,17 +36,17 @@ object errors {
    * Caused by invalid DateTime argument
    * i.e. either earlier than the earliest date OER service is available or later than currenct time
    */
-  object ResourcesNotAvailable extends OerError
+  case object ResourcesNotAvailable extends OerError
 
   /**
    * Currency not supported by API or
    * Joda Money or both
    */
-  object IllegalCurrency extends OerError
+  case object IllegalCurrency extends OerError
 
   /**
    * Other possible error types e.g.
    * access permissions
    */
-  object OtherErrors extends OerError
+  case object OtherErrors extends OerError
 }

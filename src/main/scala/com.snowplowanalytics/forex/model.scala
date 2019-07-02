@@ -20,10 +20,10 @@ object model {
   sealed trait EodRounding
 
   /** Round to previous day*/
-  object EodRoundDown extends EodRounding
+  case object EodRoundDown extends EodRounding
 
   /** Round to next day*/
-  object EodRoundUp extends EodRounding
+  case object EodRoundUp extends EodRounding
 
   /**
    * There are three types of accounts supported by OER API.
@@ -35,9 +35,9 @@ object model {
    * and will slow down the performance.
    */
   sealed trait AccountType
-  object DeveloperAccount extends AccountType
-  object EnterpriseAccount extends AccountType
-  object UnlimitedAccount extends AccountType
+  case object DeveloperAccount extends AccountType
+  case object EnterpriseAccount extends AccountType
+  case object UnlimitedAccount extends AccountType
 
   /**
    * Configure class for Forex object
