@@ -30,7 +30,7 @@ If you're using SBT, add the following lines to your build file:
 
 ```scala
 libraryDependencies ++= Seq(
-  "com.snowplowanalytics" %% "scala-forex" % "0.6.0"
+  "com.snowplowanalytics" %% "scala-forex" % "0.7.0"
 )
 ```
 
