@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2019 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -12,66 +12,78 @@
  */
 package com.snowplowanalytics.forex
 
-// Java
 import java.math.RoundingMode
-// Specs2
-import org.specs2.mutable.Specification
-// Joda
+
+import cats.Eval
+import cats.effect.IO
 import org.joda.money._
-// TestHelpers
-import TestHelpers._
+import org.specs2.mutable.Specification
 
-/**
- * Testing method for getting the live exchange rate
- */
+import model._
+
+/** Testing method for getting the live exchange rate */
 class ForexNowSpec extends Specification {
+  args(skipAll = sys.env.get("OER_KEY").isEmpty)
 
-  /**
-   * Trade 10000 USD to JPY at live exchange rate
-   */
-  val tradeInYenNow = fx.flatMap(_.convert(10000).to(CurrencyUnit.JPY).now)
+  val key  = sys.env.getOrElse("OER_KEY", "")
+  val ioFx = CreateForex[IO].create(ForexConfig(key, DeveloperAccount))
+  val ioFxWithBaseGBP =
+    CreateForex[IO].create(ForexConfig(key, EnterpriseAccount, baseCurrency = CurrencyUnit.GBP))
+  val evalFx = CreateForex[Eval].create(ForexConfig(key, DeveloperAccount))
+  val evalFxWithBaseGBP =
+    CreateForex[Eval].create(ForexConfig(key, EnterpriseAccount, baseCurrency = CurrencyUnit.GBP))
 
+  /** Trade 10000 USD to JPY at live exchange rate */
   "convert 10000 USD dollars to Yen now" should {
     "be > 10000" in {
-      tradeInYenNow
-        .unsafeRunSync() must beRight(
+      val ioTradeInYenNow = ioFx.flatMap(_.convert(10000).to(CurrencyUnit.JPY).now)
+      ioTradeInYenNow.unsafeRunSync() must beRight(
+        (m: Money) => m.isGreaterThan(Money.of(CurrencyUnit.JPY, 10000, RoundingMode.HALF_EVEN)))
+      val ioTradeInYenNow2 = ioFx
+        .flatMap(_.convert(10000, CurrencyUnit.USD).to(CurrencyUnit.JPY).now)
+      ioTradeInYenNow2.unsafeRunSync() must beRight(
+        (m: Money) => m.isGreaterThan(Money.of(CurrencyUnit.JPY, 10000, RoundingMode.HALF_EVEN)))
+      val evalTradeInYenNow = evalFx.flatMap(_.convert(10000).to(CurrencyUnit.JPY).now)
+      evalTradeInYenNow.value must beRight(
+        (m: Money) => m.isGreaterThan(Money.of(CurrencyUnit.JPY, 10000, RoundingMode.HALF_EVEN)))
+      val evalTradeInYenNow2 = evalFx
+        .flatMap(_.convert(10000, CurrencyUnit.USD).to(CurrencyUnit.JPY).now)
+      evalTradeInYenNow2.value must beRight(
         (m: Money) => m.isGreaterThan(Money.of(CurrencyUnit.JPY, 10000, RoundingMode.HALF_EVEN)))
     }
   }
 
-  /**
-   * GBP -> SGD with USD as base currency
-   */
-  val gbpToSgdWithBaseUsd = fx.flatMap(_.rate(CurrencyUnit.GBP).to(CurrencyUnit.of("SGD")).now)
-
+  /** GBP -> SGD with USD as base currency */
   "GBP to SGD with base currency USD live exchange rate" should {
     "be greater than 1 SGD" in {
-      gbpToSgdWithBaseUsd
-        .unsafeRunSync() must beRight((m: Money) => m.isGreaterThan(Money.of(CurrencyUnit.of("SGD"), 1)))
+      val ioGbpToSgdWithBaseUsd =
+        ioFx.flatMap(_.rate(CurrencyUnit.GBP).to(CurrencyUnit.of("SGD")).now)
+      ioGbpToSgdWithBaseUsd.unsafeRunSync() must beRight(
+        (m: Money) => m.isGreaterThan(Money.of(CurrencyUnit.of("SGD"), 1)))
+      val evalGbpToSgdWithBaseUsd =
+        evalFx.flatMap(_.rate(CurrencyUnit.GBP).to(CurrencyUnit.of("SGD")).now)
+      evalGbpToSgdWithBaseUsd.value must beRight((m: Money) => m.isGreaterThan(Money.of(CurrencyUnit.of("SGD"), 1)))
     }
   }
 
-  /**
-   * GBP -> SGD with GBP as base currency
-   */
-  val gbpToSgdWithBaseGbp = fxWithBaseGBP.flatMap(_.rate.to(CurrencyUnit.of("SGD")).now)
-
+  /** GBP -> SGD with GBP as base currency */
   "GBP to SGD with base currency GBP live exchange rate" should {
     "be greater than 1 SGD" in {
-      gbpToSgdWithBaseGbp
-        .unsafeRunSync() must beRight((m: Money) => m.isGreaterThan(Money.of(CurrencyUnit.of("SGD"), 1)))
+      val ioGbpToSgdWithBaseGbp = ioFxWithBaseGBP.flatMap(_.rate.to(CurrencyUnit.of("SGD")).now)
+      ioGbpToSgdWithBaseGbp.unsafeRunSync() must beRight(
+        (m: Money) => m.isGreaterThan(Money.of(CurrencyUnit.of("SGD"), 1)))
+      val evalGbpToSgdWithBaseGbp = evalFxWithBaseGBP.flatMap(_.rate.to(CurrencyUnit.of("SGD")).now)
+      evalGbpToSgdWithBaseGbp.value must beRight((m: Money) => m.isGreaterThan(Money.of(CurrencyUnit.of("SGD"), 1)))
     }
   }
 
-  /**
-   * GBP with GBP as base currency
-   */
-  val gbpToGbpWithBaseGbp = fxWithBaseGBP.flatMap(_.rate.to(CurrencyUnit.GBP).now)
-
+  /** GBP with GBP as base currency */
   "Do not throw JodaTime exception on converting identical currencies" should {
     "be equal 1 GBP" in {
-      gbpToGbpWithBaseGbp
-        .unsafeRunSync() must beRight((m: Money) => m.isEqual(Money.of(CurrencyUnit.of("GBP"), 1)))
+      val ioGbpToGbpWithBaseGbp = ioFxWithBaseGBP.flatMap(_.rate.to(CurrencyUnit.GBP).now)
+      ioGbpToGbpWithBaseGbp.unsafeRunSync() must beRight((m: Money) => m.isEqual(Money.of(CurrencyUnit.of("GBP"), 1)))
+      val evalGbpToGbpWithBaseGbp = evalFxWithBaseGBP.flatMap(_.rate.to(CurrencyUnit.GBP).now)
+      evalGbpToGbpWithBaseGbp.value must beRight((m: Money) => m.isEqual(Money.of(CurrencyUnit.of("GBP"), 1)))
     }
   }
 }

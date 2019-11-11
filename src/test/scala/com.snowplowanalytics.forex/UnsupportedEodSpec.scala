@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2019 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -12,48 +12,52 @@
  */
 package com.snowplowanalytics.forex
 
-// Java
 import java.time.{ZoneId, ZonedDateTime}
 
-// Joda
+import cats.Eval
+import cats.effect.IO
 import org.joda.money.CurrencyUnit
-
-// Specs2
 import org.specs2.mutable.Specification
-// TestHelpers
-import TestHelpers._
-// oerclient
-import oerclient.OerResponseError
-import oerclient.ResourcesNotAvailable
+
+import errors._
+import model._
 
 /**
  *  Testing for exceptions caused by invalid dates
  */
 class UnsupportedEodSpec extends Specification {
+  args(skipAll = sys.env.get("OER_KEY").isEmpty)
+
+  val key    = sys.env.getOrElse("OER_KEY", "")
+  val ioFx   = CreateForex[IO].create(ForexConfig(key, DeveloperAccount))
+  val evalFx = CreateForex[Eval].create(ForexConfig(key, DeveloperAccount))
 
   "An end-of-date lookup in 1900" should {
     "throw an exception" in {
 
       /**
-       * 1900 is earlier than 1990 which is the earliest available date for looking up exchange rates
+       * 1900 is earlier than 1990 which is the earliest available date for looking up exchange
+       * rates
        */
       val date1900 = ZonedDateTime.of(1900, 3, 13, 0, 0, 0, 0, ZoneId.systemDefault)
-      fx.flatMap(_.rate.to(CurrencyUnit.GBP).eod(date1900))
-        .unsafeRunSync() must beLike {
+      ioFx.flatMap(_.rate.to(CurrencyUnit.GBP).eod(date1900)).unsafeRunSync() must beLike {
+        case Left(OerResponseError(_, ResourcesNotAvailable)) => ok
+      }
+      evalFx.flatMap(_.rate.to(CurrencyUnit.GBP).eod(date1900)).value must beLike {
         case Left(OerResponseError(_, ResourcesNotAvailable)) => ok
       }
     }
   }
 
-  "An end-of-date lookup in 2020" should {
+  "An end-of-date lookup in 2030" should {
     "throw an exception" in {
 
-      /**
-       * 2020 is in the future so it won't be available either
-       */
-      val date2020 = ZonedDateTime.of(2020, 3, 13, 0, 0, 0, 0, ZoneId.systemDefault)
-      fx.flatMap(_.rate.to(CurrencyUnit.GBP).eod(date2020))
-        .unsafeRunSync() must beLike {
+      /** 2030 is in the future so it won't be available either */
+      val date2030 = ZonedDateTime.of(2030, 3, 13, 0, 0, 0, 0, ZoneId.systemDefault)
+      ioFx.flatMap(_.rate.to(CurrencyUnit.GBP).eod(date2030)).unsafeRunSync() must beLike {
+        case Left(OerResponseError(_, ResourcesNotAvailable)) => ok
+      }
+      evalFx.flatMap(_.rate.to(CurrencyUnit.GBP).eod(date2030)).value must beLike {
         case Left(OerResponseError(_, ResourcesNotAvailable)) => ok
       }
     }
