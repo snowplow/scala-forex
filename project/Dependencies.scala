@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2019 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -18,29 +18,31 @@ object Dependencies {
   object V {
     // Java
     val jodaMoney   = "1.0.1"
-    val jodaConvert = "2.1.1"
+    val jodaConvert = "2.2.0"
 
     // Scala
-    val catsEffect = "1.0.0"
-    val circe      = "0.10.0"
-    val lruMap     = "0.2.0"
+    val catsEffect = "1.2.0"
+    val circe      = "0.11.1"
+    val lruMap     = "0.3.0"
+    val scalaj     = "2.4.1"
 
     // Scala (test only)
-    val specs2 = "4.3.4"
+    val specs2 = "4.4.1"
   }
 
   object Libraries {
     // Java
-    val jodaMoney    = "org.joda"              % "joda-money"         % V.jodaMoney
-    val jodaConvert  = "org.joda"              % "joda-convert"       % V.jodaConvert
+    val jodaMoney    = "org.joda"              % "joda-money"     % V.jodaMoney
+    val jodaConvert  = "org.joda"              % "joda-convert"   % V.jodaConvert
 
     // Scala
-    val catsEffect   = "org.typelevel"         %% "cats-effect"       % V.catsEffect
-    val circeParser  = "io.circe"              %% "circe-parser"      % V.circe
-    val lruMap       = "com.snowplowanalytics" %% "scala-lru-map"     % V.lruMap
+    val catsEffect   = "org.typelevel"         %% "cats-effect"   % V.catsEffect
+    val circeParser  = "io.circe"              %% "circe-parser"  % V.circe
+    val lruMap       = "com.snowplowanalytics" %% "scala-lru-map" % V.lruMap
+    val scalaj       = "org.scalaj"            %% "scalaj-http"   % V.scalaj
 
     // Scala (test only)
-    val specs2Core   = "org.specs2"            %% "specs2-core"       % V.specs2        % "test"
-    val specs2Mock   = "org.specs2"            %% "specs2-mock"       % V.specs2        % "test"
+    val specs2Core   = "org.specs2"            %% "specs2-core"   % V.specs2     % "test"
+    val specs2Mock   = "org.specs2"            %% "specs2-mock"   % V.specs2     % "test"
   }
 }

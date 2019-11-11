@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2019 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -12,57 +12,65 @@
  */
 package com.snowplowanalytics.forex
 
-// Java
 import java.time.{ZoneId, ZonedDateTime}
 
-// Joda
+import cats.Eval
+import cats.effect.IO
 import org.joda.money.{CurrencyUnit, Money}
-
-// Specs2
 import org.specs2.mutable.Specification
-// TestHelpers
-import TestHelpers._
+
+import model._
 
 /**
  * Testing method for getting the latest end-of-day rate
  * prior to the datetime or the day after according to the user's setting
  */
 class ForexAtSpec extends Specification {
+  args(skipAll = sys.env.get("OER_KEY").isEmpty)
 
-  /**
-   * GBP->CAD with USD as baseCurrency
-   */
-  val tradeDate = ZonedDateTime.of(2011, 3, 13, 11, 39, 27, 567, ZoneId.of("America/New_York"))
+  val key  = sys.env.getOrElse("OER_KEY", "")
+  val ioFx = CreateForex[IO].create(ForexConfig(key, DeveloperAccount))
+  val ioFxWithBaseGBP =
+    CreateForex[IO].create(ForexConfig(key, EnterpriseAccount, baseCurrency = CurrencyUnit.GBP))
+  val evalFx = CreateForex[Eval].create(ForexConfig(key, DeveloperAccount))
+  val evalFxWithBaseGBP =
+    CreateForex[Eval].create(ForexConfig(key, EnterpriseAccount, baseCurrency = CurrencyUnit.GBP))
 
-  val gbpToCadWithBaseUsd = fx.flatMap(_.rate(CurrencyUnit.GBP).to(CurrencyUnit.CAD).at(tradeDate))
+  val tradeDate =
+    ZonedDateTime.of(2011, 3, 13, 11, 39, 27, 567, ZoneId.of("America/New_York"))
 
-  val cadMoney = gbpToCadWithBaseUsd
-
+  /** GBP->CAD with USD as baseCurrency */
   "GBP to CAD with USD as base currency returning latest eod rate" should {
     "be > 0" in {
-      gbpToCadWithBaseUsd.unsafeRunSync() must beRight((m: Money) => m.isPositive)
+      val ioGbpToCadWithBaseUsd =
+        ioFx.flatMap(_.rate(CurrencyUnit.GBP).to(CurrencyUnit.CAD).at(tradeDate))
+      ioGbpToCadWithBaseUsd.unsafeRunSync() must beRight((m: Money) => m.isPositive)
+      val evalGbpToCadWithBaseUsd =
+        evalFx.flatMap(_.rate(CurrencyUnit.GBP).to(CurrencyUnit.CAD).at(tradeDate))
+      evalGbpToCadWithBaseUsd.value must beRight((m: Money) => m.isPositive)
     }
   }
 
-  /**
-   * GBP-> CAD with GBP as base currency
-   */
-  val gbpToCadWithBaseGbp = fxWithBaseGBP.flatMap(_.rate.to(CurrencyUnit.CAD).at(tradeDate))
-
+  /** GBP-> CAD with GBP as base currency */
   "GBP to CAD with GBP as base currency returning latest eod" should {
     "be > 0" in {
-      gbpToCadWithBaseGbp.unsafeRunSync() must beRight((m: Money) => m.isPositive)
+      val ioGbpToCadWithBaseGbp = ioFxWithBaseGBP.flatMap(_.rate.to(CurrencyUnit.CAD).at(tradeDate))
+      ioGbpToCadWithBaseGbp.unsafeRunSync() must beRight((m: Money) => m.isPositive)
+      val evalGbpToCadWithBaseGbp =
+        evalFxWithBaseGBP.flatMap(_.rate.to(CurrencyUnit.CAD).at(tradeDate))
+      evalGbpToCadWithBaseGbp.value must beRight((m: Money) => m.isPositive)
     }
   }
 
-  /**
-   * CNY -> GBP with USD as base currency
-   */
-  val cnyOverGbpHistorical = fx.flatMap(_.rate(CurrencyUnit.of("CNY")).to(CurrencyUnit.GBP).at(tradeDate))
-
+  /** CNY -> GBP with USD as base currency */
   "CNY to GBP with USD as base currency returning latest eod rate" should {
     "be > 0" in {
-      cnyOverGbpHistorical.unsafeRunSync() must beRight((m: Money) => m.isPositive)
+      val ioCnyOverGbpHistorical =
+        ioFx.flatMap(_.rate(CurrencyUnit.of("CNY")).to(CurrencyUnit.GBP).at(tradeDate))
+      ioCnyOverGbpHistorical.unsafeRunSync() must beRight((m: Money) => m.isPositive)
+      val evalCnyOverGbpHistorical =
+        evalFx.flatMap(_.rate(CurrencyUnit.of("CNY")).to(CurrencyUnit.GBP).at(tradeDate))
+      evalCnyOverGbpHistorical.value must beRight((m: Money) => m.isPositive)
     }
   }
 

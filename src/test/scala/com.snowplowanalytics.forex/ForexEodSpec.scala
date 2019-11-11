@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2019 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -12,18 +12,16 @@
  */
 package com.snowplowanalytics.forex
 
-// Java
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
-// Joda-Money
+import cats.Eval
+import cats.effect.IO
 import org.joda.money.{CurrencyUnit, Money}
-
-// Specs2
 import org.specs2.mutable.Specification
 import org.specs2.matcher.DataTables
-// TestHelpers
-import TestHelpers._
+
+import model._
 
 /**
  * Testing method for getting the end-of-date exchange rate
@@ -32,8 +30,13 @@ import TestHelpers._
  */
 class ForexEodSpec extends Specification with DataTables {
 
+  val key    = sys.env.getOrElse("OER_KEY", "")
+  val ioFx   = CreateForex[IO].create(ForexConfig(key, DeveloperAccount))
+  val evalFx = CreateForex[Eval].create(ForexConfig(key, DeveloperAccount))
+
   override def is =
-    "end-of-date lookup tests: forex rate between two currencies for a specific date is always the same" ! e1
+    skipAllIf(sys.env.get("OER_KEY").isEmpty) ^
+      "end-of-date lookup tests: forex rate between two currencies for a specific date is always the same" ! e1
 
   // Table values obtained from OER API
   def e1 =
@@ -44,7 +47,18 @@ class ForexEodSpec extends Specification with DataTables {
       CurrencyUnit.GBP !! CurrencyUnit.USD       ! "2011-03-13T11:45:34+00:00" ! "1.60" |
       CurrencyUnit.GBP !! CurrencyUnit.of("SGD") ! "2008-03-13T00:01:01+00:00" ! "2.80" |> {
       (fromCurr, toCurr, date, exp) =>
-        fx.flatMap(_.rate(fromCurr).to(toCurr).eod(ZonedDateTime.parse(date, DateTimeFormatter.ISO_OFFSET_DATE_TIME)))
+        ioFx
+          .flatMap(
+            _.rate(fromCurr)
+              .to(toCurr)
+              .eod(ZonedDateTime.parse(date, DateTimeFormatter.ISO_OFFSET_DATE_TIME)))
           .unsafeRunSync() must beRight((m: Money) => m.getAmount.toString mustEqual exp)
+        evalFx
+          .flatMap(
+            _.rate(fromCurr)
+              .to(toCurr)
+              .eod(ZonedDateTime.parse(date, DateTimeFormatter.ISO_OFFSET_DATE_TIME)))
+          .value must beRight((m: Money) => m.getAmount.toString mustEqual exp)
     }
+
 }

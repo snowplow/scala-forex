@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2019 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -12,22 +12,28 @@
  */
 package com.snowplowanalytics.forex
 
-// cats
+import cats.Eval
 import cats.effect.IO
-
-// Specs2
 import org.specs2.mutable.Specification
 
-/**
- * Testing that setting cache size to zero will disable the use of cache
- */
+import model._
+
+/** Testing that setting cache size to zero will disable the use of cache */
 class ForexWithoutCachesSpec extends Specification {
+  args(skipAll = sys.env.get("OER_KEY").isEmpty)
+
+  val key = sys.env.getOrElse("OER_KEY", "")
+
   "Setting both cache sizes to zero" should {
     "disable the use of caches" in {
-      val fxWithoutCache =
-        Forex.getForex[IO](ForexConfig(TestHelpers.key, DeveloperAccount, nowishCacheSize = 0, eodCacheSize = 0))
-      fxWithoutCache.unsafeRunSync().client.eodCache.isEmpty
-      fxWithoutCache.unsafeRunSync().client.nowishCache.isEmpty
+      val ioFxWithoutCache =
+        CreateForex[IO].create(ForexConfig(key, DeveloperAccount, nowishCacheSize = 0, eodCacheSize = 0))
+      ioFxWithoutCache.unsafeRunSync().client.eodCache.isEmpty
+      ioFxWithoutCache.unsafeRunSync().client.nowishCache.isEmpty
+      val evalFxWithoutCache =
+        CreateForex[Eval].create(ForexConfig(key, DeveloperAccount, nowishCacheSize = 0, eodCacheSize = 0))
+      evalFxWithoutCache.value.client.eodCache.isEmpty
+      evalFxWithoutCache.value.client.nowishCache.isEmpty
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2019 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -11,43 +11,54 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.forex
-package oerclient
 
-// Java
 import java.math.BigDecimal
 import java.time.ZonedDateTime
 
-// Joda
+import cats.Eval
+import cats.effect.IO
 import org.joda.money.CurrencyUnit
-
-// Specs2
 import org.specs2.mutable.Specification
 
-import TestHelpers._
+import model._
 
 /** Testing methods for Open exchange rate client */
 class OerClientSpec extends Specification {
+  args(skipAll = sys.env.get("OER_KEY").isEmpty)
+
+  val key    = sys.env.getOrElse("OER_KEY", "")
+  val ioFx   = CreateForex[IO].create(ForexConfig(key, DeveloperAccount))
+  val evalFx = CreateForex[Eval].create(ForexConfig(key, DeveloperAccount))
 
   "live currency value for USD" should {
     "always equal to 1" in {
-      fx.map(_.client)
+      ioFx
+        .map(_.client)
         .flatMap(_.getLiveCurrencyValue(CurrencyUnit.USD))
         .unsafeRunSync() must beRight(new BigDecimal(1))
+      evalFx
+        .map(_.client)
+        .flatMap(_.getLiveCurrencyValue(CurrencyUnit.USD))
+        .value must beRight(new BigDecimal(1))
     }
   }
 
-  val gbpLiveRate = fx.flatMap(_.client.getLiveCurrencyValue(CurrencyUnit.GBP))
   "live currency value for GBP" should {
     "be less than 1" in {
-      gbpLiveRate.unsafeRunSync() must beRight((d: BigDecimal) => d.doubleValue < 1)
+      val ioGbpLiveRate = ioFx.flatMap(_.client.getLiveCurrencyValue(CurrencyUnit.GBP))
+      ioGbpLiveRate.unsafeRunSync() must beRight((d: BigDecimal) => d.doubleValue < 1)
+      val evalGbpLiveRate = evalFx.flatMap(_.client.getLiveCurrencyValue(CurrencyUnit.GBP))
+      evalGbpLiveRate.value must beRight((d: BigDecimal) => d.doubleValue < 1)
     }
   }
 
-  val date = ZonedDateTime.parse("2008-01-01T01:01:01.123+09:00")
   "historical currency value for USD on 01/01/2008" should {
     "always equal to 1 as well" in {
-      fx.flatMap(_.client.getHistoricalCurrencyValue(CurrencyUnit.USD, date))
+      val date = ZonedDateTime.parse("2008-01-01T01:01:01.123+09:00")
+      ioFx
+        .flatMap(_.client.getHistoricalCurrencyValue(CurrencyUnit.USD, date))
         .unsafeRunSync() must beRight(new BigDecimal(1))
+      evalFx.flatMap(_.client.getHistoricalCurrencyValue(CurrencyUnit.USD, date)).value must beRight(new BigDecimal(1))
     }
   }
 }

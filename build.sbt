@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2019 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -17,7 +17,7 @@ lazy val root = project.in(file("."))
   .enablePlugins(ScalaUnidocPlugin, GhpagesPlugin)
   .settings(
     name        := "scala-forex",
-    version     := "0.6.0",
+    version     := "0.7.0",
     description := "High-performance Scala library for performing currency conversions using Open Exchange Rates"
   )
   .settings(BuildSettings.buildSettings)
@@ -31,6 +31,7 @@ lazy val root = project.in(file("."))
       Dependencies.Libraries.catsEffect,
       Dependencies.Libraries.circeParser,
       Dependencies.Libraries.lruMap,
+      Dependencies.Libraries.scalaj,
       Dependencies.Libraries.specs2Core,
       Dependencies.Libraries.specs2Mock
     )
