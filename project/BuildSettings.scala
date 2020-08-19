@@ -58,10 +58,6 @@ object BuildSettings {
       </developers>)
   )
 
-  lazy val formattingSettings = Seq(
-    scalafmtOnCompile := true
-  )
-
   lazy val docsSettings = Seq(
     addMappingsToSiteDir(mappings in (ScalaUnidoc, packageDoc), siteSubdirName in ScalaUnidoc),
     gitRemoteRepo := "https://github.com/snowplow/scala-forex.git",
