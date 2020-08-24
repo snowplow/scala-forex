@@ -12,7 +12,6 @@
  */
 package com.snowplowanalytics.forex
 
-import cats.Eval
 import cats.effect.IO
 import org.specs2.mutable.Specification
 
@@ -30,10 +29,6 @@ class ForexWithoutCachesSpec extends Specification {
         CreateForex[IO].create(ForexConfig(key, DeveloperAccount, nowishCacheSize = 0, eodCacheSize = 0))
       ioFxWithoutCache.unsafeRunSync().client.eodCache.isEmpty
       ioFxWithoutCache.unsafeRunSync().client.nowishCache.isEmpty
-      val evalFxWithoutCache =
-        CreateForex[Eval].create(ForexConfig(key, DeveloperAccount, nowishCacheSize = 0, eodCacheSize = 0))
-      evalFxWithoutCache.value.client.eodCache.isEmpty
-      evalFxWithoutCache.value.client.nowishCache.isEmpty
     }
   }
 

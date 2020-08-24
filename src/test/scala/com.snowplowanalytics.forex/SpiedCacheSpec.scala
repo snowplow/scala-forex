@@ -17,7 +17,6 @@ import java.time.{ZoneId, ZonedDateTime}
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext
 
-import cats.Eval
 import cats.effect.IO
 import cats.syntax.apply._
 import org.joda.money.CurrencyUnit
@@ -53,24 +52,6 @@ class SpiedCacheSpec extends Specification with Mockito {
   val spiedIoFx                = Forex[IO](config, ioClient)
   val spiedIoFxWith5NowishSecs = Forex[IO](fxConfigWith5NowishSecs, ioClient)
 
-  val spiedEvalNowishCache = spy(
-    CreateLruMap[Eval, NowishCacheKey, NowishCacheValue]
-      .create(config.nowishCacheSize)
-      .value
-  )
-  val spiedEvalEodCache = spy(
-    CreateLruMap[Eval, EodCacheKey, EodCacheValue]
-      .create(config.eodCacheSize)
-      .value
-  )
-  val evalClient = OerClient.getClient[Eval](
-    config,
-    Some(spiedEvalNowishCache),
-    Some(spiedEvalEodCache)
-  )
-  val spiedEvalFx                = Forex[Eval](config, evalClient)
-  val spiedEvalFxWith5NowishSecs = Forex[Eval](fxConfigWith5NowishSecs, evalClient)
-
   implicit val timer = IO.timer(ExecutionContext.global)
 
   /**
@@ -101,30 +82,6 @@ class SpiedCacheSpec extends Specification with Mockito {
       } yield test1 and test2
 
       ioAction.unsafeRunSync()
-
-      val evalAction = for {
-        // call nowish, update the cache with key("CAD","GBP") and corresponding value
-        _ <- spiedEvalFxWith5NowishSecs.rate(CurrencyUnit.CAD).to(CurrencyUnit.GBP).nowish
-        // get the value from the first HTPP request
-        valueFromFirstHttpRequest <- spiedEvalNowishCache.get((CurrencyUnit.CAD, CurrencyUnit.GBP))
-        // call nowish within 5 secs will get the value from the cache which is the same as valueFromFirstHttpRequest
-        _ <- spiedEvalFxWith5NowishSecs.rate(CurrencyUnit.CAD).to(CurrencyUnit.GBP).nowish
-
-        valueFromCache <- spiedEvalNowishCache.get((CurrencyUnit.CAD, CurrencyUnit.GBP))
-        test1 = valueFromCache must be equalTo valueFromFirstHttpRequest
-
-        _ = Thread.sleep(6000)
-        // nowish will get the value over HTTP request, which will replace the previous value in the cache
-        _ <- spiedEvalFxWith5NowishSecs.rate(CurrencyUnit.CAD).to(CurrencyUnit.GBP).nowish
-
-        // value will be different from previous value -
-        // even if the monetary value is the same, the
-        // timestamp will be different
-        newValueFromCache <- spiedEvalNowishCache.get((CurrencyUnit.CAD, CurrencyUnit.GBP))
-        test2 = newValueFromCache mustNotEqual valueFromFirstHttpRequest
-      } yield test1 and test2
-
-      evalAction.value
     }
   }
 
@@ -143,19 +100,12 @@ class SpiedCacheSpec extends Specification with Mockito {
         .eod(date)
         .productR(spiedIoEodCache.get((CurrencyUnit.CAD, CurrencyUnit.GBP, date)))
         .map { valueFromCache =>
-          there was two(spiedIoEodCache).get((CurrencyUnit.CAD, CurrencyUnit.GBP, date)) and (valueFromCache must beSome)
+          there was two(spiedIoEodCache).get(
+            (CurrencyUnit.CAD, CurrencyUnit.GBP, date)
+          ) and (valueFromCache must beSome)
         }
         .unsafeRunSync()
 
-      spiedEvalFx
-        .rate(CurrencyUnit.CAD)
-        .to(CurrencyUnit.GBP)
-        .eod(date)
-        .productR(spiedEvalEodCache.get((CurrencyUnit.CAD, CurrencyUnit.GBP, date)))
-        .map { valueFromCache =>
-          there was two(spiedEvalEodCache).get((CurrencyUnit.CAD, CurrencyUnit.GBP, date)) and (valueFromCache must beSome)
-        }
-        .value
     }
   }
 

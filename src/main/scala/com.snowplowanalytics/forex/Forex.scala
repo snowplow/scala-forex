@@ -18,7 +18,7 @@ import java.math.{BigDecimal, RoundingMode}
 
 import scala.util.{Failure, Success, Try}
 
-import cats.{Eval, Id, Monad}
+import cats.{Id, Monad}
 import cats.effect.Sync
 import cats.data.{EitherT, OptionT}
 import cats.implicits._
@@ -26,6 +26,7 @@ import org.joda.money._
 
 import errors._
 import model._
+import com.snowplowanalytics.lrumap.CreateLruMap
 
 trait CreateForex[F[_]] {
   def create(config: ForexConfig): F[Forex[F]]
@@ -34,16 +35,13 @@ trait CreateForex[F[_]] {
 object CreateForex {
   def apply[F[_]](implicit ev: CreateForex[F]): CreateForex[F] = ev
 
-  implicit def syncCreateForex[F[_]: Sync: ZonedClock]: CreateForex[F] =
+  implicit def syncCreateForex[F[_]: Sync: ZonedClock](implicit
+    CLM1: CreateLruMap[F, NowishCacheKey, NowishCacheValue],
+    CLM2: CreateLruMap[F, EodCacheKey, EodCacheValue]
+  ): CreateForex[F] =
     (config: ForexConfig) =>
       OerClient
         .getClient[F](config)
-        .map(client => Forex(config, client))
-
-  implicit def evalCreateForex: CreateForex[Eval] =
-    (config: ForexConfig) =>
-      OerClient
-        .getClient[Eval](config)
         .map(client => Forex(config, client))
 
   implicit def idCreateForex: CreateForex[Id] =
@@ -71,9 +69,8 @@ object Forex {
     if (!fromCurrIsBaseCurr) {
       val fromOverBase = new BigDecimal(1).divide(baseOverFrom, Forex.commonScale, RoundingMode.HALF_EVEN)
       fromOverBase.multiply(baseOverTo)
-    } else {
+    } else
       baseOverTo
-    }
 }
 
 /**
@@ -220,11 +217,11 @@ final case class ForexLookupWhen[F[_]](
    * failed
    */
   def at(tradeDate: ZonedDateTime)(implicit M: Monad[F]): F[Either[OerResponseError, Money]] = {
-    val latestEod = if (config.getNearestDay == EodRoundUp) {
-      tradeDate.truncatedTo(ChronoUnit.DAYS).plusDays(1)
-    } else {
-      tradeDate.truncatedTo(ChronoUnit.DAYS)
-    }
+    val latestEod =
+      if (config.getNearestDay == EodRoundUp)
+        tradeDate.truncatedTo(ChronoUnit.DAYS).plusDays(1)
+      else
+        tradeDate.truncatedTo(ChronoUnit.DAYS)
     eod(latestEod)
   }
 
