@@ -15,7 +15,6 @@ package com.snowplowanalytics.forex
 import java.math.BigDecimal
 import java.time.ZonedDateTime
 
-import cats.Eval
 import cats.effect.IO
 import org.joda.money.CurrencyUnit
 import org.specs2.mutable.Specification
@@ -26,9 +25,8 @@ import model._
 class OerClientSpec extends Specification {
   args(skipAll = sys.env.get("OER_KEY").isEmpty)
 
-  val key    = sys.env.getOrElse("OER_KEY", "")
-  val ioFx   = CreateForex[IO].create(ForexConfig(key, DeveloperAccount))
-  val evalFx = CreateForex[Eval].create(ForexConfig(key, DeveloperAccount))
+  val key  = sys.env.getOrElse("OER_KEY", "")
+  val ioFx = CreateForex[IO].create(ForexConfig(key, DeveloperAccount))
 
   "live currency value for USD" should {
     "always equal to 1" in {
@@ -36,10 +34,6 @@ class OerClientSpec extends Specification {
         .map(_.client)
         .flatMap(_.getLiveCurrencyValue(CurrencyUnit.USD))
         .unsafeRunSync() must beRight(new BigDecimal(1))
-      evalFx
-        .map(_.client)
-        .flatMap(_.getLiveCurrencyValue(CurrencyUnit.USD))
-        .value must beRight(new BigDecimal(1))
     }
   }
 
@@ -47,8 +41,6 @@ class OerClientSpec extends Specification {
     "be less than 1" in {
       val ioGbpLiveRate = ioFx.flatMap(_.client.getLiveCurrencyValue(CurrencyUnit.GBP))
       ioGbpLiveRate.unsafeRunSync() must beRight((d: BigDecimal) => d.doubleValue < 1)
-      val evalGbpLiveRate = evalFx.flatMap(_.client.getLiveCurrencyValue(CurrencyUnit.GBP))
-      evalGbpLiveRate.value must beRight((d: BigDecimal) => d.doubleValue < 1)
     }
   }
 
@@ -58,7 +50,6 @@ class OerClientSpec extends Specification {
       ioFx
         .flatMap(_.client.getHistoricalCurrencyValue(CurrencyUnit.USD, date))
         .unsafeRunSync() must beRight(new BigDecimal(1))
-      evalFx.flatMap(_.client.getHistoricalCurrencyValue(CurrencyUnit.USD, date)).value must beRight(new BigDecimal(1))
     }
   }
 }

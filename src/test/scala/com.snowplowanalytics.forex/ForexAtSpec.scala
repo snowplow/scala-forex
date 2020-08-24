@@ -14,7 +14,6 @@ package com.snowplowanalytics.forex
 
 import java.time.{ZoneId, ZonedDateTime}
 
-import cats.Eval
 import cats.effect.IO
 import org.joda.money.{CurrencyUnit, Money}
 import org.specs2.mutable.Specification
@@ -32,9 +31,6 @@ class ForexAtSpec extends Specification {
   val ioFx = CreateForex[IO].create(ForexConfig(key, DeveloperAccount))
   val ioFxWithBaseGBP =
     CreateForex[IO].create(ForexConfig(key, EnterpriseAccount, baseCurrency = CurrencyUnit.GBP))
-  val evalFx = CreateForex[Eval].create(ForexConfig(key, DeveloperAccount))
-  val evalFxWithBaseGBP =
-    CreateForex[Eval].create(ForexConfig(key, EnterpriseAccount, baseCurrency = CurrencyUnit.GBP))
 
   val tradeDate =
     ZonedDateTime.of(2011, 3, 13, 11, 39, 27, 567, ZoneId.of("America/New_York"))
@@ -45,9 +41,6 @@ class ForexAtSpec extends Specification {
       val ioGbpToCadWithBaseUsd =
         ioFx.flatMap(_.rate(CurrencyUnit.GBP).to(CurrencyUnit.CAD).at(tradeDate))
       ioGbpToCadWithBaseUsd.unsafeRunSync() must beRight((m: Money) => m.isPositive)
-      val evalGbpToCadWithBaseUsd =
-        evalFx.flatMap(_.rate(CurrencyUnit.GBP).to(CurrencyUnit.CAD).at(tradeDate))
-      evalGbpToCadWithBaseUsd.value must beRight((m: Money) => m.isPositive)
     }
   }
 
@@ -56,9 +49,6 @@ class ForexAtSpec extends Specification {
     "be > 0" in {
       val ioGbpToCadWithBaseGbp = ioFxWithBaseGBP.flatMap(_.rate.to(CurrencyUnit.CAD).at(tradeDate))
       ioGbpToCadWithBaseGbp.unsafeRunSync() must beRight((m: Money) => m.isPositive)
-      val evalGbpToCadWithBaseGbp =
-        evalFxWithBaseGBP.flatMap(_.rate.to(CurrencyUnit.CAD).at(tradeDate))
-      evalGbpToCadWithBaseGbp.value must beRight((m: Money) => m.isPositive)
     }
   }
 
@@ -68,9 +58,6 @@ class ForexAtSpec extends Specification {
       val ioCnyOverGbpHistorical =
         ioFx.flatMap(_.rate(CurrencyUnit.of("CNY")).to(CurrencyUnit.GBP).at(tradeDate))
       ioCnyOverGbpHistorical.unsafeRunSync() must beRight((m: Money) => m.isPositive)
-      val evalCnyOverGbpHistorical =
-        evalFx.flatMap(_.rate(CurrencyUnit.of("CNY")).to(CurrencyUnit.GBP).at(tradeDate))
-      evalCnyOverGbpHistorical.value must beRight((m: Money) => m.isPositive)
     }
   }
 

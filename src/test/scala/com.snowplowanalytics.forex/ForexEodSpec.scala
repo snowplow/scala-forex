@@ -15,7 +15,6 @@ package com.snowplowanalytics.forex
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
-import cats.Eval
 import cats.effect.IO
 import org.joda.money.{CurrencyUnit, Money}
 import org.specs2.mutable.Specification
@@ -30,9 +29,8 @@ import model._
  */
 class ForexEodSpec extends Specification with DataTables {
 
-  val key    = sys.env.getOrElse("OER_KEY", "")
-  val ioFx   = CreateForex[IO].create(ForexConfig(key, DeveloperAccount))
-  val evalFx = CreateForex[Eval].create(ForexConfig(key, DeveloperAccount))
+  val key  = sys.env.getOrElse("OER_KEY", "")
+  val ioFx = CreateForex[IO].create(ForexConfig(key, DeveloperAccount))
 
   override def is =
     skipAllIf(sys.env.get("OER_KEY").isEmpty) ^
@@ -51,14 +49,9 @@ class ForexEodSpec extends Specification with DataTables {
           .flatMap(
             _.rate(fromCurr)
               .to(toCurr)
-              .eod(ZonedDateTime.parse(date, DateTimeFormatter.ISO_OFFSET_DATE_TIME)))
+              .eod(ZonedDateTime.parse(date, DateTimeFormatter.ISO_OFFSET_DATE_TIME))
+          )
           .unsafeRunSync() must beRight((m: Money) => m.getAmount.toString mustEqual exp)
-        evalFx
-          .flatMap(
-            _.rate(fromCurr)
-              .to(toCurr)
-              .eod(ZonedDateTime.parse(date, DateTimeFormatter.ISO_OFFSET_DATE_TIME)))
-          .value must beRight((m: Money) => m.getAmount.toString mustEqual exp)
     }
 
 }

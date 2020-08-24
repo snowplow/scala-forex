@@ -23,7 +23,7 @@ object Dependencies {
     // Scala
     val catsEffect = "2.1.4"
     val circe      = "0.13.0"
-    val lruMap     = "0.3.0"
+    val lruMap     = "0.5.0"
     val scalaj     = "2.4.1"
 
     // Scala (test only)
