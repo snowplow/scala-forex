@@ -19,9 +19,6 @@ import Keys._
 import bintray.BintrayPlugin._
 import bintray.BintrayKeys._
 
-// Scalafmt
-import org.scalafmt.sbt.ScalafmtPlugin.autoImport._
-
 // Docs
 import sbtunidoc.ScalaUnidocPlugin.autoImport._
 import com.typesafe.sbt.site.SitePlugin.autoImport._
@@ -31,8 +28,8 @@ object BuildSettings {
 
   // Basic settings for our app
   lazy val buildSettings = Seq[Setting[_]](
-    organization          := "com.snowplowanalytics",
-    scalaVersion          := "2.12.8",
+    organization := "com.snowplowanalytics",
+    scalaVersion := "2.12.8"
   )
 
   // Publish settings
@@ -45,10 +42,10 @@ object BuildSettings {
     bintrayRepository := "snowplow-maven",
     pomIncludeRepository := { _ => false },
     homepage := Some(url("http://snowplowanalytics.com")),
-    scmInfo := Some(ScmInfo(url("https://github.com/snowplow/scala-forex"),
-      "scm:git@github.com:snowplow/scala-forex.git")),
-    pomExtra := (
-      <developers>
+    scmInfo := Some(
+      ScmInfo(url("https://github.com/snowplow/scala-forex"), "scm:git@github.com:snowplow/scala-forex.git")
+    ),
+    pomExtra := (<developers>
         <developer>
           <name>Snowplow Analytics Ltd</name>
           <email>support@snowplowanalytics.com</email>
