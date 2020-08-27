@@ -23,8 +23,8 @@ import forex.errors._
 package object forex {
 
   /**
-   * The key and value for each cache entry
-   */
+    * The key and value for each cache entry
+    */
   type NowishCacheKey   = (CurrencyUnit, CurrencyUnit) // source currency , target currency
   type NowishCacheValue = (ZonedDateTime, BigDecimal)  // timestamp, exchange rate
 
@@ -36,8 +36,8 @@ package object forex {
   type ApiRequestResult = Either[OerResponseError, BigDecimal]
 
   /**
-   * The two LRU caches we use
-   */
+    * The two LRU caches we use
+    */
   type NowishCache[F[_]] = LruMap[F, NowishCacheKey, NowishCacheValue]
   type EodCache[F[_]]    = LruMap[F, EodCacheKey, EodCacheValue]
 }

@@ -22,8 +22,8 @@ import errors._
 import model._
 
 /**
- *  Testing for exceptions caused by invalid dates
- */
+  *  Testing for exceptions caused by invalid dates
+  */
 class UnsupportedEodSpec extends Specification {
   args(skipAll = sys.env.get("OER_KEY").isEmpty)
 
@@ -34,9 +34,9 @@ class UnsupportedEodSpec extends Specification {
     "throw an exception" in {
 
       /**
-       * 1900 is earlier than 1990 which is the earliest available date for looking up exchange
-       * rates
-       */
+        * 1900 is earlier than 1990 which is the earliest available date for looking up exchange
+        * rates
+        */
       val date1900 = ZonedDateTime.of(1900, 3, 13, 0, 0, 0, 0, ZoneId.systemDefault)
       ioFx.flatMap(_.rate.to(CurrencyUnit.GBP).eod(date1900)).unsafeRunSync() must beLike {
         case Left(OerResponseError(_, ResourcesNotAvailable)) => ok

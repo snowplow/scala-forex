@@ -17,36 +17,35 @@ import io.circe.Decoder
 object errors {
 
   /**
-   * OER error states from the HTTP requests
-   * @param errorMessage - error message from OER API
-   * @param errorType - specific error type
-   */
+    * OER error states from the HTTP requests
+    * @param errorMessage - error message from OER API
+    * @param errorType - specific error type
+    */
   final case class OerResponseError(errorMessage: String, errorType: OerError)
 
-  implicit val oerResponseErrorDecoder: Decoder[OerResponseError] = Decoder.decodeString
-    .prepare(_.downField("message"))
-    .map(OerResponseError(_, OtherErrors))
+  implicit val oerResponseErrorDecoder: Decoder[OerResponseError] =
+    Decoder.decodeString.prepare(_.downField("message")).map(OerResponseError(_, OtherErrors))
 
   /**
-   * User defined error types
-   */
+    * User defined error types
+    */
   sealed trait OerError
 
   /**
-   * Caused by invalid DateTime argument
-   * i.e. either earlier than the earliest date OER service is available or later than currenct time
-   */
+    * Caused by invalid DateTime argument
+    * i.e. either earlier than the earliest date OER service is available or later than currenct time
+    */
   case object ResourcesNotAvailable extends OerError
 
   /**
-   * Currency not supported by API or
-   * Joda Money or both
-   */
+    * Currency not supported by API or
+    * Joda Money or both
+    */
   case object IllegalCurrency extends OerError
 
   /**
-   * Other possible error types e.g.
-   * access permissions
-   */
+    * Other possible error types e.g.
+    * access permissions
+    */
   case object OtherErrors extends OerError
 }

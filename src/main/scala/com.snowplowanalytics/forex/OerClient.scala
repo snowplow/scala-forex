@@ -26,23 +26,23 @@ import model._
 import responses._
 
 /**
- * Implements Json for Open Exchange Rates(http://openexchangerates.org)
- * @param config - a configurator for Forex object
- * @param nowishCache - user defined nowishCache
- * @param eodCache - user defined eodCache
- */
+  * Implements Json for Open Exchange Rates(http://openexchangerates.org)
+  * @param config - a configurator for Forex object
+  * @param nowishCache - user defined nowishCache
+  * @param eodCache - user defined eodCache
+  */
 final case class OerClient[F[_]: Monad](
   config: ForexConfig,
   nowishCache: Option[NowishCache[F]] = None,
-  eodCache: Option[EodCache[F]]       = None
+  eodCache: Option[EodCache[F]] = None
 )(implicit T: Transport[F]) {
 
   private val endpoint = "openexchangerates.org/api/"
 
   /** Sets the base currency in the url
-   * according to the API, only Unlimited and Enterprise accounts
-   * are allowed to set the base currency in the HTTP URL
-   */
+    * according to the API, only Unlimited and Enterprise accounts
+    * are allowed to set the base currency in the HTTP URL
+    */
   private val base = config.accountLevel match {
     case UnlimitedAccount  => "&base=" + config.baseCurrency
     case EnterpriseAccount => "&base=" + config.baseCurrency
@@ -50,9 +50,9 @@ final case class OerClient[F[_]: Monad](
   }
 
   /**
-   * The constant that will hold the URL for
-   * a live exchange rate lookup from OER
-   */
+    * The constant that will hold the URL for
+    * a live exchange rate lookup from OER
+    */
   private val latest = "latest.json?app_id=" + config.appId + base
 
   /** The earliest date OER service is availble */
@@ -60,13 +60,13 @@ final case class OerClient[F[_]: Monad](
     ZonedDateTime.of(LocalDateTime.of(1999, 1, 1, 0, 0), ZoneId.systemDefault)
 
   /**
-   * Gets live currency value for the desired currency,
-   * silently drop the currency types which Joda money does not support.
-   * If cache exists, update nowishCache when an API request has been done,
-   * else just return the forex rate
-   * @param currency - The desired currency we want to look up from the API
-   * @return result returned from API
-   */
+    * Gets live currency value for the desired currency,
+    * silently drop the currency types which Joda money does not support.
+    * If cache exists, update nowishCache when an API request has been done,
+    * else just return the forex rate
+    * @param currency - The desired currency we want to look up from the API
+    * @return result returned from API
+    */
   def getLiveCurrencyValue(currency: CurrencyUnit): F[ApiRequestResult] = {
     val action = for {
       response     <- EitherT(T.receive(endpoint, latest))
@@ -111,7 +111,8 @@ final case class OerClient[F[_]: Monad](
       }
     }
     cacheActions.map { _ =>
-      response.rates
+      response
+        .rates
         .get(currency)
         .map(_.bigDecimal)
         .toRight(OerResponseError("Currency not found in the API, invalid currency ", IllegalCurrency))
@@ -119,33 +120,33 @@ final case class OerClient[F[_]: Monad](
   }
 
   /**
-   * Builds the historical link for the URI according to the date
-   * @param date - The historical date for the currency look up,
-   * which should be the same as date argument in the getHistoricalCurrencyValue method below
-   * @return the link in string format
-   */
+    * Builds the historical link for the URI according to the date
+    * @param date - The historical date for the currency look up,
+    * which should be the same as date argument in the getHistoricalCurrencyValue method below
+    * @return the link in string format
+    */
   private def buildHistoricalLink(date: ZonedDateTime): String =
     f"historical/${date.getYear}%04d-${date.getMonthValue}%02d-${date.getDayOfMonth}%02d.json?app_id=${config.appId}" + base
 
   /**
-   * Gets historical forex rate for the given currency and date
-   * return error message if the date is invalid
-   * silently drop the currency types which Joda money does not support
-   * if cache exists, update the eodCache when an API request has been done,
-   * else just return the look up result
-   * @param currency - The desired currency we want to look up from the API
-   * @param date - The specific date we want to look up on
-   * @return result returned from API
-   */
+    * Gets historical forex rate for the given currency and date
+    * return error message if the date is invalid
+    * silently drop the currency types which Joda money does not support
+    * if cache exists, update the eodCache when an API request has been done,
+    * else just return the look up result
+    * @param currency - The desired currency we want to look up from the API
+    * @param date - The specific date we want to look up on
+    * @return result returned from API
+    */
   def getHistoricalCurrencyValue(
     currency: CurrencyUnit,
     date: ZonedDateTime
   ): F[ApiRequestResult] =
-    if (date.isBefore(oerDataFrom) || date.isAfter(ZonedDateTime.now)) {
+    if (date.isBefore(oerDataFrom) || date.isAfter(ZonedDateTime.now))
       OerResponseError(s"Exchange rate unavailable on the date [$date]", ResourcesNotAvailable)
         .asLeft[JBigDecimal]
         .pure[F]
-    } else {
+    else {
       val historicalLink = buildHistoricalLink(date)
       val action = for {
         response <- EitherT(T.receive(endpoint, historicalLink))
@@ -195,7 +196,8 @@ final case class OerClient[F[_]: Monad](
     }
 
     cacheAction.map { _ =>
-      response.rates
+      response
+        .rates
         .get(currency)
         .map(_.bigDecimal)
         .toRight(OerResponseError(s"Currency not found in the API, invalid currency $currency", IllegalCurrency))
@@ -204,18 +206,18 @@ final case class OerClient[F[_]: Monad](
 }
 
 /**
- * Companion object for ForexClient class
- * This class has one method for getting forex clients
- * but for now there is only one client since we are only using OER
- */
+  * Companion object for ForexClient class
+  * This class has one method for getting forex clients
+  * but for now there is only one client since we are only using OER
+  */
 object OerClient {
 
   /** Creates a client with a cache and sensible default ForexConfig */
   def getClient[F[_]: Monad: Transport](
     appId: String,
     accountLevel: AccountType
-  )(
-    implicit CLM1: CreateLruMap[F, NowishCacheKey, NowishCacheValue],
+  )(implicit
+    CLM1: CreateLruMap[F, NowishCacheKey, NowishCacheValue],
     CLM2: CreateLruMap[F, EodCacheKey, EodCacheValue]
   ): F[OerClient[F]] =
     getClient[F](ForexConfig(appId = appId, accountLevel = accountLevel))
@@ -223,23 +225,21 @@ object OerClient {
   /** Getter for clients, creating the caches as defined in the config */
   def getClient[F[_]: Monad: Transport](
     config: ForexConfig
-  )(
-    implicit CLM1: CreateLruMap[F, NowishCacheKey, NowishCacheValue],
+  )(implicit
+    CLM1: CreateLruMap[F, NowishCacheKey, NowishCacheValue],
     CLM2: CreateLruMap[F, EodCacheKey, EodCacheValue]
   ): F[OerClient[F]] = {
     val nowishCacheF =
-      if (config.nowishCacheSize > 0) {
+      if (config.nowishCacheSize > 0)
         CLM1.create(config.nowishCacheSize).map(_.some)
-      } else {
+      else
         Monad[F].pure(Option.empty[NowishCache[F]])
-      }
 
     val eodCacheF =
-      if (config.eodCacheSize > 0) {
+      if (config.eodCacheSize > 0)
         CLM2.create(config.eodCacheSize).map(_.some)
-      } else {
+      else
         Monad[F].pure(Option.empty[EodCache[F]])
-      }
 
     (nowishCacheF, eodCacheF).mapN {
       case (nowish, eod) =>

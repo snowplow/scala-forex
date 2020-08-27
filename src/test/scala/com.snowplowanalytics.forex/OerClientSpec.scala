@@ -30,10 +30,9 @@ class OerClientSpec extends Specification {
 
   "live currency value for USD" should {
     "always equal to 1" in {
-      ioFx
-        .map(_.client)
-        .flatMap(_.getLiveCurrencyValue(CurrencyUnit.USD))
-        .unsafeRunSync() must beRight(new BigDecimal(1))
+      ioFx.map(_.client).flatMap(_.getLiveCurrencyValue(CurrencyUnit.USD)).unsafeRunSync() must beRight(
+        new BigDecimal(1)
+      )
     }
   }
 
@@ -47,9 +46,9 @@ class OerClientSpec extends Specification {
   "historical currency value for USD on 01/01/2008" should {
     "always equal to 1 as well" in {
       val date = ZonedDateTime.parse("2008-01-01T01:01:01.123+09:00")
-      ioFx
-        .flatMap(_.client.getHistoricalCurrencyValue(CurrencyUnit.USD, date))
-        .unsafeRunSync() must beRight(new BigDecimal(1))
+      ioFx.flatMap(_.client.getHistoricalCurrencyValue(CurrencyUnit.USD, date)).unsafeRunSync() must beRight(
+        new BigDecimal(1)
+      )
     }
   }
 }

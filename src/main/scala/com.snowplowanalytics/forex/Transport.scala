@@ -25,12 +25,12 @@ import responses._
 trait Transport[F[_]] {
 
   /**
-   * Main client logic for Request => Response function,
-   * where Response is wrapped in tparam `F`
-   * @param endpoint endpoint to interrogate
-   * @param path path to request
-   * @return extracted either error or exchanged rate wrapped in `F`
-   */
+    * Main client logic for Request => Response function,
+    * where Response is wrapped in tparam `F`
+    * @param endpoint endpoint to interrogate
+    * @param path path to request
+    * @return extracted either error or exchanged rate wrapped in `F`
+    */
   def receive(endpoint: String, path: String): F[Either[OerResponseError, OerResponse]]
 
 }
@@ -38,33 +38,36 @@ trait Transport[F[_]] {
 object Transport {
 
   /**
-   * Http Transport leveraging cats-effect's Sync.
-   * @return a Sync Transport
-   */
-  implicit def httpTransport[F[_]: Sync]: Transport[F] = new Transport[F] {
-    def receive(endpoint: String, path: String): F[Either[OerResponseError, OerResponse]] =
-      Sync[F].delay(buildRequest(endpoint, path))
-  }
+    * Http Transport leveraging cats-effect's Sync.
+    * @return a Sync Transport
+    */
+  implicit def httpTransport[F[_]: Sync]: Transport[F] =
+    new Transport[F] {
+      def receive(endpoint: String, path: String): F[Either[OerResponseError, OerResponse]] =
+        Sync[F].delay(buildRequest(endpoint, path))
+    }
 
   /**
-   * Eval http Transport to use in cases where you have to do side-effects (e.g. spark or beam).
-   * @return an Eval Transport
-   */
-  implicit def evalHttpTransport: Transport[Eval] = new Transport[Eval] {
-    def receive(endpoint: String, path: String): Eval[Either[OerResponseError, OerResponse]] =
-      Eval.later {
+    * Eval http Transport to use in cases where you have to do side-effects (e.g. spark or beam).
+    * @return an Eval Transport
+    */
+  implicit def evalHttpTransport: Transport[Eval] =
+    new Transport[Eval] {
+      def receive(endpoint: String, path: String): Eval[Either[OerResponseError, OerResponse]] =
+        Eval.later {
+          buildRequest(endpoint, path)
+        }
+    }
+
+  /**
+    * Id http Transport to use in cases where you don't care about side-effects.
+    * @return an Id Transport
+    */
+  implicit def idHttpTransport: Transport[Id] =
+    new Transport[Id] {
+      def receive(endpoint: String, path: String): Id[Either[OerResponseError, OerResponse]] =
         buildRequest(endpoint, path)
-      }
-  }
-
-  /**
-   * Id http Transport to use in cases where you don't care about side-effects.
-   * @return an Id Transport
-   */
-  implicit def idHttpTransport: Transport[Id] = new Transport[Id] {
-    def receive(endpoint: String, path: String): Id[Either[OerResponseError, OerResponse]] =
-      buildRequest(endpoint, path)
-  }
+    }
 
   implicit def eitherDecoder: Decoder[Either[OerResponseError, OerResponse]] =
     implicitly[Decoder[OerResponseError]].either(implicitly[Decoder[OerResponse]])
@@ -75,11 +78,12 @@ object Transport {
   ): Either[OerResponseError, OerResponse] =
     for {
       response <- Http("http://" + endpoint + path).asString.body.asRight
-      parsed <- parse(response)
-        .leftMap(e => OerResponseError(s"OER response is not JSON: ${e.getMessage}", OtherErrors))
-      decoded <- parsed
-        .as[Either[OerResponseError, OerResponse]]
-        .leftMap(_ => OerResponseError(s"OER response couldn't be decoded", OtherErrors))
+      parsed <-
+        parse(response).leftMap(e => OerResponseError(s"OER response is not JSON: ${e.getMessage}", OtherErrors))
+      decoded <-
+        parsed
+          .as[Either[OerResponseError, OerResponse]]
+          .leftMap(_ => OerResponseError(s"OER response couldn't be decoded", OtherErrors))
       res <- decoded
     } yield res
 }
