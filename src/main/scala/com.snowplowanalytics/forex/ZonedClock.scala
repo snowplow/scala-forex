@@ -22,15 +22,18 @@ trait ZonedClock[F[_]] {
 }
 
 object ZonedClock {
-  implicit def zonedClock[F[_]: Sync]: ZonedClock[F] = new ZonedClock[F] {
-    def currentTime: F[ZonedDateTime] = Sync[F].delay(ZonedDateTime.now)
-  }
+  implicit def zonedClock[F[_]: Sync]: ZonedClock[F] =
+    new ZonedClock[F] {
+      def currentTime: F[ZonedDateTime] = Sync[F].delay(ZonedDateTime.now)
+    }
 
-  implicit def evalZonedClock: ZonedClock[Eval] = new ZonedClock[Eval] {
-    def currentTime: Eval[ZonedDateTime] = Eval.later(ZonedDateTime.now)
-  }
+  implicit def evalZonedClock: ZonedClock[Eval] =
+    new ZonedClock[Eval] {
+      def currentTime: Eval[ZonedDateTime] = Eval.later(ZonedDateTime.now)
+    }
 
-  implicit def idZonedClock: ZonedClock[Id] = new ZonedClock[Id] {
-    def currentTime: Id[ZonedDateTime] = ZonedDateTime.now
-  }
+  implicit def idZonedClock: ZonedClock[Id] =
+    new ZonedClock[Id] {
+      def currentTime: Id[ZonedDateTime] = ZonedDateTime.now
+    }
 }

@@ -27,9 +27,12 @@ object responses {
     override def apply(c: HCursor): Decoder.Result[OerResponse] =
       c.downField("rates").as[Map[String, BigDecimal]].map { map =>
         OerResponse(
-          map.toList.mapFilter {
-            case (key, value) => Try(CurrencyUnit.of(key)).toOption.map(_ -> value)
-          }.toMap
+          map
+            .toList
+            .mapFilter {
+              case (key, value) => Try(CurrencyUnit.of(key)).toOption.map(_ -> value)
+            }
+            .toMap
         )
       }
   }

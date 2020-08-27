@@ -33,8 +33,7 @@ class ForexNowishSpec extends Specification {
   "CAD to GBP with USD as base currency returning near-live rate" should {
     "be smaller than 1 pound" in {
       val ioCadOverGbpNowish = ioFx.flatMap(_.rate(CurrencyUnit.CAD).to(CurrencyUnit.GBP).nowish)
-      ioCadOverGbpNowish
-        .unsafeRunSync() must beRight((m: Money) => m.isLessThan(Money.of(CurrencyUnit.GBP, 1)))
+      ioCadOverGbpNowish.unsafeRunSync() must beRight((m: Money) => m.isLessThan(Money.of(CurrencyUnit.GBP, 1)))
     }
   }
 

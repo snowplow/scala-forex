@@ -23,10 +23,10 @@ import org.specs2.matcher.DataTables
 import model._
 
 /**
- * Testing method for getting the end-of-date exchange rate
- * since historical forex rate is fixed, the actual look up result should be
- * the same as the value in the table
- */
+  * Testing method for getting the end-of-date exchange rate
+  * since historical forex rate is fixed, the actual look up result should be
+  * the same as the value in the table
+  */
 class ForexEodSpec extends Specification with DataTables {
 
   val key  = sys.env.getOrElse("OER_KEY", "")
@@ -47,9 +47,7 @@ class ForexEodSpec extends Specification with DataTables {
       (fromCurr, toCurr, date, exp) =>
         ioFx
           .flatMap(
-            _.rate(fromCurr)
-              .to(toCurr)
-              .eod(ZonedDateTime.parse(date, DateTimeFormatter.ISO_OFFSET_DATE_TIME))
+            _.rate(fromCurr).to(toCurr).eod(ZonedDateTime.parse(date, DateTimeFormatter.ISO_OFFSET_DATE_TIME))
           )
           .unsafeRunSync() must beRight((m: Money) => m.getAmount.toString mustEqual exp)
     }

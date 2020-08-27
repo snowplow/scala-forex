@@ -21,9 +21,9 @@ import org.specs2.mutable.Specification
 import model._
 
 /**
- * Testing method for getting the latest end-of-day rate
- * prior to the datetime or the day after according to the user's setting
- */
+  * Testing method for getting the latest end-of-day rate
+  * prior to the datetime or the day after according to the user's setting
+  */
 class ForexAtSpec extends Specification {
   args(skipAll = sys.env.get("OER_KEY").isEmpty)
 

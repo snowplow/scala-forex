@@ -35,14 +35,10 @@ class SpiedCacheSpec extends Specification with Mockito {
   val fxConfigWith5NowishSecs = ForexConfig(key, DeveloperAccount, nowishSecs = 5)
 
   val spiedIoNowishCache = spy(
-    CreateLruMap[IO, NowishCacheKey, NowishCacheValue]
-      .create(config.nowishCacheSize)
-      .unsafeRunSync()
+    CreateLruMap[IO, NowishCacheKey, NowishCacheValue].create(config.nowishCacheSize).unsafeRunSync()
   )
   val spiedIoEodCache = spy(
-    CreateLruMap[IO, EodCacheKey, EodCacheValue]
-      .create(config.eodCacheSize)
-      .unsafeRunSync()
+    CreateLruMap[IO, EodCacheKey, EodCacheValue].create(config.eodCacheSize).unsafeRunSync()
   )
   val ioClient = OerClient.getClient[IO](
     config,
@@ -55,8 +51,8 @@ class SpiedCacheSpec extends Specification with Mockito {
   implicit val timer = IO.timer(ExecutionContext.global)
 
   /**
-   * nowish cache with 5-sec memory
-   */
+    * nowish cache with 5-sec memory
+    */
   "A lookup of CAD->GBP within memory time limit" should {
     "return the value stored in the nowish cache and be overwritten after configured time by a new request" in {
       val ioAction = for {
@@ -68,7 +64,7 @@ class SpiedCacheSpec extends Specification with Mockito {
         _ <- spiedIoFxWith5NowishSecs.rate(CurrencyUnit.CAD).to(CurrencyUnit.GBP).nowish
 
         valueFromCache <- spiedIoNowishCache.get((CurrencyUnit.CAD, CurrencyUnit.GBP))
-        test1 = valueFromCache must be equalTo valueFromFirstHttpRequest
+        test1 = (valueFromCache must be).equalTo(valueFromFirstHttpRequest)
 
         _ <- IO.sleep(6.seconds)
         // nowish will get the value over HTTP request, which will replace the previous value in the cache
@@ -79,17 +75,17 @@ class SpiedCacheSpec extends Specification with Mockito {
         // timestamp will be different
         newValueFromCache <- spiedIoNowishCache.get((CurrencyUnit.CAD, CurrencyUnit.GBP))
         test2 = newValueFromCache mustNotEqual valueFromFirstHttpRequest
-      } yield test1 and test2
+      } yield test1.and(test2)
 
       ioAction.unsafeRunSync()
     }
   }
 
   /**
-   * CAD -> GBP with base currency USD on 13-03-2011
-   * The eod lookup will call get method on eod cache
-   * after the call, the key will be stored in the cache
-   */
+    * CAD -> GBP with base currency USD on 13-03-2011
+    * The eod lookup will call get method on eod cache
+    * after the call, the key will be stored in the cache
+    */
   val date = ZonedDateTime.of(2011, 3, 13, 0, 0, 0, 0, ZoneId.systemDefault)
 
   "Eod query on CAD->GBP" should {
@@ -100,9 +96,13 @@ class SpiedCacheSpec extends Specification with Mockito {
         .eod(date)
         .productR(spiedIoEodCache.get((CurrencyUnit.CAD, CurrencyUnit.GBP, date)))
         .map { valueFromCache =>
-          there was two(spiedIoEodCache).get(
-            (CurrencyUnit.CAD, CurrencyUnit.GBP, date)
-          ) and (valueFromCache must beSome)
+          there
+            .was(
+              two(spiedIoEodCache).get(
+                (CurrencyUnit.CAD, CurrencyUnit.GBP, date)
+              )
+            )
+            .and(valueFromCache must beSome)
         }
         .unsafeRunSync()
 
