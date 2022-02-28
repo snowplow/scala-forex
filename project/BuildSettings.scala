@@ -26,10 +26,13 @@ import com.typesafe.sbt.SbtGit.GitKeys._
 
 object BuildSettings {
 
+  lazy val javaCompilerOptions = Seq("-source", "11", "-target", "11")
+
   // Basic settings for our app
   lazy val buildSettings = Seq[Setting[_]](
     organization := "com.snowplowanalytics",
-    scalaVersion := "2.12.15"
+    scalaVersion := "2.12.15",
+    javacOptions := javaCompilerOptions,
   )
 
   // Publish settings
