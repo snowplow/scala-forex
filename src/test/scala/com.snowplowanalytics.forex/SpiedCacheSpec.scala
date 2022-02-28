@@ -15,10 +15,9 @@ package com.snowplowanalytics.forex
 import java.time.{ZoneId, ZonedDateTime}
 
 import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext
 
 import cats.effect.IO
-import cats.syntax.apply._
+import cats.effect.unsafe.implicits.global
 import org.joda.money.CurrencyUnit
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
@@ -48,7 +47,6 @@ class SpiedCacheSpec extends Specification with Mockito {
   val spiedIoFx                = Forex[IO](config, ioClient)
   val spiedIoFxWith5NowishSecs = Forex[IO](fxConfigWith5NowishSecs, ioClient)
 
-  implicit val timer = IO.timer(ExecutionContext.global)
 
   /**
     * nowish cache with 5-sec memory

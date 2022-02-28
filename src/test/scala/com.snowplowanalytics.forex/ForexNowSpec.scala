@@ -15,6 +15,7 @@ package com.snowplowanalytics.forex
 import java.math.RoundingMode
 
 import cats.effect.IO
+import cats.effect.unsafe.implicits.global
 import org.joda.money._
 import org.specs2.mutable.Specification
 

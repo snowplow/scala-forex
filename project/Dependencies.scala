@@ -21,9 +21,8 @@ object Dependencies {
     val jodaConvert = "2.2.0"
 
     // Scala
-    val catsEffect = "2.1.4"
     val circe      = "0.13.0"
-    val lruMap     = "0.5.0"
+    val lruMap     = "0.6.0"
     val scalaj     = "2.4.1"
 
     // Scala (test only)
@@ -36,7 +35,6 @@ object Dependencies {
     val jodaConvert = "org.joda" % "joda-convert" % V.jodaConvert
 
     // Scala
-    val catsEffect  = "org.typelevel"         %% "cats-effect"   % V.catsEffect
     val circeParser = "io.circe"              %% "circe-parser"  % V.circe
     val lruMap      = "com.snowplowanalytics" %% "scala-lru-map" % V.lruMap
     val scalaj      = "org.scalaj"            %% "scalaj-http"   % V.scalaj

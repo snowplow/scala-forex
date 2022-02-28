@@ -28,7 +28,6 @@ lazy val root = project
     libraryDependencies ++= Seq(
       Dependencies.Libraries.jodaConvert,
       Dependencies.Libraries.jodaMoney,
-      Dependencies.Libraries.catsEffect,
       Dependencies.Libraries.circeParser,
       Dependencies.Libraries.lruMap,
       Dependencies.Libraries.scalaj,

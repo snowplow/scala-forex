@@ -15,6 +15,7 @@ package com.snowplowanalytics.forex
 import java.time.{ZoneId, ZonedDateTime}
 
 import cats.effect.IO
+import cats.effect.unsafe.implicits.global
 import org.joda.money.{CurrencyUnit, Money}
 import org.specs2.mutable.Specification
 
