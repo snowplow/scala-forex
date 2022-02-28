@@ -13,6 +13,8 @@
 package com.snowplowanalytics.forex
 
 import cats.effect.IO
+import cats.effect.unsafe.implicits.global
+
 import org.specs2.mutable.Specification
 
 import model._

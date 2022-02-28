@@ -16,6 +16,7 @@ import java.math.BigDecimal
 import java.time.ZonedDateTime
 
 import cats.effect.IO
+import cats.effect.unsafe.implicits.global
 import org.joda.money.CurrencyUnit
 import org.specs2.mutable.Specification
 
