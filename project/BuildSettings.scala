@@ -29,7 +29,7 @@ object BuildSettings {
   // Basic settings for our app
   lazy val buildSettings = Seq[Setting[_]](
     organization := "com.snowplowanalytics",
-    scalaVersion := "2.12.8"
+    scalaVersion := "2.12.15"
   )
 
   // Publish settings
