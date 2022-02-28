@@ -14,15 +14,12 @@
 // SBT
 import sbt._
 import Keys._
-
-// Bintray plugin
-import bintray.BintrayPlugin._
-import bintray.BintrayKeys._
+import com.typesafe.sbt.site.SiteScaladocPlugin.autoImport.SiteScaladoc
+import sbtdynver.DynVerPlugin.autoImport.dynverVTagPrefix
 
 // Docs
-import sbtunidoc.ScalaUnidocPlugin.autoImport._
-import com.typesafe.sbt.site.SitePlugin.autoImport._
-import com.typesafe.sbt.SbtGit.GitKeys._
+import com.typesafe.sbt.site.SitePlugin.autoImport.siteSubdirName
+import com.typesafe.sbt.site.SiteScaladocPlugin.autoImport._
 
 object BuildSettings {
 
@@ -32,35 +29,27 @@ object BuildSettings {
   lazy val buildSettings = Seq[Setting[_]](
     organization := "com.snowplowanalytics",
     scalaVersion := "2.12.15",
-    javacOptions := javaCompilerOptions,
+    javacOptions := javaCompilerOptions
   )
 
-  // Publish settings
-  lazy val publishSettings = bintraySettings ++ Seq(
-    publishMavenStyle := true,
+  lazy val publishSettings = Seq[Setting[_]](
     publishArtifact := true,
-    publishArtifact in Test := false,
-    licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0.html")),
-    bintrayOrganization := Some("snowplow"),
-    bintrayRepository := "snowplow-maven",
+    Test / publishArtifact := false,
     pomIncludeRepository := { _ => false },
     homepage := Some(url("http://snowplowanalytics.com")),
-    scmInfo := Some(
-      ScmInfo(url("https://github.com/snowplow/scala-forex"), "scm:git@github.com:snowplow/scala-forex.git")
-    ),
-    pomExtra := (<developers>
-        <developer>
-          <name>Snowplow Analytics Ltd</name>
-          <email>support@snowplowanalytics.com</email>
-          <organization>Snowplow Analytics Ltd</organization>
-          <organizationUrl>http://snowplowanalytics.com</organizationUrl>
-        </developer>
-      </developers>)
+    licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0.html")),
+    ThisBuild / dynverVTagPrefix := false, // Otherwise git tags required to have v-prefix
+    developers := List(
+      Developer(
+        "Snowplow Analytics Ltd",
+        "Snowplow Analytics Ltd",
+        "support@snowplowanalytics.com",
+        url("https://snowplowanalytics.com")
+      )
+    )
   )
 
   lazy val docsSettings = Seq(
-    addMappingsToSiteDir(mappings in (ScalaUnidoc, packageDoc), siteSubdirName in ScalaUnidoc),
-    gitRemoteRepo := "https://github.com/snowplow/scala-forex.git",
-    siteSubdirName := ""
+    SiteScaladoc / siteSubdirName := s"${version.value}",
   )
 }

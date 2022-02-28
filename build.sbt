@@ -15,10 +15,8 @@
 
 lazy val root = project
   .in(file("."))
-  .enablePlugins(ScalaUnidocPlugin, GhpagesPlugin)
   .settings(
     name := "scala-forex",
-    version := "1.0.0",
     description := "High-performance Scala library for performing currency conversions using Open Exchange Rates"
   )
   .settings(BuildSettings.buildSettings)
@@ -36,3 +34,4 @@ lazy val root = project
       Dependencies.Libraries.specs2Mock
     )
   )
+  .enablePlugins(SiteScaladocPlugin, PreprocessPlugin)

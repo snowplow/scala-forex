@@ -1,10 +1,9 @@
 # Scala Forex
 
-[![Build Status][travis-image]][travis]
-[![Maven Central][maven-image]][maven-link]
+[![Build Status][ci-image]][ci]
+[![Maven Central][release-image]][releases]
+[![Coverage Status][coveralls-image]][coveralls]
 [![License][license-image]][license]
-[![Join the chat at https://gitter.im/snowplow/scala-forex][gitter-image]][gitter-link]
-[![codecov](https://codecov.io/gh/snowplow/scala-forex/branch/master/graph/badge.svg)](https://codecov.io/gh/snowplow/scala-forex)
 
 ## 1. Introduction
 
@@ -402,16 +401,16 @@ limitations under the License.
 
 [joda-money]: http://www.joda.org/joda-money/
 
-[travis]: https://travis-ci.org/snowplow/scala-forex
-[travis-image]: https://travis-ci.org/snowplow/scala-forex.png?branch=master
+[coveralls]: https://coveralls.io/github/snowplow/scala-forex?branch=master
+[coveralls-image]: https://coveralls.io/repos/github/snowplow/scala-forex/badge.svg?branch=master
 
-[maven-image]: https://maven-badges.herokuapp.com/maven-central/com.snowplowanalytics/scala-forex_2.12/badge.svg
-[maven-link]: https://maven-badges.herokuapp.com/maven-central/com.snowplowanalytics/scala-forex_2.12
+[ci]: https://github.com/snowplow/scala-forex/actions?query=workflow%3ACI
+[ci-image]: https://github.com/snowplow/scala-forex/workflows/CI/badge.svg
+
+[releases]: https://maven-badges.herokuapp.com/maven-central/com.snowplowanalytics/scala-forex_2.12
+[release-image]: https://img.shields.io/maven-central/v/com.snowplowanalytics/scala-forex_2.12.svg
 
 [license-image]: http://img.shields.io/badge/license-Apache--2-blue.svg?style=flat
 [license]: http://www.apache.org/licenses/LICENSE-2.0
-
-[gitter-image]: https://badges.gitter.im/snowplow/scala-forex.svg
-[gitter-link]: https://gitter.im/snowplow/scala-forex?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
 
 [scaladoc-pages]: http://snowplow.github.io/scala-forex/
