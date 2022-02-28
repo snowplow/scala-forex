@@ -21,9 +21,9 @@ object Dependencies {
     val jodaConvert = "2.2.0"
 
     // Scala
-    val circe      = "0.13.0"
-    val lruMap     = "0.6.0"
-    val scalaj     = "2.4.1"
+    val circe  = "0.13.0"
+    val lruMap = "0.6.0"
+    val scalaj = "2.4.1"
 
     // Scala (test only)
     val specs2 = "4.4.1"

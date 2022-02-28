@@ -47,7 +47,6 @@ class SpiedCacheSpec extends Specification with Mockito {
   val spiedIoFx                = Forex[IO](config, ioClient)
   val spiedIoFxWith5NowishSecs = Forex[IO](fxConfigWith5NowishSecs, ioClient)
 
-
   /**
     * nowish cache with 5-sec memory
     */

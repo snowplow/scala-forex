@@ -18,7 +18,6 @@ lazy val root = project
   .enablePlugins(ScalaUnidocPlugin, GhpagesPlugin)
   .settings(
     name := "scala-forex",
-    version := "1.0.0",
     description := "High-performance Scala library for performing currency conversions using Open Exchange Rates"
   )
   .settings(BuildSettings.buildSettings)
