@@ -18,8 +18,7 @@ import java.math.{BigDecimal, RoundingMode}
 
 import scala.util.{Failure, Success, Try}
 
-import cats.{Id, Monad}
-import cats.effect.Sync
+import cats.Monad
 import cats.data.{EitherT, OptionT}
 import cats.implicits._
 import org.joda.money._
@@ -35,14 +34,11 @@ trait CreateForex[F[_]] {
 object CreateForex {
   def apply[F[_]](implicit ev: CreateForex[F]): CreateForex[F] = ev
 
-  implicit def syncCreateForex[F[_]: Sync: ZonedClock](implicit
+  implicit def createForex[F[_]: Monad: Transport](implicit
     CLM1: CreateLruMap[F, NowishCacheKey, NowishCacheValue],
     CLM2: CreateLruMap[F, EodCacheKey, EodCacheValue]
   ): CreateForex[F] =
     (config: ForexConfig) => OerClient.getClient[F](config).map(client => Forex(config, client))
-
-  implicit def idCreateForex: CreateForex[Id] =
-    (config: ForexConfig) => OerClient.getClient[Id](config).map(client => Forex(config, client))
 }
 
 /** Companion object to get Forex object */

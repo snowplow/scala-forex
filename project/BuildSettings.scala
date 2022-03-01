@@ -28,7 +28,8 @@ object BuildSettings {
   // Basic settings for our app
   lazy val buildSettings = Seq[Setting[_]](
     organization := "com.snowplowanalytics",
-    scalaVersion := "2.12.15",
+    scalaVersion := "2.13.8",
+    crossScalaVersions := Seq("2.12.15", "2.13.8"),
     javacOptions := javaCompilerOptions
   )
 
@@ -50,6 +51,6 @@ object BuildSettings {
   )
 
   lazy val docsSettings = Seq(
-    SiteScaladoc / siteSubdirName := s"${version.value}",
+    SiteScaladoc / siteSubdirName := s"${version.value}"
   )
 }

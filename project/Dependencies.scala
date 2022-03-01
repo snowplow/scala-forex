@@ -24,10 +24,10 @@ object Dependencies {
     val catsEffect = "3.3.5"
     val circe      = "0.13.0"
     val lruMap     = "0.6.0"
-    val scalaj     = "2.4.1"
+    val scalaj     = "2.4.2"
 
     // Scala (test only)
-    val specs2 = "4.4.1"
+    val specs2 = "4.13.2"
   }
 
   object Libraries {
