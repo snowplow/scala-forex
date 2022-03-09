@@ -1,3 +1,8 @@
+Version 3.0.0 (2022-03-09)
+--------------------------
+Fix 2.0.0 changelog (#190)
+Bump circe to 0.14.1 (#188)
+
 Version 2.0.0 (2022-03-09)
 --------------------------
 Add cross-compilation for Scala 2.13 (#187)
