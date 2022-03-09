@@ -1,6 +1,5 @@
 Version 2.0.0 (2022-03-09)
 --------------------------
-Bump circe to 0.14.1 (#188)
 Add cross-compilation for Scala 2.13 (#187)
 Migrate to GitHub Actions (#185)
 Extend copyright to 2022 (#184)
