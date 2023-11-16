@@ -23,13 +23,13 @@ There are three types of accounts supported by OER API, Unlimited, Enterprise an
 
 ### 2.2 Installation
 
-The latest version of Scala Forex is 0.7.0, which is built against 2.12.x.
+The latest version of Scala Forex is 3.0.0, which is cross-built against 2.12 & 2.13.
 
 If you're using SBT, add the following lines to your build file:
 
 ```scala
 libraryDependencies ++= Seq(
-  "com.snowplowanalytics" %% "scala-forex" % "0.7.0"
+  "com.snowplowanalytics" %% "scala-forex" % "3.0.0"
 )
 ```
 
