@@ -22,7 +22,7 @@ object Dependencies {
 
     // Scala
     val catsEffect = "3.3.5"
-    val circe      = "0.13.0"
+    val circe      = "0.14.3"
     val lruMap     = "0.6.0"
     val scalaj     = "2.4.2"
 
